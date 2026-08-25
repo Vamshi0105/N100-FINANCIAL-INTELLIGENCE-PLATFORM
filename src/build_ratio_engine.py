@@ -21,7 +21,7 @@ from analytics.ratios import (
 
 from analytics.cagr import calculate_cagr
 
-from analytics.cashflow_kpis import (
+from analytics.cash_flow import (
     free_cash_flow,
     cfo_pat_ratio,
     cfo_quality_score,

@@ -2,7 +2,7 @@ import sqlite3
 import csv
 import os
 
-from analytics.cashflow_kpis import (
+from analytics.cash_flow import (
     sign,
     capital_allocation_pattern,
     cfo_pat_ratio
