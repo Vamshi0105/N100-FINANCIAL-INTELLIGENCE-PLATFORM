@@ -11,6 +11,7 @@ import logging
 import math
 import sqlite3
 from pathlib import Path
+import pandas as pd
 
 
 # ============================================================
@@ -146,18 +147,34 @@ def operating_profit_margin(
     return calculated
 
 
-def cross_check_opm(
-    computed_opm,
-    reported_opm,
-    tolerance=1,
-):
-    computed_opm = to_float(computed_opm)
+def cross_check_opm(calculated_opm, reported_opm):
+    calculated_opm = to_float(calculated_opm)
     reported_opm = to_float(reported_opm)
 
-    if computed_opm is None or reported_opm is None:
+    if calculated_opm is None or reported_opm is None:
         return False
 
-    return abs(computed_opm - reported_opm) > tolerance
+    # Ignore obviously invalid source percentage values.
+    # A percentage outside this range is treated as bad source data.
+    if reported_opm < -100 or reported_opm > 100:
+        logger.warning(
+            "Invalid source OPM ignored: calculated=%.2f reported=%.2f",
+            calculated_opm,
+            reported_opm,
+        )
+        return False
+
+    difference = abs(calculated_opm - reported_opm)
+
+    if difference > 1:
+        logger.warning(
+            "OPM mismatch: calculated=%.2f reported=%.2f",
+            calculated_opm,
+            reported_opm,
+        )
+        return False
+
+    return True
 
 
 def return_on_equity(
@@ -913,7 +930,413 @@ def load_source_data(conn):
 
     return pnl, bs, cf
 
+# ============================================================
+# DAY 13 — SECTOR + SOURCE RATIO CROSS-CHECKS
+# ============================================================
 
+def normalize_company_id(value):
+    """Normalize company identifiers for reliable cross-file joins."""
+    if value is None:
+        return None
+    return str(value).strip().upper()
+
+
+def find_project_file(filename):
+    """
+    Locate a project Excel file without assuming one
+    particular folder structure.
+    """
+
+    candidates = [
+        Path(filename),
+        Path("data") / filename,
+        Path("data") / "raw" / filename,
+        Path("data") / "supporting" / filename,
+        Path("input") / filename,
+        Path("inputs") / filename,
+        Path("data") / "input" / filename,
+    ]
+
+    for path in candidates:
+        if path.exists():
+            return path
+
+    raise FileNotFoundError(
+        f"Could not locate {filename}. "
+        f"Checked: {', '.join(str(p) for p in candidates)}"
+    )
+
+
+def load_sector_mapping():
+    """
+    Load company_id -> broad_sector from sectors.xlsx.
+
+    Day 13 sector data is optional. If sectors.xlsx is not available,
+    return an empty mapping so the core ratio engine can still run.
+    """
+
+    try:
+        path = find_project_file("sectors.xlsx")
+    except FileNotFoundError:
+        logger.warning(
+            "sectors.xlsx not found. Continuing without sector mapping."
+        )
+        return {}
+
+    df = pd.read_excel(path)
+
+    required_columns = {
+        "company_id",
+        "broad_sector",
+    }
+
+    missing = required_columns - set(df.columns)
+
+    if missing:
+        raise RuntimeError(
+            "sectors.xlsx is missing columns: "
+            + ", ".join(sorted(missing))
+        )
+
+    df["company_id"] = df["company_id"].map(
+        normalize_company_id
+    )
+
+    sectors = dict(
+        zip(
+            df["company_id"],
+            df["broad_sector"],
+        )
+    )
+
+    logger.info(
+        "Loaded sector mappings: %d",
+        len(sectors),
+    )
+
+    return sectors
+
+
+def load_source_ratio_values():
+    """
+    Load pre-computed ROCE and ROE values from companies.xlsx.
+
+    These values are optional Day 13 validation/reference data.
+    If companies.xlsx is unavailable, return empty mappings so the
+    core ratio engine can still populate financial_ratios.
+    """
+
+    try:
+        path = find_project_file("companies.xlsx")
+    except FileNotFoundError:
+        logger.warning(
+            "companies.xlsx not found. Continuing without source ROCE/ROE."
+        )
+        return {}, {}
+
+    # companies.xlsx has a title row above the real headers.
+    df = pd.read_excel(
+        path,
+        header=1,
+    )
+
+    required_columns = {
+        "id",
+        "roce_percentage",
+        "roe_percentage",
+    }
+
+    missing = required_columns - set(df.columns)
+
+    if missing:
+        raise RuntimeError(
+            "companies.xlsx is missing columns: "
+            + ", ".join(sorted(missing))
+        )
+
+    df["id"] = df["id"].map(
+        normalize_company_id
+    )
+
+    roce_values = {}
+    roe_values = {}
+
+    for _, row in df.iterrows():
+
+        company_id = row["id"]
+
+        roce = to_float(
+            row["roce_percentage"]
+        )
+
+        roe = to_float(
+            row["roe_percentage"]
+        )
+
+        roce_values[company_id] = roce
+        roe_values[company_id] = roe
+
+    logger.info(
+        "Loaded source ROCE values: %d",
+        len(roce_values),
+    )
+
+    logger.info(
+        "Loaded source ROE values: %d",
+        len(roe_values),
+    )
+
+    return roce_values, roe_values
+
+
+def setup_edge_case_log():
+    """
+    Create/reset the Day 13 anomaly log.
+    """
+
+    output_dir = Path("output")
+
+    output_dir.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    log_path = (
+        output_dir
+        / "ratio_edge_cases.log"
+    )
+
+    with open(
+        log_path,
+        "w",
+        encoding="utf-8",
+    ) as log_file:
+
+        log_file.write(
+            "N100 Ratio Engine - Day 13 Edge Cases\n"
+        )
+
+        log_file.write(
+            "=" * 70
+            + "\n"
+        )
+
+        log_file.write(
+            "ROCE / ROE source cross-checks\n"
+        )
+
+        log_file.write(
+            "Difference threshold: > 5 percentage points\n"
+        )
+
+        log_file.write(
+            "Computed Ratio Engine values are analytical source of truth.\n"
+        )
+
+        log_file.write(
+            "companies.xlsx values are source/display reference only.\n"
+        )
+
+        log_file.write(
+            "=" * 70
+            + "\n\n"
+        )
+
+    return log_path
+
+
+def classify_ratio_anomaly(
+    ratio_name,
+    calculated,
+    source,
+    difference,
+):
+    """
+    Categorize a Day 13 source/computed mismatch.
+
+    ROE values that are implausibly tiny versus the computed engine value
+    are treated as data-source issues. Other large mismatches are treated
+    as version differences unless a formula discrepancy is explicitly
+    established during review.
+    """
+    if ratio_name == "ROE" and abs(source) < 1 and abs(calculated) > 5:
+        return "data source issue"
+
+    return "version difference"
+
+
+def log_ratio_edge_case(
+    log_path,
+    ratio_name,
+    company_id,
+    year,
+    calculated,
+    source,
+    difference,
+    category=None,
+):
+    """
+    Append one ratio anomaly to the Day 13 log.
+    """
+
+    if category is None:
+        category = classify_ratio_anomaly(
+            ratio_name,
+            calculated,
+            source,
+            difference,
+        )
+
+    with open(
+        log_path,
+        "a",
+        encoding="utf-8",
+    ) as log_file:
+
+        log_file.write(
+            f"{ratio_name} ANOMALY | "
+            f"company={company_id} | "
+            f"year={year} | "
+            f"calculated={calculated:.4f} | "
+            f"source={source:.4f} | "
+            f"difference={difference:.4f} | "
+            f"category={category}\n"
+        )
+
+
+def cross_check_source_ratios(
+    output_rows,
+    roce_source,
+    roe_source,
+    log_path,
+):
+    """
+    Compare the latest computed Ratio Engine ROCE/ROE
+    against companies.xlsx.
+
+    The companies.xlsx ratios are company-level values,
+    so the latest available calculated year is used.
+
+    An anomaly is logged when the absolute difference
+    exceeds 5 percentage points.
+    """
+
+    latest_rows = {}
+
+    # --------------------------------------------------------
+    # Keep latest year for each company
+    # --------------------------------------------------------
+
+    for row in output_rows:
+
+        company_id = row.get(
+            "company_id"
+        )
+
+        year = row.get(
+            "year"
+        )
+
+        if company_id is None:
+            continue
+
+        parsed_year = parse_year(year)
+
+        if parsed_year is None:
+            continue
+
+        existing = latest_rows.get(
+            company_id
+        )
+
+        if (
+            existing is None
+            or parsed_year
+            > parse_year(existing["year"])
+        ):
+            latest_rows[company_id] = row
+
+    roce_anomalies = 0
+    roe_anomalies = 0
+
+    # --------------------------------------------------------
+    # ROCE cross-check
+    # --------------------------------------------------------
+
+    for company_id, row in latest_rows.items():
+
+        calculated = to_float(
+            row.get(
+                "return_on_capital_employed_pct"
+            )
+        )
+
+        source = roce_source.get(
+            company_id
+        )
+
+        if calculated is None or source is None:
+            continue
+
+        difference = abs(
+            calculated - source
+        )
+
+        if difference > 5:
+
+            log_ratio_edge_case(
+                log_path=log_path,
+                ratio_name="ROCE",
+                company_id=company_id,
+                year=row["year"],
+                calculated=calculated,
+                source=source,
+                difference=difference,
+            )
+
+            roce_anomalies += 1
+
+    # --------------------------------------------------------
+    # ROE cross-check
+    # --------------------------------------------------------
+
+    for company_id, row in latest_rows.items():
+
+        calculated = to_float(
+            row.get(
+                "return_on_equity_pct"
+            )
+        )
+
+        source = roe_source.get(
+            company_id
+        )
+
+        if calculated is None or source is None:
+            continue
+
+        difference = abs(
+            calculated - source
+        )
+
+        if difference > 5:
+
+            log_ratio_edge_case(
+                log_path=log_path,
+                ratio_name="ROE",
+                company_id=company_id,
+                year=row["year"],
+                calculated=calculated,
+                source=source,
+                difference=difference,
+            )
+
+            roe_anomalies += 1
+
+    return (
+        roce_anomalies,
+        roe_anomalies,
+    )
 # ============================================================
 # HISTORICAL VALUE HELPERS
 # ============================================================
@@ -1195,6 +1618,7 @@ def build_ratio_row(
     bs_row,
     cf_row,
     pnl,
+    sector=None,
 ):
     pnl_row = pnl_row or {}
     bs_row = bs_row or {}
@@ -1379,7 +1803,10 @@ def build_ratio_row(
         "debt_to_equity": de,
 
         "high_leverage_flag": (
-            high_leverage_flag(de)
+            high_leverage_flag(
+                de,
+                sector=sector,
+            )
         ),
 
         "interest_coverage": icr,
@@ -1561,6 +1988,25 @@ def populate_financial_ratios():
         )
 
         # ----------------------------------------------------
+        # Day 13 — Load sector and source-ratio reference data
+        # ----------------------------------------------------
+
+        sectors = load_sector_mapping()
+        roce_source, roe_source = load_source_ratio_values()
+        edge_case_log = setup_edge_case_log()
+
+        financials_count = sum(
+            1
+            for company_id in sectors
+            if sectors.get(company_id) == "Financials"
+        )
+
+        logger.info(
+            "Financials companies in sector mapping: %d",
+            financials_count,
+        )
+
+        # ----------------------------------------------------
         # UNION of all company/year combinations
         # ----------------------------------------------------
 
@@ -1604,21 +2050,66 @@ def populate_financial_ratios():
             )
 
             row = build_ratio_row(
-                company_id=company_id,
+              company_id=company_id,
                 year=year,
                 pnl_row=pnl_row,
                 bs_row=bs_row,
                 cf_row=cf_row,
                 pnl=pnl,
-            )
-
+                sector=sectors.get(
+                    normalize_company_id(company_id)
+                ),
+)
             output_rows.append(row)
 
         logger.info(
             "Prepared ratio rows: %d",
             len(output_rows),
         )
+        # ----------------------------------------------------
+        # Day 13 — ROCE / ROE source cross-check
+        # ----------------------------------------------------
 
+        roce_anomalies, roe_anomalies = (
+            cross_check_source_ratios(
+                output_rows=output_rows,
+                roce_source=roce_source,
+                roe_source=roe_source,
+                log_path=edge_case_log,
+            )
+        )
+
+        logger.info(
+            "Day 13 ROCE anomalies: %d",
+            roce_anomalies,
+        )
+
+        logger.info(
+            "Day 13 ROE anomalies: %d",
+            roe_anomalies,
+        )
+
+        print()
+        print(
+            f"ROCE anomalies: {roce_anomalies}"
+        )
+
+        print(
+            f"ROE anomalies: {roe_anomalies}"
+        )
+
+        print(
+            f"Edge-case log: {edge_case_log}"
+        )
+
+        print(
+            f"Financials companies: {financials_count}"
+        )
+
+        logger.info(
+            "Financials companies in sector mapping: %d",
+            financials_count,
+        )
         # ----------------------------------------------------
         # Make sure output rows contain exactly the columns
         # required by the existing table.
@@ -1628,6 +2119,11 @@ def populate_financial_ratios():
         # 46 values for 44 columns
         # 47 values for 44 columns
         # ----------------------------------------------------
+        
+        if not output_rows:
+            raise RuntimeError(
+                "No ratio rows were generated."
+            )
 
         insert_columns = [
             column
