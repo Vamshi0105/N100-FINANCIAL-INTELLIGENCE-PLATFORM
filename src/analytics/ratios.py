@@ -147,34 +147,19 @@ def operating_profit_margin(
     return calculated
 
 
-def cross_check_opm(calculated_opm, reported_opm):
-    calculated_opm = to_float(calculated_opm)
-    reported_opm = to_float(reported_opm)
+def cross_check_opm(calculated_opm, reported_opm, tolerance=1):
+    """
+    Return True when a valid reported OPM differs from the
+    calculated OPM by more than the allowed tolerance.
+    """
 
     if calculated_opm is None or reported_opm is None:
         return False
 
-    # Ignore obviously invalid source percentage values.
-    # A percentage outside this range is treated as bad source data.
     if reported_opm < -100 or reported_opm > 100:
-        logger.warning(
-            "Invalid source OPM ignored: calculated=%.2f reported=%.2f",
-            calculated_opm,
-            reported_opm,
-        )
         return False
 
-    difference = abs(calculated_opm - reported_opm)
-
-    if difference > 1:
-        logger.warning(
-            "OPM mismatch: calculated=%.2f reported=%.2f",
-            calculated_opm,
-            reported_opm,
-        )
-        return False
-
-    return True
+    return abs(calculated_opm - reported_opm) > tolerance
 
 
 def return_on_equity(

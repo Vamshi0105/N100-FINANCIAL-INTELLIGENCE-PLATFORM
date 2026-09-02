@@ -60,3 +60,13 @@ def test_roa_zero_assets():
         20,
         0
     ) is None
+def test_operating_profit_margin_zero_sales():
+    assert operating_profit_margin(50, 0) is None
+
+
+def test_roce_zero_or_negative_capital_employed():
+    # Zero capital employed should return None
+    assert return_on_capital_employed(100, 0, 0, 0) is None
+
+    # Negative capital employed is calculated by the current engine
+    assert return_on_capital_employed(100, -500, 0, 0) == -20.0
