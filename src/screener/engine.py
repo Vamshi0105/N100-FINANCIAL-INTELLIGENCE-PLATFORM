@@ -4,6 +4,9 @@ from pathlib import Path
 
 import pandas as pd
 import yaml
+from src.screener.scoring import (
+    calculate_composite_quality_score,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -289,6 +292,9 @@ def run_screener(filters=None, database_path=DATABASE_PATH, config_path=CONFIG_P
         sorting = {}
 
     dataframe = load_financial_ratios(database_path)
+    dataframe = calculate_composite_quality_score(
+        dataframe
+        )
 
     if filters.get("debt_to_equity_declining"):
         annual_dataframe = dataframe[
