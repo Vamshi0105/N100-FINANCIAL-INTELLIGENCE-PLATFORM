@@ -63,20 +63,41 @@ def load_financial_ratios(database_path=DATABASE_PATH):
     return dataframe
 def get_latest_company_records(dataframe: pd.DataFrame) -> pd.DataFrame:
     """
-    Return the latest available record for each company.
+    Return the latest annual financial record for each company.
+
+    Annual records use the normalized year format YYYY-03.
     """
     df = dataframe.copy()
 
-    df["year_sort"] = pd.to_datetime(
-        df["year"].astype(str),
+    # Use annual reporting periods only.
+    annual_df = df[
+        df["year"].astype(str).str.endswith("-03")
+    ].copy()
+
+    annual_df["year_sort"] = pd.to_datetime(
+        annual_df["year"].astype(str),
         errors="coerce",
     )
 
-    df = df.sort_values(["company_id", "year_sort"])
+    annual_df = annual_df.sort_values(
+        ["company_id", "year_sort"]
+    )
 
-    latest = df.groupby("company_id").tail(1).copy()
+    latest = (
+        annual_df.groupby("company_id")
+        .tail(1)
+        .copy()
+    )
 
-    return latest.drop(columns=["year_sort"], errors="ignore")
+    logger.info(
+        "Latest annual company records retained: %s",
+        len(latest),
+    )
+
+    return latest.drop(
+        columns=["year_sort"],
+        errors="ignore",
+    )
 
 
 def apply_debt_declining_filter(df: pd.DataFrame) -> pd.DataFrame:
