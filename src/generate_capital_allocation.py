@@ -1,131 +1,165 @@
+from __future__ import annotations
+
 import sqlite3
-import csv
-import os
+from pathlib import Path
 
 from analytics.cash_flow import (
-    sign,
-    capital_allocation_pattern,
-    cfo_pat_ratio
+    generate_capital_allocation_csv,
 )
 
 
-DB_PATH = "data/nifty100.db"
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
-OUTPUT = "output/capital_allocation.csv"
+DB_PATH = (
+    PROJECT_ROOT
+    / "data"
+    / "nifty100.db"
+)
 
-
-os.makedirs(
-    "output",
-    exist_ok=True
+OUTPUT_PATH = (
+    PROJECT_ROOT
+    / "output"
+    / "capital_allocation.csv"
 )
 
 
-conn = sqlite3.connect(
-    DB_PATH
-)
+def main():
+    """
+    Generate the latest capital allocation pattern
+    for each company.
 
-cursor = conn.cursor()
+    The dashboard needs one latest annual record
+    per company.
+    """
 
+    print(f"Database: {DB_PATH}")
+    print(f"Output: {OUTPUT_PATH}")
 
-cursor.execute("""
-    SELECT
-        fr.company_id,
-        fr.year,
-        cf.operating_activity as cfo,
-        cf.investing_activity as cfi,
-        cf.financing_activity as cff
-    FROM financial_ratios fr
-    JOIN cashflow cf
-        ON fr.company_id = cf.company_id
-        AND fr.year = cf.year
-    ORDER BY fr.company_id, fr.year
-""")
+    with sqlite3.connect(DB_PATH) as connection:
 
+        cursor = connection.cursor()
 
-rows = cursor.fetchall()
+        # ---------------------------------------------
+        # Latest annual cash flow record per company.
+        #
+        # We use March year-end records (YYYY-03).
+        # ---------------------------------------------
 
+        cursor.execute(
+            """
+            SELECT
+                cf.company_id,
+                cf.year,
+                cf.operating_activity AS cfo,
+                cf.investing_activity AS cfi,
+                cf.financing_activity AS cff
 
-with open(
-    OUTPUT,
-    "w",
-    newline="",
-    encoding="utf-8"
-) as file:
+            FROM cashflow cf
 
-    writer = csv.writer(file)
+            INNER JOIN (
+                SELECT
+                    company_id,
+                    MAX(year) AS latest_year
 
-    writer.writerow([
-        "company_id",
-        "year",
-        "cfo_sign",
-        "cfi_sign",
-        "cff_sign",
-        "pattern_label"
-    ])
+                FROM cashflow
+
+                WHERE year LIKE '%-03'
+
+                GROUP BY company_id
+            ) latest
+
+                ON cf.company_id = latest.company_id
+                AND cf.year = latest.latest_year
+
+            ORDER BY cf.company_id
+            """
+        )
+
+        rows = cursor.fetchall()
+
+    print(
+        f"\nLatest annual records found: {len(rows)}"
+    )
+
+    if not rows:
+
+        print(
+            "WARNING: No annual cash flow records found."
+        )
+        return
+
+    records = []
 
     for (
         company_id,
         year,
         cfo,
         cfi,
-        cff
+        cff,
     ) in rows:
 
-        cfo_s = sign(cfo)
-
-        cfi_s = sign(cfi)
-
-        cff_s = sign(cff)
-
-        # CFO/PAT is needed for the
-        # special (+,-,-) classification.
-        cursor.execute("""
-            SELECT
-                cash_from_operations_cr,
-                pat_cagr_5yr
-            FROM financial_ratios
-            WHERE company_id = ?
-              AND year = ?
-        """, (
-            company_id,
-            year
-        ))
-
-        result = cursor.fetchone()
-
-        cfo_pat = None
-
-        # We don't use CAGR as PAT.
-        # The special classification will be
-        # based on CFO/PAT when source PAT
-        # is available later.
-        #
-        # For now, normal sign pattern is used.
-
-        label = capital_allocation_pattern(
-            cfo,
-            cfi,
-            cff,
-            cfo_pat
+        records.append(
+            {
+                "company_id": company_id,
+                "year": year,
+                "cfo": cfo,
+                "cfi": cfi,
+                "cff": cff,
+            }
         )
 
-        writer.writerow([
-            company_id,
-            year,
-            cfo_s,
-            cfi_s,
-            cff_s,
-            label
-        ])
+    # ---------------------------------------------
+    # Use the existing analytics function.
+    # ---------------------------------------------
+
+    generate_capital_allocation_csv(
+        records,
+        output_path=OUTPUT_PATH,
+    )
+
+    print(
+        f"\nCreated: {OUTPUT_PATH}"
+    )
+
+    print(
+        f"Rows written: {len(records)}"
+    )
+
+    # ---------------------------------------------
+    # Print pattern summary.
+    # ---------------------------------------------
+
+    pattern_counts = {}
+
+    for record in records:
+
+        from analytics.cash_flow import (
+            capital_allocation_pattern,
+        )
+
+        pattern = capital_allocation_pattern(
+            record["cfo"],
+            record["cfi"],
+            record["cff"],
+        )
+
+        pattern_counts[pattern] = (
+            pattern_counts.get(
+                pattern,
+                0,
+            )
+            + 1
+        )
+
+    print("\nPattern counts:")
+
+    for pattern, count in sorted(
+        pattern_counts.items()
+    ):
+        print(
+            f"{pattern}: {count}"
+        )
 
 
-conn.close()
-
-
-print(
-    f"Created: {OUTPUT}"
-)
-
-print(
-    f"Rows written: {len(rows)}"
-)
+if __name__ == "__main__":
+    main()

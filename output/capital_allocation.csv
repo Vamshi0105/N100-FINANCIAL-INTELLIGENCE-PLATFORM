@@ -1,1 +1,91 @@
 company_id,year,cfo_sign,cfi_sign,cff_sign,pattern_label
+ABB,2024-03,+,-,-,Reinvestor
+ADANIENSOL,2024-03,+,-,-,Reinvestor
+ADANIENT,2024-03,+,-,+,Mixed
+ADANIGREEN,2024-03,+,-,+,Mixed
+ADANIPORTS,2024-03,+,-,-,Reinvestor
+ADANIPOWER,2024-03,+,+,-,Liquidating Assets
+AMBUJACEM,2024-03,+,-,+,Mixed
+APOLLOHOSP,2024-03,+,-,-,Reinvestor
+ASIANPAINT,2024-03,+,-,-,Reinvestor
+AXISBANK,2024-03,-,-,+,Growth Funded by Debt
+BAJAJ-AUTO,2024-03,+,-,-,Reinvestor
+BAJAJFINSV,2024-03,-,-,+,Growth Funded by Debt
+BAJAJHLDNG,2024-03,+,-,-,Reinvestor
+BAJFINANCE,2024-03,-,-,+,Growth Funded by Debt
+BANKBARODA,2024-03,-,-,+,Growth Funded by Debt
+BEL,2024-03,+,-,-,Reinvestor
+BHARTIARTL,2024-03,+,-,-,Reinvestor
+BHEL,2024-03,-,+,+,Distress Signal
+BOSCHLTD,2024-03,+,+,-,Liquidating Assets
+BPCL,2024-03,+,-,-,Reinvestor
+BRITANNIA,2024-03,+,+,-,Liquidating Assets
+CANBK,2024-03,+,-,-,Reinvestor
+CHOLAFIN,2024-03,-,-,+,Growth Funded by Debt
+CIPLA,2024-03,+,-,-,Reinvestor
+COALINDIA,2024-03,+,-,-,Reinvestor
+DABUR,2024-03,+,-,-,Reinvestor
+DIVISLAB,2024-03,+,-,-,Reinvestor
+DLF,2024-03,+,-,+,Mixed
+DMART,2024-03,+,-,-,Reinvestor
+DRREDDY,2024-03,+,-,-,Reinvestor
+EICHERMOT,2024-03,+,-,-,Reinvestor
+GAIL,2024-03,+,-,-,Reinvestor
+GODREJCP,2024-03,+,-,+,Mixed
+GRASIM,2024-03,-,-,+,Growth Funded by Debt
+HAL,2024-03,+,-,-,Reinvestor
+HAVELLS,2024-03,+,-,-,Reinvestor
+HCLTECH,2024-03,+,-,-,Reinvestor
+HDFCBANK,2024-03,+,+,-,Liquidating Assets
+HDFCLIFE,2024-03,+,-,-,Reinvestor
+HEROMOTOCO,2024-03,+,-,-,Reinvestor
+HINDALCO,2024-03,+,-,-,Reinvestor
+HINDUNILVR,2024-03,+,-,-,Reinvestor
+ICICIBANK,2024-03,+,-,+,Mixed
+ICICIGI,2024-03,+,-,-,Reinvestor
+ICICIPRULI,2024-03,-,+,-,CFO- / CFI+ / CFF-
+INDIGO,2024-03,+,-,-,Reinvestor
+INDUSINDBK,2024-03,-,-,-,Pre-Revenue
+INFY,2024-03,+,-,-,Reinvestor
+IOC,2024-03,+,-,-,Reinvestor
+IRCTC,2024-03,+,-,-,Reinvestor
+IRFC,2024-03,+,-,-,Reinvestor
+ITC,2024-03,+,+,-,Liquidating Assets
+JINDALSTEL,2024-03,+,-,+,Mixed
+JIOFIN,2024-03,-,+,-,CFO- / CFI+ / CFF-
+JSWENERGY,2024-03,+,-,+,Mixed
+JSWSTEEL,2024-03,+,-,-,Reinvestor
+KOTAKBANK,2024-03,+,-,+,Mixed
+LICI,2024-03,+,-,-,Reinvestor
+LODHA,2024-03,+,-,+,Mixed
+LT,2024-03,+,+,-,Liquidating Assets
+LTIM,2024-03,+,-,-,Reinvestor
+M&M,2024-03,-,-,+,Growth Funded by Debt
+MARUTI,2024-03,+,-,-,Reinvestor
+MOTHERSON,2024-03,+,-,+,Mixed
+NAUKRI,2024-03,+,-,+,Mixed
+NESTLEIND,2024-03,+,-,-,Reinvestor
+NHPC,2024-03,+,-,-,Reinvestor
+NTPC,2024-03,+,-,-,Reinvestor
+ONGC,2024-03,+,-,-,Reinvestor
+PFC,2024-03,-,-,+,Growth Funded by Debt
+PIDILITIND,2024-03,+,-,-,Reinvestor
+PNB,2024-03,-,-,+,Growth Funded by Debt
+POWERGRID,2024-03,+,-,-,Reinvestor
+RECLTD,2024-03,-,-,+,Growth Funded by Debt
+RELIANCE,2024-03,+,-,-,Reinvestor
+SBILIFE,2024-03,+,-,-,Reinvestor
+SBIN,2024-03,+,-,-,Reinvestor
+SHREECEM,2024-03,+,-,-,Reinvestor
+SHRIRAMFIN,2024-03,-,-,+,Growth Funded by Debt
+SUNPHARMA,2024-03,+,-,-,Reinvestor
+TATACONSUM,2024-03,+,-,+,Mixed
+TATAMOTORS,2024-03,+,-,-,Reinvestor
+TATAPOWER,2024-03,+,-,-,Reinvestor
+TATASTEEL,2024-03,+,-,-,Reinvestor
+TCS,2024-03,+,+,-,Liquidating Assets
+TECHM,2024-03,+,-,-,Reinvestor
+TITAN,2024-03,+,-,-,Reinvestor
+TORNTPHARM,2024-03,+,-,-,Reinvestor
+TRENT,2024-03,+,-,-,Reinvestor
+TVSMOTOR,2024-03,-,-,+,Growth Funded by Debt
