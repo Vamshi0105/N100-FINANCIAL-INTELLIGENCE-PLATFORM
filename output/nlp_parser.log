@@ -1,0 +1,15 @@
+INFO | Starting Day 29 NLP Analysis Parser
+INFO | Loading analysis data from C:\Users\rekal\OneDrive\Desktop\N100\data\raw\analysis.xlsx
+INFO | Detected analysis header row: 1
+INFO | Analysis rows loaded: 20
+INFO | Unique analysis companies: 5
+INFO | Loading Ratio Engine data from C:\Users\rekal\OneDrive\Desktop\N100\data\nifty100.db
+INFO | Ratio Engine rows loaded: 1155
+INFO | Ratio Engine companies: 92
+INFO | Parsed output saved: C:\Users\rekal\OneDrive\Desktop\N100\output\analysis_parsed.csv
+INFO | Parse failures saved: C:\Users\rekal\OneDrive\Desktop\N100\output\parse_failures.csv
+INFO | CAGR manual review saved: C:\Users\rekal\OneDrive\Desktop\N100\output\cagr_manual_review.csv
+INFO | Parsed records: 65
+INFO | Parse failures: 15
+INFO | CAGR matches: 23
+INFO | Manual review flags: 1
