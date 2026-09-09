@@ -1,27 +1,13 @@
 """
-Day 31 — Cash Flow Intelligence Module
+Day 31 + Day 32 â€” Cash Flow Intelligence and Capital Allocation
 
-Generates company-level cash flow intelligence using
-historical financial data from the N100 database.
-
-Outputs:
+Generates:
 
 output/cashflow_intelligence.xlsx
 output/distress_alerts.csv
-
-Columns:
-
-company_id
-sector
-cfo_quality_score
-cfo_quality_label
-capex_intensity_pct
-capex_label
-fcf_cagr_5yr
-fcf_conversion_pct
-distress_flag
-deleveraging_flag
-capital_allocation_label
+output/capital_allocation.csv
+output/capital_allocation_distribution.csv
+output/pattern_changes.csv
 """
 
 from __future__ import annotations
@@ -34,220 +20,237 @@ from typing import Any
 import pandas as pd
 
 from src.analytics.cash_flow import (
-    capital_allocation_pattern,
-    capex_intensity,
-    cfo_quality_score,
-    fcf_conversion_rate,
-    free_cash_flow,
+capital_allocation_pattern,
+capex_intensity,
+cfo_quality_score,
+fcf_conversion_rate,
+free_cash_flow,
 )
 
-
 # ---------------------------------------------------------
+
 # Project paths
+
 # ---------------------------------------------------------
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 DB_PATH = (
-    PROJECT_ROOT
-    / "data"
-    / "nifty100.db"
+PROJECT_ROOT
+/ "data"
+/ "nifty100.db"
 )
 
 OUTPUT_DIR = (
-    PROJECT_ROOT
-    / "output"
+PROJECT_ROOT
+/ "output"
 )
 
 INTELLIGENCE_OUTPUT_PATH = (
-    OUTPUT_DIR
-    / "cashflow_intelligence.xlsx"
+OUTPUT_DIR
+/ "cashflow_intelligence.xlsx"
 )
 
 DISTRESS_OUTPUT_PATH = (
-    OUTPUT_DIR
-    / "distress_alerts.csv"
+OUTPUT_DIR
+/ "distress_alerts.csv"
+)
+
+CAPITAL_ALLOCATION_OUTPUT_PATH = (
+OUTPUT_DIR
+/ "capital_allocation.csv"
+)
+
+DISTRIBUTION_OUTPUT_PATH = (
+OUTPUT_DIR
+/ "capital_allocation_distribution.csv"
+)
+
+PATTERN_CHANGES_OUTPUT_PATH = (
+OUTPUT_DIR
+/ "pattern_changes.csv"
 )
 
 LOG_PATH = (
-    OUTPUT_DIR
-    / "cashflow_kpis.log"
+OUTPUT_DIR
+/ "cashflow_kpis.log"
 )
 
-
 # ---------------------------------------------------------
+
 # Logging
+
 # ---------------------------------------------------------
 
 def configure_logging() -> None:
     """
-    Configure Day 31 logging.
+    Configure logging.
     """
-
+    
     OUTPUT_DIR.mkdir(
         parents=True,
         exist_ok=True,
     )
-
+    
     logger = logging.getLogger()
-
+    
     if logger.handlers:
         return
-
+    
     logger.setLevel(
         logging.INFO
     )
-
+    
     formatter = logging.Formatter(
         "%(levelname)s | %(message)s"
     )
-
+    
     file_handler = logging.FileHandler(
         LOG_PATH,
         encoding="utf-8",
     )
-
+    
     file_handler.setFormatter(
         formatter
     )
-
+    
     stream_handler = logging.StreamHandler()
-
+    
     stream_handler.setFormatter(
         formatter
     )
-
+    
     logger.addHandler(
         file_handler
     )
-
+    
     logger.addHandler(
         stream_handler
     )
-
-
+    
 # ---------------------------------------------------------
+
 # Normalization helpers
+
 # ---------------------------------------------------------
 
 def normalize_company_id(
     value: Any,
-) -> str | None:
+    ) -> str | None:
     """
     Normalize company identifier.
     """
-
+    
     if value is None:
         return None
-
+    
     if pd.isna(value):
         return None
-
+    
     company_id = str(
         value
     ).strip().upper()
-
+    
     if not company_id:
         return None
-
+    
     return company_id
-
-
+    
 def normalize_year(
     value: Any,
-) -> int | None:
+    ) -> int | None:
     """
     Convert year values into integers.
     """
-
+    
     if value is None:
         return None
-
+    
     if pd.isna(value):
         return None
-
+    
     text = str(
         value
     ).strip()
-
+    
     if not text:
         return None
-
+    
     try:
-
+    
         return int(
             text[:4]
         )
-
+    
     except (
         TypeError,
         ValueError,
     ):
-
+    
         return None
-
-
+    
 def to_numeric(
     value: Any,
-) -> float | None:
+    ) -> float | None:
     """
-    Safely convert a value to float.
+    Safely convert value to float.
     """
-
+    
     if value is None:
         return None
-
+    
     if pd.isna(value):
         return None
-
+    
     try:
-
+    
         result = float(
             value
         )
-
+    
         if pd.isna(result):
             return None
-
+    
         return result
-
+    
     except (
         TypeError,
         ValueError,
     ):
-
+    
         return None
-
-
+    
 # ---------------------------------------------------------
+
 # Data loading
+
 # ---------------------------------------------------------
 
 def load_data() -> dict[str, pd.DataFrame]:
     """
-    Load Day 31 data.
+    Load required data from database.
     """
-
+    
     logging.info(
-        "Loading Day 31 data from %s",
+        "Loading cash flow intelligence data from %s",
         DB_PATH,
     )
-
+    
     if not DB_PATH.exists():
-
+    
         raise FileNotFoundError(
             f"Database not found: {DB_PATH}"
         )
-
+    
     queries = {
-
+    
         "companies": """
             SELECT
                 CAST(id AS TEXT) AS company_id,
                 company_name
             FROM companies
         """,
-
+    
         "cashflow": """
             SELECT
                 CAST(company_id AS TEXT) AS company_id,
@@ -258,7 +261,7 @@ def load_data() -> dict[str, pd.DataFrame]:
                 net_cash_flow
             FROM cashflow
         """,
-
+    
         "profitandloss": """
             SELECT
                 CAST(company_id AS TEXT) AS company_id,
@@ -268,7 +271,7 @@ def load_data() -> dict[str, pd.DataFrame]:
                 net_profit
             FROM profitandloss
         """,
-
+    
         "balancesheet": """
             SELECT
                 CAST(company_id AS TEXT) AS company_id,
@@ -276,7 +279,7 @@ def load_data() -> dict[str, pd.DataFrame]:
                 borrowings
             FROM balancesheet
         """,
-
+    
         "sectors": """
             SELECT
                 CAST(company_id AS TEXT) AS company_id,
@@ -285,28 +288,28 @@ def load_data() -> dict[str, pd.DataFrame]:
             FROM sectors
         """,
     }
-
+    
     data: dict[
         str,
         pd.DataFrame,
     ] = {}
-
+    
     with sqlite3.connect(
         DB_PATH
     ) as connection:
-
+    
         for name, query in queries.items():
-
+    
             df = pd.read_sql_query(
                 query,
                 connection,
             )
-
+    
             if (
                 "company_id"
                 in df.columns
             ):
-
+    
                 df[
                     "company_id"
                 ] = df[
@@ -314,18 +317,18 @@ def load_data() -> dict[str, pd.DataFrame]:
                 ].apply(
                     normalize_company_id
                 )
-
+    
                 df = df[
                     df[
                         "company_id"
                     ].notna()
                 ].copy()
-
+    
             if (
                 "year"
                 in df.columns
             ):
-
+    
                 df[
                     "year_numeric"
                 ] = df[
@@ -333,144 +336,120 @@ def load_data() -> dict[str, pd.DataFrame]:
                 ].apply(
                     normalize_year
                 )
-
+    
             data[name] = df
-
+    
             logging.info(
                 "%s rows loaded: %s",
                 name,
                 len(df),
             )
-
+    
     return data
-
-
+    
 # ---------------------------------------------------------
+
 # Historical helpers
+
 # ---------------------------------------------------------
 
 def latest_row(
     df: pd.DataFrame,
-) -> pd.Series | None:
+    ) -> pd.Series | None:
     """
-    Return latest row by year.
+    Return latest row.
     """
-
+    
     if df.empty:
         return None
-
+    
     working_df = df.sort_values(
         by="year_numeric",
         ascending=False,
         na_position="last",
     )
-
+    
     return working_df.iloc[0]
-
-
-def latest_n_rows(
-    df: pd.DataFrame,
-    count: int,
-) -> pd.DataFrame:
-    """
-    Return latest rows in chronological order.
-    """
-
-    if df.empty:
-        return df.copy()
-
-    working_df = df.sort_values(
-        by="year_numeric",
-        ascending=True,
-        na_position="last",
-    )
-
-    return working_df.tail(
-        count
-    ).copy()
-
-
+    
 def latest_value(
     df: pd.DataFrame,
     column: str,
-) -> float | None:
+    ) -> float | None:
     """
-    Return latest available numeric value.
+    Return latest numeric value.
     """
-
+    
     if (
         df.empty
         or column
         not in df.columns
     ):
         return None
-
+    
     working_df = df.copy()
-
+    
     working_df[
         column
     ] = pd.to_numeric(
         working_df[column],
         errors="coerce",
     )
-
+    
     working_df = working_df[
         working_df[
             column
         ].notna()
     ].copy()
-
+    
     if working_df.empty:
         return None
-
+    
     row = latest_row(
         working_df
     )
-
+    
     if row is None:
         return None
-
+    
     return to_numeric(
         row[column]
     )
-
-
+    
 def latest_two_values(
     df: pd.DataFrame,
     column: str,
-) -> list[float]:
+    ) -> list[float]:
     """
     Return latest two numeric values.
     """
-
+    
     if (
         df.empty
         or column
         not in df.columns
     ):
         return []
-
+    
     working_df = df.copy()
-
+    
     working_df[
         column
     ] = pd.to_numeric(
         working_df[column],
         errors="coerce",
     )
-
+    
     working_df = working_df[
         working_df[
             column
         ].notna()
     ].copy()
-
+    
     working_df = working_df.sort_values(
         by="year_numeric",
         ascending=True,
-        na_position="last",
     )
-
+    
     return [
         float(value)
         for value
@@ -480,43 +459,42 @@ def latest_two_values(
         .tail(2)
         .tolist()
     ]
-
-
+    
 # ---------------------------------------------------------
+
 # CFO quality
+
 # ---------------------------------------------------------
 
 def calculate_cfo_quality(
     cashflow_df: pd.DataFrame,
     pnl_df: pd.DataFrame,
-) -> tuple[float | None, str | None]:
+    ) -> tuple[float | None, str | None]:
     """
     Calculate average CFO/PAT ratio over
-    the latest 5 matching years.
-
-    Years with PAT equal to zero are ignored.
+    latest 5 matching years.
     """
-
+    
     if (
         cashflow_df.empty
         or pnl_df.empty
     ):
         return None, None
-
+    
     cashflow = cashflow_df[
         [
             "year_numeric",
             "operating_activity",
         ]
     ].copy()
-
+    
     pnl = pnl_df[
         [
             "year_numeric",
             "net_profit",
         ]
     ].copy()
-
+    
     cashflow[
         "operating_activity"
     ] = pd.to_numeric(
@@ -525,7 +503,7 @@ def calculate_cfo_quality(
         ],
         errors="coerce",
     )
-
+    
     pnl[
         "net_profit"
     ] = pd.to_numeric(
@@ -534,161 +512,145 @@ def calculate_cfo_quality(
         ],
         errors="coerce",
     )
-
+    
     merged = cashflow.merge(
         pnl,
         on="year_numeric",
         how="inner",
     )
-
+    
     merged = merged.dropna(
         subset=[
             "operating_activity",
             "net_profit",
         ]
     )
-
+    
     merged = merged[
         merged[
             "net_profit"
         ]
         != 0
     ].copy()
-
+    
     if merged.empty:
         return None, None
-
+    
     merged = merged.sort_values(
         by="year_numeric",
         ascending=True,
     ).tail(
         5
     )
-
-    cfo_values = merged[
-        "operating_activity"
-    ].tolist()
-
-    pat_values = merged[
-        "net_profit"
-    ].tolist()
-
+    
     return cfo_quality_score(
-        cfo_values,
-        pat_values,
+        merged[
+            "operating_activity"
+        ].tolist(),
+        merged[
+            "net_profit"
+        ].tolist(),
     )
-
-
+    
 # ---------------------------------------------------------
+
 # CapEx intensity
+
 # ---------------------------------------------------------
 
 def calculate_capex_intensity(
     cashflow_df: pd.DataFrame,
     pnl_df: pd.DataFrame,
-) -> tuple[float | None, str | None]:
+    ) -> tuple[float | None, str | None]:
     """
     Calculate latest CapEx intensity.
     """
-
+    
     if (
         cashflow_df.empty
         or pnl_df.empty
     ):
         return None, None
-
+    
     cashflow = cashflow_df[
         [
             "year_numeric",
             "investing_activity",
         ]
     ].copy()
-
+    
     pnl = pnl_df[
         [
             "year_numeric",
             "sales",
         ]
     ].copy()
-
-    cashflow[
-        "investing_activity"
-    ] = pd.to_numeric(
-        cashflow[
-            "investing_activity"
-        ],
-        errors="coerce",
-    )
-
-    pnl[
-        "sales"
-    ] = pd.to_numeric(
-        pnl[
-            "sales"
-        ],
-        errors="coerce",
-    )
-
+    
     merged = cashflow.merge(
         pnl,
         on="year_numeric",
         how="inner",
     )
-
+    
+    merged[
+        "investing_activity"
+    ] = pd.to_numeric(
+        merged[
+            "investing_activity"
+        ],
+        errors="coerce",
+    )
+    
+    merged[
+        "sales"
+    ] = pd.to_numeric(
+        merged[
+            "sales"
+        ],
+        errors="coerce",
+    )
+    
     merged = merged.dropna(
         subset=[
             "investing_activity",
             "sales",
         ]
     )
-
+    
     if merged.empty:
         return None, None
-
-    merged = merged.sort_values(
+    
+    latest = merged.sort_values(
         by="year_numeric",
         ascending=False,
-    )
-
-    latest = merged.iloc[0]
-
-    investing_activity = to_numeric(
-        latest[
-            "investing_activity"
-        ]
-    )
-
-    sales = to_numeric(
-        latest[
-            "sales"
-        ]
-    )
-
-    if (
-        investing_activity is None
-        or sales is None
-    ):
-        return None, None
-
+    ).iloc[0]
+    
     return capex_intensity(
-        investing_activity,
-        sales,
+        float(
+            latest[
+                "investing_activity"
+            ]
+        ),
+        float(
+            latest[
+                "sales"
+            ]
+        ),
     )
-
-
+    
 # ---------------------------------------------------------
+
 # FCF helpers
+
 # ---------------------------------------------------------
 
 def calculate_fcf_history(
     cashflow_df: pd.DataFrame,
-) -> pd.DataFrame:
+    ) -> pd.DataFrame:
     """
-    Calculate FCF history.
-
-    FCF = CFO + Investing Activity
+    FCF = CFO + Investing Activity.
     """
-
+    
     if cashflow_df.empty:
         return pd.DataFrame(
             columns=[
@@ -696,7 +658,7 @@ def calculate_fcf_history(
                 "fcf",
             ]
         )
-
+    
     working_df = cashflow_df[
         [
             "year_numeric",
@@ -704,7 +666,7 @@ def calculate_fcf_history(
             "investing_activity",
         ]
     ].copy()
-
+    
     working_df[
         "operating_activity"
     ] = pd.to_numeric(
@@ -713,7 +675,7 @@ def calculate_fcf_history(
         ],
         errors="coerce",
     )
-
+    
     working_df[
         "investing_activity"
     ] = pd.to_numeric(
@@ -722,131 +684,108 @@ def calculate_fcf_history(
         ],
         errors="coerce",
     )
-
+    
     working_df = working_df.dropna(
         subset=[
             "operating_activity",
             "investing_activity",
         ]
     )
-
-    if working_df.empty:
-        return pd.DataFrame(
-            columns=[
-                "year_numeric",
-                "fcf",
-            ]
-        )
-
+    
     working_df[
         "fcf"
-    ] = working_df.apply(
-        lambda row: free_cash_flow(
-            row[
-                "operating_activity"
-            ],
-            row[
-                "investing_activity"
-            ],
-        ),
-        axis=1,
+    ] = (
+        working_df[
+            "operating_activity"
+        ]
+        + working_df[
+            "investing_activity"
+        ]
     )
-
+    
     return working_df[
         [
             "year_numeric",
             "fcf",
         ]
     ].sort_values(
-        by="year_numeric",
-        ascending=True,
+        by="year_numeric"
     )
-
-
+    
 def calculate_fcf_cagr_5yr(
     cashflow_df: pd.DataFrame,
-) -> float | None:
+    ) -> float | None:
     """
-    Calculate FCF CAGR across 5 years.
-
-    Returns None when CAGR is mathematically invalid.
+    Calculate 5-year FCF CAGR.
     """
-
-    fcf_history = calculate_fcf_history(
+    
+    history = calculate_fcf_history(
         cashflow_df
     )
-
-    if len(fcf_history) < 5:
+    
+    if len(history) < 5:
         return None
-
-    values = fcf_history.tail(
+    
+    values = history.tail(
         5
     ).reset_index(
         drop=True
     )
-
-    beginning_fcf = to_numeric(
+    
+    beginning = to_numeric(
         values.loc[
             0,
             "fcf",
         ]
     )
-
-    ending_fcf = to_numeric(
+    
+    ending = to_numeric(
         values.loc[
             len(values) - 1,
             "fcf",
         ]
     )
-
+    
     if (
-        beginning_fcf is None
-        or ending_fcf is None
-        or beginning_fcf <= 0
-        or ending_fcf <= 0
+        beginning is None
+        or ending is None
+        or beginning <= 0
+        or ending <= 0
     ):
         return None
-
-    periods = (
-        len(values) - 1
-    )
-
-    if periods <= 0:
-        return None
-
-    cagr = (
+    
+    periods = len(values) - 1
+    
+    result = (
         (
-            ending_fcf
-            / beginning_fcf
+            ending
+            / beginning
         )
         ** (
             1 / periods
         )
         - 1
     ) * 100
-
+    
     return round(
-        cagr,
+        result,
         2,
     )
-
-
+    
 def calculate_fcf_conversion(
     cashflow_df: pd.DataFrame,
     pnl_df: pd.DataFrame,
-) -> float | None:
+    ) -> float | None:
     """
-    Calculate latest FCF conversion rate.
-
-    FCF / Operating Profit * 100
+    Calculate latest FCF conversion.
     """
-
+    
     if (
         cashflow_df.empty
         or pnl_df.empty
     ):
         return None
-
+    
     cashflow = cashflow_df[
         [
             "year_numeric",
@@ -854,238 +793,656 @@ def calculate_fcf_conversion(
             "investing_activity",
         ]
     ].copy()
-
+    
     pnl = pnl_df[
         [
             "year_numeric",
             "operating_profit",
         ]
     ].copy()
-
+    
     merged = cashflow.merge(
         pnl,
         on="year_numeric",
         how="inner",
     )
-
-    if merged.empty:
-        return None
-
+    
     merged = merged.sort_values(
         by="year_numeric",
         ascending=False,
     )
-
+    
     for _, row in merged.iterrows():
-
+    
         cfo = to_numeric(
             row[
                 "operating_activity"
             ]
         )
-
+    
         cfi = to_numeric(
             row[
                 "investing_activity"
             ]
         )
-
+    
         operating_profit = to_numeric(
             row[
                 "operating_profit"
             ]
         )
-
+    
         if (
             cfo is None
             or cfi is None
             or operating_profit is None
         ):
             continue
-
+    
         fcf = free_cash_flow(
             cfo,
             cfi,
         )
-
+    
         result = fcf_conversion_rate(
             fcf,
             operating_profit,
         )
-
+    
         if result is not None:
             return round(
                 result,
                 2,
             )
-
+    
     return None
-
-
+    
 # ---------------------------------------------------------
+
 # Distress detection
+
 # ---------------------------------------------------------
 
 def detect_distress(
     cashflow_df: pd.DataFrame,
-) -> tuple[bool, float | None, float | None]:
+    ) -> tuple[
+    bool,
+    float | None,
+    float | None,
+    ]:
     """
     Distress:
-
+    
     CFO < 0
     AND
     CFF > 0
     """
-
+    
     latest = latest_row(
         cashflow_df
     )
-
+    
     if latest is None:
         return False, None, None
-
+    
     cfo = to_numeric(
         latest.get(
             "operating_activity"
         )
     )
-
+    
     cff = to_numeric(
         latest.get(
             "financing_activity"
         )
     )
-
+    
     if (
         cfo is None
         or cff is None
     ):
         return False, cfo, cff
-
+    
     return (
         cfo < 0
         and cff > 0
     ), cfo, cff
-
-
+    
 # ---------------------------------------------------------
+
 # Deleveraging detection
+
 # ---------------------------------------------------------
 
 def detect_deleveraging(
     cashflow_df: pd.DataFrame,
     balance_df: pd.DataFrame,
-) -> bool:
+    ) -> bool:
     """
-    Deleveraging:
-
     Latest CFF < 0
     AND
-    Latest borrowings < previous year borrowings.
+    borrowings declining.
     """
-
+    
     latest_cff = latest_value(
         cashflow_df,
         "financing_activity",
     )
-
+    
     borrowings = latest_two_values(
         balance_df,
         "borrowings",
     )
-
+    
     if (
         latest_cff is None
         or len(borrowings) < 2
     ):
         return False
-
-    previous_borrowings = borrowings[-2]
-    latest_borrowings = borrowings[-1]
-
+    
     return (
         latest_cff < 0
-        and latest_borrowings
-        < previous_borrowings
+        and borrowings[-1]
+        < borrowings[-2]
     )
-
-
-# ---------------------------------------------------------
-# Capital allocation
+    
 # ---------------------------------------------------------
 
-def calculate_capital_allocation(
+# Capital allocation history
+
+# ---------------------------------------------------------
+
+def sign_label(
+    value: float | None,
+    ) -> str:
+    """
+    Convert value to +, -, or 0.
+    """
+    
+    if value is None:
+        return "0"
+    
+    if value > 0:
+        return "+"
+    
+    if value < 0:
+        return "-"
+    
+    return "0"
+    
+def build_capital_allocation_history(
     cashflow_df: pd.DataFrame,
-    cfo_quality: float | None,
-) -> str | None:
+    pnl_df: pd.DataFrame,
+    ) -> pd.DataFrame:
     """
-    Calculate latest capital allocation label.
+    Build capital allocation history for
+    every available cashflow year.
+    
+    This is the key Day 32 fix.
+    
+    One output row is generated for every
+    company-year present in the cashflow table.
     """
-
-    latest = latest_row(
-        cashflow_df
-    )
-
-    if latest is None:
-        return None
-
-    cfo = to_numeric(
-        latest.get(
+    
+    if cashflow_df.empty:
+    
+        return pd.DataFrame(
+            columns=[
+                "company_id",
+                "year",
+                "year_numeric",
+                "cfo_sign",
+                "cfi_sign",
+                "cff_sign",
+                "pattern_label",
+            ]
+        )
+    
+    working_df = cashflow_df.copy()
+    
+    working_df[
+        "operating_activity"
+    ] = pd.to_numeric(
+        working_df[
             "operating_activity"
-        )
+        ],
+        errors="coerce",
     )
-
-    cfi = to_numeric(
-        latest.get(
+    
+    working_df[
+        "investing_activity"
+    ] = pd.to_numeric(
+        working_df[
             "investing_activity"
-        )
+        ],
+        errors="coerce",
     )
-
-    cff = to_numeric(
-        latest.get(
+    
+    working_df[
+        "financing_activity"
+    ] = pd.to_numeric(
+        working_df[
             "financing_activity"
+        ],
+        errors="coerce",
+    )
+    
+    pnl_lookup = {}
+    
+    if not pnl_df.empty:
+    
+        pnl_working = pnl_df[
+            [
+                "year_numeric",
+                "net_profit",
+            ]
+        ].copy()
+    
+        pnl_working[
+            "net_profit"
+        ] = pd.to_numeric(
+            pnl_working[
+                "net_profit"
+            ],
+            errors="coerce",
         )
+    
+        for _, row in pnl_working.iterrows():
+    
+            year = row[
+                "year_numeric"
+            ]
+    
+            net_profit = row[
+                "net_profit"
+            ]
+    
+            if (
+                pd.notna(year)
+                and pd.notna(net_profit)
+                and net_profit != 0
+            ):
+    
+                pnl_lookup[
+                    int(year)
+                ] = float(
+                    net_profit
+                )
+    
+    records = []
+    
+    for _, row in working_df.iterrows():
+    
+        cfo = to_numeric(
+            row[
+                "operating_activity"
+            ]
+        )
+    
+        cfi = to_numeric(
+            row[
+                "investing_activity"
+            ]
+        )
+    
+        cff = to_numeric(
+            row[
+                "financing_activity"
+            ]
+        )
+    
+        cfo = 0.0 if cfo is None else cfo
+        cfi = 0.0 if cfi is None else cfi
+        cff = 0.0 if cff is None else cff
+    
+        year_numeric = row[
+            "year_numeric"
+        ]
+    
+        cfo_pat_ratio = None
+    
+        if (
+            pd.notna(
+                year_numeric
+            )
+            and int(
+                year_numeric
+            )
+            in pnl_lookup
+        ):
+    
+            net_profit = pnl_lookup[
+                int(
+                    year_numeric
+                )
+            ]
+    
+            if net_profit != 0:
+    
+                cfo_pat_ratio = (
+                    cfo
+                    / net_profit
+                )
+    
+        pattern_label = (
+            capital_allocation_pattern(
+                cfo,
+                cfi,
+                cff,
+                cfo_pat_ratio,
+            )
+        )
+    
+        records.append(
+            {
+                "company_id": row[
+                    "company_id"
+                ],
+                "year": row[
+                    "year"
+                ],
+                "year_numeric": year_numeric,
+                "cfo_sign": sign_label(
+                    cfo
+                ),
+                "cfi_sign": sign_label(
+                    cfi
+                ),
+                "cff_sign": sign_label(
+                    cff
+                ),
+                "pattern_label": (
+                    pattern_label
+                ),
+            }
+        )
+    
+    return pd.DataFrame(
+        records
     )
+    
+# ---------------------------------------------------------
 
-    if (
-        cfo is None
-        or cfi is None
-        or cff is None
-    ):
-        return None
-
-    return capital_allocation_pattern(
-        cfo,
-        cfi,
-        cff,
-        cfo_quality,
-    )
-
+# Day 32 verification
 
 # ---------------------------------------------------------
+
+def verify_capital_allocation_coverage(
+    capital_allocation_df: pd.DataFrame,
+    cashflow_df: pd.DataFrame,
+    ) -> None:
+    """
+    Verify capital allocation covers every
+    company-year available in cashflow data.
+    """
+    
+    expected = cashflow_df[
+        [
+            "company_id",
+            "year_numeric",
+        ]
+    ].dropna().drop_duplicates()
+    
+    generated = capital_allocation_df[
+        [
+            "company_id",
+            "year_numeric",
+        ]
+    ].dropna().drop_duplicates()
+    
+    merged = expected.merge(
+        generated,
+        on=[
+            "company_id",
+            "year_numeric",
+        ],
+        how="left",
+        indicator=True,
+    )
+    
+    missing = merged[
+        merged[
+            "_merge"
+        ]
+        != "both"
+    ]
+    
+    if not missing.empty:
+    
+        missing_records = [
+            (
+                f"{row.company_id} "
+                f"({int(row.year_numeric)})"
+            )
+            for row in missing.itertuples()
+        ]
+    
+        raise ValueError(
+            "Missing capital allocation records: "
+            + ", ".join(
+                missing_records
+            )
+        )
+    
+    logging.info(
+        "Capital allocation coverage passed "
+        "for %s company-year records",
+        len(expected),
+    )
+    
+# ---------------------------------------------------------
+
+# Distribution summary
+
+# ---------------------------------------------------------
+
+def generate_distribution_summary(
+    capital_allocation_df: pd.DataFrame,
+    ) -> pd.DataFrame:
+    """
+    Count companies in each pattern
+    for the latest available year.
+    """
+    
+    if capital_allocation_df.empty:
+    
+        return pd.DataFrame(
+            columns=[
+                "pattern_label",
+                "company_count",
+            ]
+        )
+    
+    latest_rows = (
+        capital_allocation_df
+        .sort_values(
+            by=[
+                "company_id",
+                "year_numeric",
+            ],
+            ascending=[
+                True,
+                False,
+            ],
+        )
+        .groupby(
+            "company_id",
+            as_index=False,
+        )
+        .first()
+    )
+    
+    distribution = (
+        latest_rows[
+            "pattern_label"
+        ]
+        .value_counts()
+        .rename_axis(
+            "pattern_label"
+        )
+        .reset_index(
+            name="company_count"
+        )
+    )
+    
+    return distribution.sort_values(
+        by="company_count",
+        ascending=False,
+    ).reset_index(
+        drop=True
+    )
+    
+# ---------------------------------------------------------
+
+# Pattern changes
+
+# ---------------------------------------------------------
+
+def generate_pattern_changes(
+    capital_allocation_df: pd.DataFrame,
+    ) -> pd.DataFrame:
+    """
+    Detect year-over-year pattern changes.
+    
+    Example:
+    
+    Reinvestor -> Distress Signal
+    """
+    
+    columns = [
+        "company_id",
+        "previous_year",
+        "previous_pattern",
+        "year",
+        "pattern_label",
+        "change_description",
+    ]
+    
+    if capital_allocation_df.empty:
+    
+        return pd.DataFrame(
+            columns=columns
+        )
+    
+    working_df = (
+        capital_allocation_df
+        .sort_values(
+            by=[
+                "company_id",
+                "year_numeric",
+            ],
+            ascending=[
+                True,
+                True,
+            ],
+        )
+        .copy()
+    )
+    
+    records = []
+    
+    for company_id, group in (
+        working_df.groupby(
+            "company_id"
+        )
+    ):
+    
+        group = group.reset_index(
+            drop=True
+        )
+    
+        for index in range(
+            1,
+            len(group),
+        ):
+    
+            previous_row = group.iloc[
+                index - 1
+            ]
+    
+            current_row = group.iloc[
+                index
+            ]
+    
+            previous_pattern = (
+                previous_row[
+                    "pattern_label"
+                ]
+            )
+    
+            current_pattern = (
+                current_row[
+                    "pattern_label"
+                ]
+            )
+    
+            if (
+                previous_pattern
+                != current_pattern
+            ):
+    
+                records.append(
+                    {
+                        "company_id": (
+                            company_id
+                        ),
+                        "previous_year": (
+                            previous_row[
+                                "year"
+                            ]
+                        ),
+                        "previous_pattern": (
+                            previous_pattern
+                        ),
+                        "year": (
+                            current_row[
+                                "year"
+                            ]
+                        ),
+                        "pattern_label": (
+                            current_pattern
+                        ),
+                        "change_description": (
+                            f"{previous_pattern} "
+                            f"-> "
+                            f"{current_pattern}"
+                        ),
+                    }
+                )
+    
+    return pd.DataFrame(
+        records,
+        columns=columns,
+    )
+    
+    
+# ---------------------------------------------------------
+
 # Sector helper
+
 # ---------------------------------------------------------
 
 def get_sector(
     sector_df: pd.DataFrame,
-) -> str | None:
+    ) -> str | None:
     """
-    Return best available sector name.
+    Return broad sector.
     """
-
+    
+    
     if sector_df.empty:
         return None
-
+    
     row = sector_df.iloc[0]
-
+    
     broad_sector = row.get(
         "broad_sector"
     )
-
+    
     sub_sector = row.get(
         "sub_sector"
     )
-
+    
     if (
         pd.notna(
             broad_sector
@@ -1097,7 +1454,7 @@ def get_sector(
         return str(
             broad_sector
         ).strip()
-
+    
     if (
         pd.notna(
             sub_sector
@@ -1109,45 +1466,45 @@ def get_sector(
         return str(
             sub_sector
         ).strip()
-
+    
     return None
-
-
+    
+    
 # ---------------------------------------------------------
+
 # Main intelligence engine
+
 # ---------------------------------------------------------
 
 def generate_cashflow_intelligence(
     data: dict[str, pd.DataFrame],
-) -> tuple[
+    ) -> tuple[
     pd.DataFrame,
     pd.DataFrame,
-]:
-    """
-    Generate cash flow intelligence
-    and distress alerts.
-    """
-
+    pd.DataFrame,
+    ]:
+    
+    
     companies_df = data[
         "companies"
     ]
-
+    
     cashflow_df = data[
         "cashflow"
     ]
-
+    
     pnl_df = data[
         "profitandloss"
     ]
-
+    
     balance_df = data[
         "balancesheet"
     ]
-
+    
     sectors_df = data[
         "sectors"
     ]
-
+    
     company_ids = sorted(
         companies_df[
             "company_id"
@@ -1156,96 +1513,126 @@ def generate_cashflow_intelligence(
         .unique()
         .tolist()
     )
-
+    
     logging.info(
         "Companies to process: %s",
         len(company_ids),
     )
-
+    
     intelligence_records = []
+    
     distress_records = []
-
+    
+    capital_history_frames = []
+    
     for company_id in company_ids:
-
+    
         company_cashflow = cashflow_df[
             cashflow_df[
                 "company_id"
             ]
             == company_id
         ].copy()
-
+    
         company_pnl = pnl_df[
             pnl_df[
                 "company_id"
             ]
             == company_id
         ].copy()
-
+    
         company_balance = balance_df[
             balance_df[
                 "company_id"
             ]
             == company_id
         ].copy()
-
+    
         company_sector = sectors_df[
             sectors_df[
                 "company_id"
             ]
             == company_id
         ].copy()
-
+    
         sector = get_sector(
             company_sector
         )
-
+    
         cfo_score, cfo_label = (
             calculate_cfo_quality(
                 company_cashflow,
                 company_pnl,
             )
         )
-
+    
         capex_pct, capex_label = (
             calculate_capex_intensity(
                 company_cashflow,
                 company_pnl,
             )
         )
-
+    
         fcf_cagr = (
             calculate_fcf_cagr_5yr(
                 company_cashflow
             )
         )
-
+    
         fcf_conversion = (
             calculate_fcf_conversion(
                 company_cashflow,
                 company_pnl,
             )
         )
-
+    
         distress_flag, latest_cfo, latest_cff = (
             detect_distress(
                 company_cashflow
             )
         )
-
+    
         deleveraging_flag = (
             detect_deleveraging(
                 company_cashflow,
                 company_balance,
             )
         )
-
-        capital_allocation = (
-            calculate_capital_allocation(
+    
+        company_capital_history = (
+            build_capital_allocation_history(
                 company_cashflow,
-                cfo_score,
+                company_pnl,
             )
         )
-
+    
+        if (
+            not company_capital_history.empty
+        ):
+    
+            capital_history_frames.append(
+                company_capital_history
+            )
+    
+            latest_capital_row = (
+                company_capital_history
+                .sort_values(
+                    by="year_numeric",
+                    ascending=False,
+                )
+                .iloc[0]
+            )
+    
+            capital_allocation_label = (
+                latest_capital_row[
+                    "pattern_label"
+                ]
+            )
+    
+        else:
+    
+            capital_allocation_label = None
+    
         intelligence_records.append(
             {
                 "company_id": company_id,
@@ -1258,7 +1645,9 @@ def generate_cashflow_intelligence(
                     if cfo_score is not None
                     else None
                 ),
-                "cfo_quality_label": cfo_label,
+                "cfo_quality_label": (
+                    cfo_label
+                ),
                 "capex_intensity_pct": (
                     round(
                         capex_pct,
@@ -1267,8 +1656,12 @@ def generate_cashflow_intelligence(
                     if capex_pct is not None
                     else None
                 ),
-                "capex_label": capex_label,
-                "fcf_cagr_5yr": fcf_cagr,
+                "capex_label": (
+                    capex_label
+                ),
+                "fcf_cagr_5yr": (
+                    fcf_cagr
+                ),
                 "fcf_conversion_pct": (
                     fcf_conversion
                 ),
@@ -1283,20 +1676,20 @@ def generate_cashflow_intelligence(
                     )
                 ),
                 "capital_allocation_label": (
-                    capital_allocation
+                    capital_allocation_label
                 ),
             }
         )
-
+    
         if distress_flag:
-
+    
             latest_net_profit = (
                 latest_value(
                     company_pnl,
                     "net_profit",
                 )
             )
-
+    
             distress_records.append(
                 {
                     "company_id": company_id,
@@ -1307,7 +1700,7 @@ def generate_cashflow_intelligence(
                     ),
                 }
             )
-
+    
     output_columns = [
         "company_id",
         "sector",
@@ -1321,54 +1714,89 @@ def generate_cashflow_intelligence(
         "deleveraging_flag",
         "capital_allocation_label",
     ]
-
+    
     distress_columns = [
         "company_id",
         "cfo_value",
         "cff_value",
         "latest_net_profit",
     ]
-
+    
     intelligence_df = pd.DataFrame(
         intelligence_records,
         columns=output_columns,
     )
-
+    
     distress_df = pd.DataFrame(
         distress_records,
         columns=distress_columns,
     )
-
-    intelligence_df = intelligence_df.sort_values(
-        by="company_id"
-    ).reset_index(
-        drop=True
+    
+    if capital_history_frames:
+    
+        capital_allocation_df = pd.concat(
+            capital_history_frames,
+            ignore_index=True,
+        )
+    
+    else:
+    
+        capital_allocation_df = (
+            pd.DataFrame()
+        )
+    
+    intelligence_df = (
+        intelligence_df
+        .sort_values(
+            by="company_id"
+        )
+        .reset_index(
+            drop=True
+        )
     )
-
-    distress_df = distress_df.sort_values(
-        by="company_id"
-    ).reset_index(
-        drop=True
+    
+    distress_df = (
+        distress_df
+        .sort_values(
+            by="company_id"
+        )
+        .reset_index(
+            drop=True
+        )
     )
-
+    
+    capital_allocation_df = (
+        capital_allocation_df
+        .sort_values(
+            by=[
+                "company_id",
+                "year_numeric",
+            ]
+        )
+        .reset_index(
+            drop=True
+        )
+    )
+    
     return (
         intelligence_df,
         distress_df,
+        capital_allocation_df,
     )
-
-
+    
+    
 # ---------------------------------------------------------
-# Verification
+
+# Company coverage
+
 # ---------------------------------------------------------
 
 def verify_company_coverage(
     intelligence_df: pd.DataFrame,
     companies_df: pd.DataFrame,
-) -> None:
-    """
-    Verify every company is present.
-    """
-
+    ) -> None:
+    
+    
     expected_companies = set(
         companies_df[
             "company_id"
@@ -1376,7 +1804,7 @@ def verify_company_coverage(
         .dropna()
         .tolist()
     )
-
+    
     generated_companies = set(
         intelligence_df[
             "company_id"
@@ -1384,14 +1812,14 @@ def verify_company_coverage(
         .dropna()
         .tolist()
     )
-
+    
     missing = (
         expected_companies
         - generated_companies
     )
-
+    
     if missing:
-
+    
         raise ValueError(
             "Companies missing cash flow intelligence: "
             + ", ".join(
@@ -1400,117 +1828,205 @@ def verify_company_coverage(
                 )
             )
         )
-
+    
     logging.info(
-        "Coverage verification passed for %s companies",
+        "Company coverage passed for %s companies",
         len(
             expected_companies
         ),
     )
-
-
+    
 # ---------------------------------------------------------
+
 # Output writing
+
 # ---------------------------------------------------------
 
 def save_outputs(
     intelligence_df: pd.DataFrame,
     distress_df: pd.DataFrame,
-) -> None:
+    capital_allocation_df: pd.DataFrame,
+    distribution_df: pd.DataFrame,
+    pattern_changes_df: pd.DataFrame,
+    ) -> None:
     """
-    Save Day 31 outputs.
+    Save all Day 31 and Day 32 outputs.
     """
-
+    
     OUTPUT_DIR.mkdir(
         parents=True,
         exist_ok=True,
     )
-
+    
     intelligence_df.to_excel(
         INTELLIGENCE_OUTPUT_PATH,
         index=False,
     )
-
+    
     distress_df.to_csv(
         DISTRESS_OUTPUT_PATH,
         index=False,
     )
-
+    
+    capital_allocation_df[
+        [
+            "company_id",
+            "year",
+            "cfo_sign",
+            "cfi_sign",
+            "cff_sign",
+            "pattern_label",
+        ]
+    ].to_csv(
+        CAPITAL_ALLOCATION_OUTPUT_PATH,
+        index=False,
+    )
+    
+    distribution_df.to_csv(
+        DISTRIBUTION_OUTPUT_PATH,
+        index=False,
+    )
+    
+    pattern_changes_df.to_csv(
+        PATTERN_CHANGES_OUTPUT_PATH,
+        index=False,
+    )
+    
     logging.info(
         "Cash flow intelligence saved: %s",
         INTELLIGENCE_OUTPUT_PATH,
     )
-
+    
     logging.info(
         "Distress alerts saved: %s",
         DISTRESS_OUTPUT_PATH,
     )
-
-
+    
+    logging.info(
+        "Capital allocation saved: %s",
+        CAPITAL_ALLOCATION_OUTPUT_PATH,
+    )
+    
+    logging.info(
+        "Capital allocation distribution saved: %s",
+        DISTRIBUTION_OUTPUT_PATH,
+    )
+    
+    logging.info(
+        "Pattern changes saved: %s",
+        PATTERN_CHANGES_OUTPUT_PATH,
+    )
+    
 # ---------------------------------------------------------
+
 # Main execution
+
 # ---------------------------------------------------------
 
 def run_cashflow_intelligence() -> None:
     """
-    Execute Day 31 Cash Flow Intelligence Module.
+    Execute Day 31 + Day 32 modules.
     """
-
+    
     configure_logging()
-
+    
     logging.info(
-        "Starting Day 31 Cash Flow Intelligence Module"
+        "Starting Cash Flow Intelligence "
+        "and Capital Allocation Module"
     )
-
+    
     data = load_data()
-
-    intelligence_df, distress_df = (
-        generate_cashflow_intelligence(
-            data
-        )
+    
+    (
+        intelligence_df,
+        distress_df,
+        capital_allocation_df,
+    ) = generate_cashflow_intelligence(
+        data
     )
-
+    
     verify_company_coverage(
         intelligence_df,
         data[
             "companies"
         ],
     )
-
+    
+    verify_capital_allocation_coverage(
+        capital_allocation_df,
+        data[
+            "cashflow"
+        ],
+    )
+    
+    distribution_df = (
+        generate_distribution_summary(
+            capital_allocation_df
+        )
+    )
+    
+    pattern_changes_df = (
+        generate_pattern_changes(
+            capital_allocation_df
+        )
+    )
+    
     save_outputs(
         intelligence_df,
         distress_df,
+        capital_allocation_df,
+        distribution_df,
+        pattern_changes_df,
     )
-
+    
     print(
-        "\nDay 31 Cash Flow Intelligence "
-        "Module completed successfully."
+        "\nDay 31 + Day 32 completed successfully."
     )
-
+    
     print(
-        f"Companies processed: {len(intelligence_df)}"
+        f"Companies processed: "
+        f"{len(intelligence_df)}"
     )
-
+    
     print(
-        f"Distress alerts: {len(distress_df)}"
+        f"Capital allocation records: "
+        f"{len(capital_allocation_df)}"
     )
-
+    
     print(
-        f"\nIntelligence output:"
+        f"Distress alerts: "
+        f"{len(distress_df)}"
     )
-
+    
+    print(
+        f"Pattern changes: "
+        f"{len(pattern_changes_df)}"
+    )
+    
+    print(
+        "\nOutputs:"
+    )
+    
     print(
         f"  {INTELLIGENCE_OUTPUT_PATH}"
     )
-
-    print(
-        f"\nDistress alerts:"
-    )
-
+    
     print(
         f"  {DISTRESS_OUTPUT_PATH}"
     )
-
-
+    
+    print(
+        f"  {CAPITAL_ALLOCATION_OUTPUT_PATH}"
+    )
+    
+    print(
+        f"  {DISTRIBUTION_OUTPUT_PATH}"
+    )
+    
+    print(
+        f"  {PATTERN_CHANGES_OUTPUT_PATH}"
+    )
+    
+    
 if __name__ == "__main__":
     run_cashflow_intelligence()

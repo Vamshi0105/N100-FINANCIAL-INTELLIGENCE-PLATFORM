@@ -9,3 +9,27 @@ INFO | Companies to process: 92
 INFO | Coverage verification passed for 92 companies
 INFO | Cash flow intelligence saved: C:\Users\rekal\OneDrive\Desktop\N100\output\cashflow_intelligence.xlsx
 INFO | Distress alerts saved: C:\Users\rekal\OneDrive\Desktop\N100\output\distress_alerts.csv
+INFO | Starting Cash Flow Intelligence and Capital Allocation Module
+INFO | Loading cash flow intelligence data from C:\Users\rekal\OneDrive\Desktop\N100\data\nifty100.db
+INFO | companies rows loaded: 92
+INFO | cashflow rows loaded: 1056
+INFO | profitandloss rows loaded: 1073
+INFO | balancesheet rows loaded: 1140
+INFO | sectors rows loaded: 92
+INFO | Companies to process: 92
+INFO | Company coverage passed for 92 companies
+INFO | Starting Cash Flow Intelligence and Capital Allocation Module
+INFO | Loading cash flow intelligence data from C:\Users\rekal\OneDrive\Desktop\N100\data\nifty100.db
+INFO | companies rows loaded: 92
+INFO | cashflow rows loaded: 1056
+INFO | profitandloss rows loaded: 1073
+INFO | balancesheet rows loaded: 1140
+INFO | sectors rows loaded: 92
+INFO | Companies to process: 92
+INFO | Company coverage passed for 92 companies
+INFO | Capital allocation coverage passed for 1056 company-year records
+INFO | Cash flow intelligence saved: C:\Users\rekal\OneDrive\Desktop\N100\output\cashflow_intelligence.xlsx
+INFO | Distress alerts saved: C:\Users\rekal\OneDrive\Desktop\N100\output\distress_alerts.csv
+INFO | Capital allocation saved: C:\Users\rekal\OneDrive\Desktop\N100\output\capital_allocation.csv
+INFO | Capital allocation distribution saved: C:\Users\rekal\OneDrive\Desktop\N100\output\capital_allocation_distribution.csv
+INFO | Pattern changes saved: C:\Users\rekal\OneDrive\Desktop\N100\output\pattern_changes.csv
