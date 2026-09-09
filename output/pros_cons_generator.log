@@ -1,0 +1,11 @@
+INFO | Starting Day 30 NLP Auto Pros/Cons Generator
+INFO | Loading Day 30 data from C:\Users\rekal\OneDrive\Desktop\N100\data\nifty100.db
+INFO | companies rows loaded: 92
+INFO | ratios rows loaded: 1155
+INFO | profitandloss rows loaded: 1073
+INFO | balancesheet rows loaded: 1140
+INFO | market_cap rows loaded: 552
+INFO | sectors rows loaded: 92
+INFO | Companies to process: 92
+INFO | Coverage verification passed for 92 companies
+INFO | Pros/Cons output saved: C:\Users\rekal\OneDrive\Desktop\N100\output\pros_cons_generated.csv
