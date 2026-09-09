@@ -1,0 +1,11 @@
+INFO | Starting Day 31 Cash Flow Intelligence Module
+INFO | Loading Day 31 data from C:\Users\rekal\OneDrive\Desktop\N100\data\nifty100.db
+INFO | companies rows loaded: 92
+INFO | cashflow rows loaded: 1056
+INFO | profitandloss rows loaded: 1073
+INFO | balancesheet rows loaded: 1140
+INFO | sectors rows loaded: 92
+INFO | Companies to process: 92
+INFO | Coverage verification passed for 92 companies
+INFO | Cash flow intelligence saved: C:\Users\rekal\OneDrive\Desktop\N100\output\cashflow_intelligence.xlsx
+INFO | Distress alerts saved: C:\Users\rekal\OneDrive\Desktop\N100\output\distress_alerts.csv
