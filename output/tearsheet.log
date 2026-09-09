@@ -18,3 +18,126 @@ INFO | Generating tearsheet for SUNPHARMA
 INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\output\tearsheets\SUNPHARMA_tearsheet.pdf
 INFO | Generating tearsheet for TATASTEEL
 INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\output\tearsheets\TATASTEEL_tearsheet.pdf
+INFO | Starting Day 34 Batch Report Generation
+INFO | Starting Day 34 batch tearsheet generation
+INFO | Loading report data from C:\Users\rekal\OneDrive\Desktop\N100\data\nifty100.db
+INFO | companies rows loaded: 92
+INFO | profitandloss rows loaded: 1073
+INFO | balancesheet rows loaded: 1140
+INFO | cashflow rows loaded: 1056
+INFO | financial_ratios rows loaded: 1155
+INFO | sectors rows loaded: 92
+INFO | pros_cons rows loaded: 540
+INFO | cashflow intelligence rows loaded: 92
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\ABB_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\ADANIENSOL_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\ADANIENT_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\ADANIGREEN_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\ADANIPORTS_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\ADANIPOWER_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\AMBUJACEM_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\APOLLOHOSP_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\ASIANPAINT_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\ATGL_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\AXISBANK_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\BAJAJ-AUTO_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\BAJAJFINSV_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\BAJAJHLDNG_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\BAJFINANCE_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\BANKBARODA_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\BEL_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\BHARTIARTL_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\BHEL_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\BOSCHLTD_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\BPCL_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\BRITANNIA_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\CANBK_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\CHOLAFIN_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\CIPLA_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\COALINDIA_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\DABUR_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\DIVISLAB_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\DLF_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\DMART_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\DRREDDY_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\EICHERMOT_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\GAIL_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\GODREJCP_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\GRASIM_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\HAL_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\HAVELLS_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\HCLTECH_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\HDFCBANK_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\HDFCLIFE_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\HEROMOTOCO_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\HINDALCO_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\HINDUNILVR_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\ICICIBANK_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\ICICIGI_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\ICICIPRULI_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\INDIGO_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\INDUSINDBK_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\INFY_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\IOC_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\IRCTC_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\IRFC_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\ITC_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\JINDALSTEL_tearsheet.pdf
+WARNING | Skipping JIOFIN: 2 years available
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\JSWENERGY_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\JSWSTEEL_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\KOTAKBANK_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\LICI_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\LODHA_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\LT_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\LTIM_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\M&M_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\MARUTI_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\MOTHERSON_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\NAUKRI_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\NESTLEIND_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\NHPC_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\NTPC_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\ONGC_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\PFC_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\PIDILITIND_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\PNB_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\POWERGRID_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\RECLTD_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\RELIANCE_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\SBILIFE_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\SBIN_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\SHREECEM_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\SHRIRAMFIN_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\SIEMENS_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\SUNPHARMA_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\TATACONSUM_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\TATAMOTORS_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\TATAPOWER_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\TATASTEEL_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\TCS_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\TECHM_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\TITAN_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\TORNTPHARM_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\TRENT_tearsheet.pdf
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\tearsheets\TVSMOTOR_tearsheet.pdf
+INFO | Starting batch sector report generation
+INFO | Loading report data from C:\Users\rekal\OneDrive\Desktop\N100\data\nifty100.db
+INFO | companies rows loaded: 92
+INFO | profitandloss rows loaded: 1073
+INFO | balancesheet rows loaded: 1140
+INFO | cashflow rows loaded: 1056
+INFO | financial_ratios rows loaded: 1155
+INFO | sectors rows loaded: 92
+INFO | pros_cons rows loaded: 540
+INFO | cashflow intelligence rows loaded: 92
+INFO | Sector report generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\sector\Communication_Services_report.pdf
+INFO | Sector report generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\sector\Consumer_Discretionary_report.pdf
+INFO | Sector report generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\sector\Consumer_Staples_report.pdf
+INFO | Sector report generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\sector\Energy_report.pdf
+INFO | Sector report generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\sector\Financials_report.pdf
+INFO | Sector report generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\sector\Healthcare_report.pdf
+INFO | Sector report generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\sector\Industrials_report.pdf
+INFO | Sector report generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\sector\Information_Technology_report.pdf
+INFO | Sector report generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\sector\Materials_report.pdf
+INFO | Sector report generated: C:\Users\rekal\OneDrive\Desktop\N100\reports\sector\Real_Estate_report.pdf
