@@ -1,0 +1,20 @@
+INFO | Starting Day 33 PDF Tearsheet Template
+INFO | Loading tearsheet data from C:\Users\rekal\OneDrive\Desktop\N100\data\nifty100.db
+INFO | companies rows loaded: 92
+INFO | profitandloss rows loaded: 1073
+INFO | balancesheet rows loaded: 1140
+INFO | cashflow rows loaded: 1056
+INFO | financial_ratios rows loaded: 1155
+INFO | sectors rows loaded: 92
+INFO | pros_cons rows loaded: 540
+INFO | cashflow intelligence rows loaded: 92
+INFO | Generating tearsheet for TCS
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\output\tearsheets\TCS_tearsheet.pdf
+INFO | Generating tearsheet for HDFCBANK
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\output\tearsheets\HDFCBANK_tearsheet.pdf
+INFO | Generating tearsheet for RELIANCE
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\output\tearsheets\RELIANCE_tearsheet.pdf
+INFO | Generating tearsheet for SUNPHARMA
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\output\tearsheets\SUNPHARMA_tearsheet.pdf
+INFO | Generating tearsheet for TATASTEEL
+INFO | Tearsheet generated: C:\Users\rekal\OneDrive\Desktop\N100\output\tearsheets\TATASTEEL_tearsheet.pdf
