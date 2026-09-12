@@ -1,0 +1,93 @@
+company_id,cluster_id,cluster_name,distance_from_centroid
+ABB,0,Value Cyclicals,0.387018
+ADANIENSOL,0,Value Cyclicals,1.381767
+ADANIENT,0,Value Cyclicals,1.124937
+ADANIPOWER,0,Value Cyclicals,1.407113
+AMBUJACEM,0,Value Cyclicals,1.033565
+APOLLOHOSP,0,Value Cyclicals,0.842286
+ASIANPAINT,0,Value Cyclicals,0.287531
+ATGL,0,Value Cyclicals,1.394476
+BAJAJ-AUTO,0,Value Cyclicals,0.507332
+BHEL,0,Value Cyclicals,2.299736
+BOSCHLTD,0,Value Cyclicals,0.997146
+BPCL,0,Value Cyclicals,0.68858
+BRITANNIA,0,Value Cyclicals,0.407319
+DABUR,0,Value Cyclicals,0.567028
+DIVISLAB,0,Value Cyclicals,0.52904
+DLF,0,Value Cyclicals,2.575046
+DMART,0,Value Cyclicals,1.318812
+DRREDDY,0,Value Cyclicals,1.039886
+EICHERMOT,0,Value Cyclicals,1.045091
+GODREJCP,0,Value Cyclicals,0.717399
+GRASIM,0,Value Cyclicals,0.336502
+HAVELLS,0,Value Cyclicals,0.447148
+HCLTECH,0,Value Cyclicals,2.214905
+INFY,0,Value Cyclicals,0.34405
+IOC,0,Value Cyclicals,0.730671
+IRCTC,0,Value Cyclicals,1.073407
+ITC,0,Value Cyclicals,0.91886
+JINDALSTEL,0,Value Cyclicals,1.385011
+JSWENERGY,0,Value Cyclicals,1.479876
+JSWSTEEL,0,Value Cyclicals,0.601715
+LICI,0,Value Cyclicals,1.569421
+LODHA,0,Value Cyclicals,2.251137
+LT,0,Value Cyclicals,0.334755
+LTIM,0,Value Cyclicals,2.586917
+M&M,0,Value Cyclicals,0.867885
+MARUTI,0,Value Cyclicals,0.380315
+MOTHERSON,0,Value Cyclicals,1.032677
+NAUKRI,0,Value Cyclicals,0.862444
+NESTLEIND,0,Value Cyclicals,0.510001
+NTPC,0,Value Cyclicals,0.639804
+ONGC,0,Value Cyclicals,0.755238
+PIDILITIND,0,Value Cyclicals,0.441694
+RELIANCE,0,Value Cyclicals,0.398352
+SBILIFE,0,Value Cyclicals,1.959245
+SBIN,0,Value Cyclicals,1.823652
+SHREECEM,0,Value Cyclicals,0.276779
+SIEMENS,0,Value Cyclicals,0.365063
+SUNPHARMA,0,Value Cyclicals,0.610586
+TATACONSUM,0,Value Cyclicals,1.538451
+TATAMOTORS,0,Value Cyclicals,0.619828
+TATAPOWER,0,Value Cyclicals,0.84607
+TATASTEEL,0,Value Cyclicals,0.654192
+TCS,0,Value Cyclicals,0.36848
+TECHM,0,Value Cyclicals,0.638725
+TITAN,0,Value Cyclicals,1.38135
+TORNTPHARM,0,Value Cyclicals,0.812652
+TRENT,0,Value Cyclicals,3.395898
+TVSMOTOR,0,Value Cyclicals,1.211832
+ADANIPORTS,1,High-Quality Growth,1.170956
+BAJAJHLDNG,1,High-Quality Growth,2.465191
+BHARTIARTL,1,High-Quality Growth,1.248637
+CIPLA,1,High-Quality Growth,0.986129
+COALINDIA,1,High-Quality Growth,1.207923
+HDFCLIFE,1,High-Quality Growth,1.305758
+HEROMOTOCO,1,High-Quality Growth,1.659572
+HINDALCO,1,High-Quality Growth,0.6203
+HINDUNILVR,1,High-Quality Growth,0.742064
+ICICIGI,1,High-Quality Growth,1.775079
+ICICIPRULI,1,High-Quality Growth,1.004951
+INDIGO,1,High-Quality Growth,1.788335
+JIOFIN,1,High-Quality Growth,0.757696
+KOTAKBANK,1,High-Quality Growth,1.38521
+POWERGRID,1,High-Quality Growth,1.179899
+RECLTD,1,High-Quality Growth,2.075829
+BEL,2,Defensive Dividend,1.115231
+HAL,2,Defensive Dividend,1.115231
+GAIL,3,Emerging Growth,1.150408
+NHPC,3,Emerging Growth,1.150408
+ADANIGREEN,4,Distressed,2.612521
+AXISBANK,4,Distressed,0.851473
+BAJAJFINSV,4,Distressed,0.974799
+BAJFINANCE,4,Distressed,1.535428
+BANKBARODA,4,Distressed,1.762552
+CANBK,4,Distressed,2.677851
+CHOLAFIN,4,Distressed,0.785924
+HDFCBANK,4,Distressed,0.66289
+ICICIBANK,4,Distressed,0.759857
+INDUSINDBK,4,Distressed,0.635392
+IRFC,4,Distressed,1.978126
+PFC,4,Distressed,1.276549
+PNB,4,Distressed,1.38083
+SHRIRAMFIN,4,Distressed,1.339454
