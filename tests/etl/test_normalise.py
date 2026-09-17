@@ -90,3 +90,49 @@ def test_normalize_ticker(
         normalize_ticker(raw)
         == expected
     )
+def test_normalize_year_en_dash():
+    assert normalize_year("Mar–23") == "2023-03"
+
+
+def test_normalize_year_em_dash():
+    assert normalize_year("Mar—23") == "2023-03"
+
+
+def test_normalize_year_case_insensitive_fy():
+    assert normalize_year("fy2023") == "2023-03"
+
+
+def test_normalize_year_fy_with_space():
+    assert normalize_year("FY 2024") == "2024-03"
+
+
+def test_normalize_year_two_digit_year():
+    assert normalize_year("Dec-99") == "2099-12"
+
+
+def test_normalize_year_invalid_month_falls_to_error():
+    with pytest.raises(ValueError):
+        normalize_year("2023-99")
+
+
+def test_normalize_year_empty():
+    with pytest.raises(ValueError, match="Year is empty"):
+        normalize_year("")
+
+
+def test_normalize_year_whitespace():
+    with pytest.raises(ValueError, match="Year is empty"):
+        normalize_year("   ")
+
+
+def test_normalize_year_null():
+    with pytest.raises(ValueError, match="Year is null"):
+        normalize_year(None)
+
+
+def test_normalize_year_unparseable():
+    with pytest.raises(
+        ValueError,
+        match="Unparseable year",
+    ):
+        normalize_year("NOT_A_YEAR")
