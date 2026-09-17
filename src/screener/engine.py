@@ -1,5 +1,6 @@
 import sqlite3
 import logging
+import threading
 from pathlib import Path
 
 import pandas as pd
@@ -12,6 +13,11 @@ logger = logging.getLogger(__name__)
 
 DATABASE_PATH = Path("data/nifty100.db")
 CONFIG_PATH = Path("config/screener_config.yaml")
+
+# Thread-safe in-memory cache for the screener dataset.
+# The database is treated as read-only during API/dashboard execution.
+_SCREENER_CACHE = {}
+_SCREENER_CACHE_LOCK = threading.Lock()
 
 
 def load_screener_config(config_path=CONFIG_PATH):
@@ -61,6 +67,49 @@ def load_financial_ratios(database_path=DATABASE_PATH):
 
     logger.info("Loaded %s rows for screener", len(dataframe))
     return dataframe
+
+
+def get_cached_screener_data(database_path=DATABASE_PATH):
+    """
+    Return the screener dataset with composite scores calculated.
+
+    Uses a thread-safe cache so concurrent API requests do not
+    independently reload SQLite data and recalculate pandas metrics.
+    """
+
+    cache_key = str(Path(database_path).resolve())
+
+    # Fast path: already cached.
+    cached = _SCREENER_CACHE.get(cache_key)
+
+    if cached is not None:
+        return cached.copy(deep=True)
+
+    # Only one thread performs the expensive initial calculation.
+    with _SCREENER_CACHE_LOCK:
+        cached = _SCREENER_CACHE.get(cache_key)
+
+        if cached is None:
+            logger.info("Building screener cache")
+
+            dataframe = load_financial_ratios(database_path)
+
+            dataframe = calculate_composite_quality_score(
+                dataframe
+            )
+
+            _SCREENER_CACHE[cache_key] = dataframe
+
+            logger.info(
+                "Screener cache built: %s rows",
+                len(dataframe),
+            )
+
+            cached = dataframe
+
+    return cached.copy(deep=True)
+
+
 def get_latest_company_records(dataframe: pd.DataFrame) -> pd.DataFrame:
     """
     Return the latest annual financial record for each company.
@@ -312,10 +361,7 @@ def run_screener(filters=None, database_path=DATABASE_PATH, config_path=CONFIG_P
     else:
         sorting = {}
 
-    dataframe = load_financial_ratios(database_path)
-    dataframe = calculate_composite_quality_score(
-        dataframe
-        )
+    dataframe = get_cached_screener_data(database_path)
 
     if filters.get("debt_to_equity_declining"):
         annual_dataframe = dataframe[
