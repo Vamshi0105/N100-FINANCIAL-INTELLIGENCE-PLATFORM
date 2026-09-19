@@ -85,10 +85,7 @@ def test_fcf_conversion_zero_operating_profit():
 
 
 def test_reinvestor_pattern():
-    assert (
-        capital_allocation_pattern(100, -50, -25)
-        == "Reinvestor"
-    )
+    assert capital_allocation_pattern(100, -50, -25) == "Reinvestor"
 
 
 def test_shareholder_returns_pattern():
@@ -104,42 +101,24 @@ def test_shareholder_returns_pattern():
 
 
 def test_liquidating_assets_pattern():
-    assert (
-        capital_allocation_pattern(100, 50, -25)
-        == "Liquidating Assets"
-    )
+    assert capital_allocation_pattern(100, 50, -25) == "Liquidating Assets"
 
 
 def test_distress_signal_pattern():
-    assert (
-        capital_allocation_pattern(-100, 50, 25)
-        == "Distress Signal"
-    )
+    assert capital_allocation_pattern(-100, 50, 25) == "Distress Signal"
 
 
 def test_growth_funded_by_debt_pattern():
-    assert (
-        capital_allocation_pattern(-100, -50, 25)
-        == "Growth Funded by Debt"
-    )
+    assert capital_allocation_pattern(-100, -50, 25) == "Growth Funded by Debt"
 
 
 def test_cash_accumulator_pattern():
-    assert (
-        capital_allocation_pattern(100, 50, 25)
-        == "Cash Accumulator"
-    )
+    assert capital_allocation_pattern(100, 50, 25) == "Cash Accumulator"
 
 
 def test_pre_revenue_pattern():
-    assert (
-        capital_allocation_pattern(-100, -50, -25)
-        == "Pre-Revenue"
-    )
+    assert capital_allocation_pattern(-100, -50, -25) == "Pre-Revenue"
 
 
 def test_mixed_pattern():
-    assert (
-        capital_allocation_pattern(100, -50, 25)
-        == "Mixed"
-    )
+    assert capital_allocation_pattern(100, -50, 25) == "Mixed"

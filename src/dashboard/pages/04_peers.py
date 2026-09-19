@@ -15,23 +15,19 @@ from src.analytics.radar import (
     load_peer_percentile_data,
 )
 
-
 # --------------------------------------------------
 # Paths
 # --------------------------------------------------
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
-DATABASE_PATH = (
-    PROJECT_ROOT
-    / "data"
-    / "nifty100.db"
-)
+DATABASE_PATH = PROJECT_ROOT / "data" / "nifty100.db"
 
 
 # --------------------------------------------------
 # Data loading
 # --------------------------------------------------
+
 
 @st.cache_data
 def load_peer_dashboard_data():
@@ -44,22 +40,16 @@ def load_peer_dashboard_data():
 
     with sqlite3.connect(DATABASE_PATH) as connection:
 
-        year = get_latest_annual_year(
-            connection
+        year = get_latest_annual_year(connection)
+
+        peer_percentiles_df = load_peer_percentile_data(
+            connection,
+            year,
         )
 
-        peer_percentiles_df = (
-            load_peer_percentile_data(
-                connection,
-                year,
-            )
-        )
-
-        composite_scores_df = (
-            load_composite_scores(
-                connection,
-                year,
-            )
+        composite_scores_df = load_composite_scores(
+            connection,
+            year,
         )
 
     radar_df = build_radar_dataset(
@@ -105,9 +95,7 @@ def load_peer_kpi_data(year: str):
         WHERE r.year = ?
     """
 
-    with sqlite3.connect(
-        DATABASE_PATH
-    ) as connection:
+    with sqlite3.connect(DATABASE_PATH) as connection:
 
         dataframe = pd.read_sql_query(
             query,
@@ -116,10 +104,7 @@ def load_peer_kpi_data(year: str):
         )
 
     dataframe["company_id"] = (
-        dataframe["company_id"]
-        .astype(str)
-        .str.strip()
-        .str.upper()
+        dataframe["company_id"].astype(str).str.strip().str.upper()
     )
 
     return dataframe
@@ -128,6 +113,7 @@ def load_peer_kpi_data(year: str):
 # --------------------------------------------------
 # Formatting
 # --------------------------------------------------
+
 
 def format_number(value, decimals=2):
     """Format numeric values safely."""
@@ -154,15 +140,11 @@ def build_kpi_table(
     peer_mapping = peer_groups_df.copy()
 
     peer_mapping["company_id"] = (
-        peer_mapping["company_id"]
-        .astype(str)
-        .str.strip()
-        .str.upper()
+        peer_mapping["company_id"].astype(str).str.strip().str.upper()
     )
 
     group_companies = peer_mapping[
-        peer_mapping["peer_group_name"]
-        == selected_group
+        peer_mapping["peer_group_name"] == selected_group
     ].copy()
 
     group_df = group_companies.merge(
@@ -185,14 +167,10 @@ def build_kpi_table(
     ]
 
     display_columns = [
-        column
-        for column in display_columns
-        if column in group_df.columns
+        column for column in display_columns if column in group_df.columns
     ]
 
-    result = group_df[
-        display_columns
-    ].copy()
+    result = group_df[display_columns].copy()
 
     result = result.rename(
         columns={
@@ -231,11 +209,7 @@ def highlight_benchmark(
         if row["Company ID"] == benchmark_company:
 
             return [
-                (
-                    "background-color: "
-                    "rgba(46, 204, 113, 0.25); "
-                    "font-weight: bold;"
-                )
+                "background-color: " "rgba(46, 204, 113, 0.25); " "font-weight: bold;"
             ] * len(row)
 
         return [""] * len(row)
@@ -250,6 +224,7 @@ def highlight_benchmark(
 # Plotly Radar Chart
 # --------------------------------------------------
 
+
 def create_peer_radar_chart(
     selected_company,
     selected_group,
@@ -262,15 +237,8 @@ def create_peer_radar_chart(
     """
 
     company_row = radar_df[
-        (
-            radar_df["company_id"]
-            == selected_company
-        )
-        &
-        (
-            radar_df["peer_group_name"]
-            == selected_group
-        )
+        (radar_df["company_id"] == selected_company)
+        & (radar_df["peer_group_name"] == selected_group)
     ]
 
     if company_row.empty:
@@ -287,29 +255,19 @@ def create_peer_radar_chart(
         if pd.isna(value):
             value = 0.0
 
-        company_values.append(
-            float(value)
-        )
+        company_values.append(float(value))
 
-    peer_average_values = (
-        get_peer_group_average(
-            radar_df,
-            selected_group,
-        )
+    peer_average_values = get_peer_group_average(
+        radar_df,
+        selected_group,
     )
 
     # Close radar polygons.
     theta = AXES + [AXES[0]]
 
-    company_r = (
-        company_values
-        + [company_values[0]]
-    )
+    company_r = company_values + [company_values[0]]
 
-    peer_r = (
-        peer_average_values
-        + [peer_average_values[0]]
-    )
+    peer_r = peer_average_values + [peer_average_values[0]]
 
     figure = go.Figure()
 
@@ -321,9 +279,7 @@ def create_peer_radar_chart(
             fill="toself",
             name=selected_company,
             hovertemplate=(
-                "<b>%{theta}</b><br>"
-                "Relative Score: %{r:.2f}"
-                "<extra></extra>"
+                "<b>%{theta}</b><br>" "Relative Score: %{r:.2f}" "<extra></extra>"
             ),
         )
     )
@@ -339,18 +295,13 @@ def create_peer_radar_chart(
                 "dash": "dash",
             },
             hovertemplate=(
-                "<b>%{theta}</b><br>"
-                "Peer Average: %{r:.2f}"
-                "<extra></extra>"
+                "<b>%{theta}</b><br>" "Peer Average: %{r:.2f}" "<extra></extra>"
             ),
         )
     )
 
     figure.update_layout(
-        title=(
-            f"{selected_company} vs "
-            f"{selected_group} Peer Average"
-        ),
+        title=(f"{selected_company} vs " f"{selected_group} Peer Average"),
         polar={
             "radialaxis": {
                 "visible": True,
@@ -381,6 +332,7 @@ def create_peer_radar_chart(
 # Page
 # --------------------------------------------------
 
+
 def render():
 
     st.title("👥 Peer Comparison")
@@ -406,31 +358,21 @@ def render():
 
     except Exception as error:
 
-        st.error(
-            "Unable to load peer comparison data: "
-            f"{error}"
-        )
+        st.error("Unable to load peer comparison data: " f"{error}")
 
-        st.info(
-            "Make sure Day 18 peer percentile "
-            "rankings have been generated."
-        )
+        st.info("Make sure Day 18 peer percentile " "rankings have been generated.")
 
         return
 
     if peer_groups_df.empty:
 
-        st.warning(
-            "No peer group data is available."
-        )
+        st.warning("No peer group data is available.")
 
         return
 
     if radar_df.empty:
 
-        st.warning(
-            "No radar comparison data is available."
-        )
+        st.warning("No radar comparison data is available.")
 
         return
 
@@ -438,14 +380,7 @@ def render():
     # Peer group dropdown
     # --------------------------------------------------
 
-    peer_groups = sorted(
-        peer_groups_df[
-            "peer_group_name"
-        ]
-        .dropna()
-        .unique()
-        .tolist()
-    )
+    peer_groups = sorted(peer_groups_df["peer_group_name"].dropna().unique().tolist())
 
     st.subheader("Peer Group Selection")
 
@@ -458,26 +393,13 @@ def render():
     # Companies in selected peer group
     # --------------------------------------------------
 
-    group_companies = radar_df[
-        radar_df["peer_group_name"]
-        == selected_group
-    ].copy()
+    group_companies = radar_df[radar_df["peer_group_name"] == selected_group].copy()
 
-    company_options = sorted(
-        group_companies[
-            "company_id"
-        ]
-        .dropna()
-        .unique()
-        .tolist()
-    )
+    company_options = sorted(group_companies["company_id"].dropna().unique().tolist())
 
     if not company_options:
 
-        st.warning(
-            "No companies are available "
-            "for this peer group."
-        )
+        st.warning("No companies are available " "for this peer group.")
 
         return
 
@@ -486,9 +408,7 @@ def render():
         options=company_options,
     )
 
-    st.caption(
-        f"Financial Year: {year}"
-    )
+    st.caption(f"Financial Year: {year}")
 
     st.markdown("---")
 
@@ -496,9 +416,7 @@ def render():
     # KPI summary
     # --------------------------------------------------
 
-    total_companies = len(
-        company_options
-    )
+    total_companies = len(company_options)
 
     col1, col2, col3 = st.columns(3)
 
@@ -527,9 +445,7 @@ def render():
     # Radar chart
     # --------------------------------------------------
 
-    st.subheader(
-        "8-Metric Relative Performance"
-    )
+    st.subheader("8-Metric Relative Performance")
 
     st.caption(
         "Scores are normalised from 0 to 1 "
@@ -538,12 +454,10 @@ def render():
         "relative performance."
     )
 
-    radar_chart = (
-        create_peer_radar_chart(
-            selected_company,
-            selected_group,
-            radar_df,
-        )
+    radar_chart = create_peer_radar_chart(
+        selected_company,
+        selected_group,
+        radar_df,
     )
 
     if radar_chart is not None:
@@ -555,10 +469,7 @@ def render():
 
     else:
 
-        st.warning(
-            "Radar data is unavailable "
-            "for the selected company."
-        )
+        st.warning("Radar data is unavailable " "for the selected company.")
 
     # --------------------------------------------------
     # KPI comparison table
@@ -566,13 +477,9 @@ def render():
 
     st.markdown("---")
 
-    st.subheader(
-        "Peer Group KPI Comparison"
-    )
+    st.subheader("Peer Group KPI Comparison")
 
-    st.caption(
-        "The benchmark company is highlighted."
-    )
+    st.caption("The benchmark company is highlighted.")
 
     try:
 
@@ -585,19 +492,13 @@ def render():
 
     except Exception as error:
 
-        st.error(
-            "Unable to load peer KPI table: "
-            f"{error}"
-        )
+        st.error("Unable to load peer KPI table: " f"{error}")
 
         return
 
     if kpi_table.empty:
 
-        st.warning(
-            "No KPI data is available "
-            "for this peer group."
-        )
+        st.warning("No KPI data is available " "for this peer group.")
 
         return
 

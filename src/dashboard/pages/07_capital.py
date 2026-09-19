@@ -4,20 +4,11 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
-CAPITAL_ALLOCATION_PATH = (
-    PROJECT_ROOT
-    / "output"
-    / "capital_allocation.csv"
-)
+CAPITAL_ALLOCATION_PATH = PROJECT_ROOT / "output" / "capital_allocation.csv"
 
-DATABASE_PATH = (
-    PROJECT_ROOT
-    / "data"
-    / "nifty100.db"
-)
+DATABASE_PATH = PROJECT_ROOT / "data" / "nifty100.db"
 
 
 @st.cache_data
@@ -29,9 +20,7 @@ def load_capital_allocation_data():
     if not CAPITAL_ALLOCATION_PATH.exists():
         return pd.DataFrame()
 
-    dataframe = pd.read_csv(
-        CAPITAL_ALLOCATION_PATH
-    )
+    dataframe = pd.read_csv(CAPITAL_ALLOCATION_PATH)
 
     required_columns = {
         "company_id",
@@ -42,36 +31,23 @@ def load_capital_allocation_data():
         "pattern_label",
     }
 
-    missing_columns = (
-        required_columns
-        - set(dataframe.columns)
-    )
+    missing_columns = required_columns - set(dataframe.columns)
 
     if missing_columns:
         raise ValueError(
             "capital_allocation.csv is missing columns: "
-            + ", ".join(
-                sorted(missing_columns)
-            )
+            + ", ".join(sorted(missing_columns))
         )
 
     dataframe["company_id"] = (
-        dataframe["company_id"]
-        .astype(str)
-        .str.strip()
-        .str.upper()
+        dataframe["company_id"].astype(str).str.strip().str.upper()
     )
 
     dataframe["pattern_label"] = (
-        dataframe["pattern_label"]
-        .fillna("Unknown")
-        .astype(str)
+        dataframe["pattern_label"].fillna("Unknown").astype(str)
     )
 
-    dataframe["year"] = (
-        dataframe["year"]
-        .astype(str)
-    )
+    dataframe["year"] = dataframe["year"].astype(str)
 
     return dataframe
 
@@ -92,9 +68,7 @@ def load_company_names():
             ]
         )
 
-    connection = sqlite3.connect(
-        DATABASE_PATH
-    )
+    connection = sqlite3.connect(DATABASE_PATH)
 
     query = """
     SELECT
@@ -111,10 +85,7 @@ def load_company_names():
     connection.close()
 
     dataframe["company_id"] = (
-        dataframe["company_id"]
-        .astype(str)
-        .str.strip()
-        .str.upper()
+        dataframe["company_id"].astype(str).str.strip().str.upper()
     )
 
     return dataframe
@@ -134,15 +105,11 @@ def render():
     # Load Data
     # ---------------------------------------------
 
-    allocation_df = (
-        load_capital_allocation_data()
-    )
+    allocation_df = load_capital_allocation_data()
 
     if allocation_df.empty:
 
-        st.warning(
-            "Capital allocation data is not available."
-        )
+        st.warning("Capital allocation data is not available.")
 
         st.info(
             "Run the following command first:\n\n"
@@ -151,9 +118,7 @@ def render():
 
         return
 
-    company_df = (
-        load_company_names()
-    )
+    company_df = load_company_names()
 
     dataframe = allocation_df.merge(
         company_df,
@@ -161,35 +126,21 @@ def render():
         how="left",
     )
 
-    dataframe["company_name"] = (
-        dataframe["company_name"]
-        .fillna(dataframe["company_id"])
+    dataframe["company_name"] = dataframe["company_name"].fillna(
+        dataframe["company_id"]
     )
 
     # ---------------------------------------------
     # Summary KPIs
     # ---------------------------------------------
 
-    total_companies = (
-        dataframe["company_id"]
-        .nunique()
-    )
+    total_companies = dataframe["company_id"].nunique()
 
-    total_patterns = (
-        dataframe["pattern_label"]
-        .nunique()
-    )
+    total_patterns = dataframe["pattern_label"].nunique()
 
-    most_common_pattern = (
-        dataframe["pattern_label"]
-        .value_counts()
-        .idxmax()
-    )
+    most_common_pattern = dataframe["pattern_label"].value_counts().idxmax()
 
-    latest_year = (
-        dataframe["year"]
-        .max()
-    )
+    latest_year = dataframe["year"].max()
 
     col1, col2, col3, col4 = st.columns(4)
 
@@ -219,9 +170,7 @@ def render():
     # Pattern Summary
     # ---------------------------------------------
 
-    st.subheader(
-        "Capital Allocation Map"
-    )
+    st.subheader("Capital Allocation Map")
 
     st.caption(
         "Each rectangle represents a company. "
@@ -258,11 +207,7 @@ def render():
         },
     )
 
-    figure.update_traces(
-        textinfo=(
-            "label+value+percent parent"
-        )
-    )
+    figure.update_traces(textinfo=("label+value+percent parent"))
 
     figure.update_layout(
         height=700,
@@ -285,36 +230,20 @@ def render():
     # Pattern Selection
     # ---------------------------------------------
 
-    st.subheader(
-        "Explore Capital Allocation Pattern"
-    )
+    st.subheader("Explore Capital Allocation Pattern")
 
-    patterns = sorted(
-        dataframe["pattern_label"]
-        .unique()
-        .tolist()
-    )
+    patterns = sorted(dataframe["pattern_label"].unique().tolist())
 
     selected_pattern = st.selectbox(
         "Select Capital Allocation Pattern",
         patterns,
     )
 
-    selected_df = dataframe[
-        dataframe["pattern_label"]
-        == selected_pattern
-    ].copy()
+    selected_df = dataframe[dataframe["pattern_label"] == selected_pattern].copy()
 
-    selected_company_count = (
-        selected_df["company_id"]
-        .nunique()
-    )
+    selected_company_count = selected_df["company_id"].nunique()
 
-    percentage = (
-        selected_company_count
-        / total_companies
-        * 100
-    )
+    percentage = selected_company_count / total_companies * 100
 
     col1, col2 = st.columns(2)
 
@@ -333,7 +262,6 @@ def render():
     # ---------------------------------------------
 
     pattern_descriptions = {
-
         "Reinvestor": (
             "Positive operating cash flow with "
             "cash being deployed into investing "
@@ -342,72 +270,57 @@ def render():
             "funded reinvestment and debt or "
             "capital repayment."
         ),
-
         "Shareholder Returns": (
             "Strong operating cash generation with "
             "cash deployment towards investment and "
             "returns to shareholders."
         ),
-
         "Liquidating Assets": (
             "Positive operating and investing cash "
             "flows with financing outflows. "
             "This may indicate asset sales or "
             "reduced investment activity."
         ),
-
         "Distress Signal": (
             "Negative operating cash flow combined "
             "with positive investing and financing "
             "cash flows."
         ),
-
         "Growth Funded by Debt": (
             "Negative operating and investing cash "
             "flows supported by positive financing "
             "cash flow."
         ),
-
         "Cash Accumulator": (
-            "Positive cash flow from operations, "
-            "investing and financing."
+            "Positive cash flow from operations, " "investing and financing."
         ),
-
         "Pre-Revenue": (
             "Negative cash flow across operating, "
             "investing and financing activities."
         ),
-
         "Mixed": (
             "Positive operating cash flow, negative "
             "investing cash flow and positive "
             "financing cash flow."
         ),
-
     }
 
-    description = (
-        pattern_descriptions.get(
-            selected_pattern,
-            (
-                "This is a cash-flow sign pattern "
-                "that does not currently have a "
-                "special descriptive classification."
-            ),
-        )
+    description = pattern_descriptions.get(
+        selected_pattern,
+        (
+            "This is a cash-flow sign pattern "
+            "that does not currently have a "
+            "special descriptive classification."
+        ),
     )
 
-    st.info(
-        description
-    )
+    st.info(description)
 
     # ---------------------------------------------
     # Selected Company List
     # ---------------------------------------------
 
-    st.subheader(
-        f"Companies — {selected_pattern}"
-    )
+    st.subheader(f"Companies — {selected_pattern}")
 
     display_columns = [
         "company_id",
@@ -419,28 +332,20 @@ def render():
     ]
 
     company_display = (
-        selected_df[
-            display_columns
-        ]
-        .sort_values(
-            by="company_name"
-        )
-        .reset_index(
-            drop=True
-        )
+        selected_df[display_columns]
+        .sort_values(by="company_name")
+        .reset_index(drop=True)
     )
 
-    company_display = (
-        company_display.rename(
-            columns={
-                "company_id": "Company ID",
-                "company_name": "Company",
-                "year": "Financial Year",
-                "cfo_sign": "CFO",
-                "cfi_sign": "CFI",
-                "cff_sign": "CFF",
-            }
-        )
+    company_display = company_display.rename(
+        columns={
+            "company_id": "Company ID",
+            "company_name": "Company",
+            "year": "Financial Year",
+            "cfo_sign": "CFO",
+            "cfi_sign": "CFI",
+            "cff_sign": "CFF",
+        }
     )
 
     st.dataframe(
@@ -455,28 +360,18 @@ def render():
 
     st.divider()
 
-    st.subheader(
-        "Pattern Distribution"
-    )
+    st.subheader("Pattern Distribution")
 
-    pattern_counts = (
-        dataframe[
-            "pattern_label"
-        ]
-        .value_counts()
-        .reset_index()
-    )
+    pattern_counts = dataframe["pattern_label"].value_counts().reset_index()
 
     pattern_counts.columns = [
         "Pattern",
         "Companies",
     ]
 
-    pattern_counts = (
-        pattern_counts.sort_values(
-            by="Companies",
-            ascending=False,
-        )
+    pattern_counts = pattern_counts.sort_values(
+        by="Companies",
+        ascending=False,
     )
 
     bar_figure = px.bar(
@@ -490,9 +385,7 @@ def render():
         },
     )
 
-    bar_figure.update_traces(
-        textposition="outside"
-    )
+    bar_figure.update_traces(textposition="outside")
 
     bar_figure.update_layout(
         height=500,

@@ -5,7 +5,6 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DATABASE_PATH = PROJECT_ROOT / "data" / "nifty100.db"
 
@@ -76,29 +75,16 @@ def load_sector_data():
     connection.close()
 
     dataframe["company_id"] = (
-        dataframe["company_id"]
-        .astype(str)
-        .str.strip()
-        .str.upper()
+        dataframe["company_id"].astype(str).str.strip().str.upper()
     )
 
     dataframe["company_name"] = (
-        dataframe["company_name"]
-        .fillna(dataframe["company_id"])
-        .astype(str)
+        dataframe["company_name"].fillna(dataframe["company_id"]).astype(str)
     )
 
-    dataframe["broad_sector"] = (
-        dataframe["broad_sector"]
-        .fillna("Unknown")
-        .astype(str)
-    )
+    dataframe["broad_sector"] = dataframe["broad_sector"].fillna("Unknown").astype(str)
 
-    dataframe["sub_sector"] = (
-        dataframe["sub_sector"]
-        .fillna("Unknown")
-        .astype(str)
-    )
+    dataframe["sub_sector"] = dataframe["sub_sector"].fillna("Unknown").astype(str)
 
     numeric_columns = [
         "revenue",
@@ -142,27 +128,17 @@ def render():
 
     st.subheader("Sector Selection")
 
-    sectors = sorted(
-        dataframe["broad_sector"]
-        .dropna()
-        .unique()
-        .tolist()
-    )
+    sectors = sorted(dataframe["broad_sector"].dropna().unique().tolist())
 
     selected_sector = st.selectbox(
         "Select Sector",
         sectors,
     )
 
-    sector_df = dataframe[
-        dataframe["broad_sector"]
-        == selected_sector
-    ].copy()
+    sector_df = dataframe[dataframe["broad_sector"] == selected_sector].copy()
 
     if sector_df.empty:
-        st.warning(
-            "No companies are available for the selected sector."
-        )
+        st.warning("No companies are available for the selected sector.")
         return
 
     # -------------------------------------------------
@@ -171,26 +147,13 @@ def render():
 
     company_count = len(sector_df)
 
-    median_revenue = (
-        sector_df["revenue"]
-        .median()
-    )
+    median_revenue = sector_df["revenue"].median()
 
-    median_roe = (
-        sector_df["return_on_equity_pct"]
-        .median()
-    )
+    median_roe = sector_df["return_on_equity_pct"].median()
 
-    median_market_cap = (
-        sector_df["market_cap_crore"]
-        .median()
-    )
+    median_market_cap = sector_df["market_cap_crore"].median()
 
-    latest_year = (
-        sector_df["year"]
-        .dropna()
-        .max()
-    )
+    latest_year = sector_df["year"].dropna().max()
 
     col1, col2, col3, col4 = st.columns(4)
 
@@ -201,29 +164,17 @@ def render():
 
     col2.metric(
         "Median Revenue",
-        (
-            f"₹{median_revenue:,.0f} Cr"
-            if pd.notna(median_revenue)
-            else "N/A"
-        ),
+        (f"₹{median_revenue:,.0f} Cr" if pd.notna(median_revenue) else "N/A"),
     )
 
     col3.metric(
         "Median ROE",
-        (
-            f"{median_roe:.2f}%"
-            if pd.notna(median_roe)
-            else "N/A"
-        ),
+        (f"{median_roe:.2f}%" if pd.notna(median_roe) else "N/A"),
     )
 
     col4.metric(
         "Median Market Cap",
-        (
-            f"₹{median_market_cap:,.0f} Cr"
-            if pd.notna(median_market_cap)
-            else "N/A"
-        ),
+        (f"₹{median_market_cap:,.0f} Cr" if pd.notna(median_market_cap) else "N/A"),
     )
 
     st.divider()
@@ -232,13 +183,10 @@ def render():
     # Bubble Chart
     # -------------------------------------------------
 
-    st.subheader(
-        f"{selected_sector} — Company Positioning"
-    )
+    st.subheader(f"{selected_sector} — Company Positioning")
 
     st.caption(
-        "Bubble size represents market capitalisation. "
-        "Colour represents sub-sector."
+        "Bubble size represents market capitalisation. " "Colour represents sub-sector."
     )
 
     bubble_df = sector_df.dropna(
@@ -251,18 +199,12 @@ def render():
 
     if bubble_df.empty:
 
-        st.info(
-            "Insufficient data is available to create "
-            "the bubble chart."
-        )
+        st.info("Insufficient data is available to create " "the bubble chart.")
 
     else:
 
         # Avoid zero/negative bubble sizes.
-        bubble_df["bubble_size"] = (
-            bubble_df["market_cap_crore"]
-            .clip(lower=1)
-        )
+        bubble_df["bubble_size"] = bubble_df["market_cap_crore"].clip(lower=1)
 
         figure = px.scatter(
             bubble_df,
@@ -306,9 +248,7 @@ def render():
     # Sector Median KPI Bar Chart
     # -------------------------------------------------
 
-    st.subheader(
-        f"{selected_sector} — Median Financial KPIs"
-    )
+    st.subheader(f"{selected_sector} — Median Financial KPIs")
 
     median_kpis = pd.DataFrame(
         {
@@ -320,39 +260,20 @@ def render():
                 "Composite Score",
             ],
             "Median Value": [
-                sector_df[
-                    "return_on_equity_pct"
-                ].median(),
-
-                sector_df[
-                    "return_on_capital_employed_pct"
-                ].median(),
-
-                sector_df[
-                    "operating_profit_margin_pct"
-                ].median(),
-
-                sector_df[
-                    "net_profit_margin_pct"
-                ].median(),
-
-                sector_df[
-                    "composite_quality_score"
-                ].median(),
+                sector_df["return_on_equity_pct"].median(),
+                sector_df["return_on_capital_employed_pct"].median(),
+                sector_df["operating_profit_margin_pct"].median(),
+                sector_df["net_profit_margin_pct"].median(),
+                sector_df["composite_quality_score"].median(),
             ],
         }
     )
 
-    median_kpis = median_kpis.dropna(
-        subset=["Median Value"]
-    )
+    median_kpis = median_kpis.dropna(subset=["Median Value"])
 
     if median_kpis.empty:
 
-        st.info(
-            "Insufficient data is available to calculate "
-            "sector median KPIs."
-        )
+        st.info("Insufficient data is available to calculate " "sector median KPIs.")
 
     else:
 
@@ -385,9 +306,7 @@ def render():
 
     st.divider()
 
-    st.subheader(
-        f"{selected_sector} — Company Data"
-    )
+    st.subheader(f"{selected_sector} — Company Data")
 
     display_columns = [
         "company_id",
@@ -403,9 +322,7 @@ def render():
     ]
 
     available_columns = [
-        column
-        for column in display_columns
-        if column in sector_df.columns
+        column for column in display_columns if column in sector_df.columns
     ]
 
     display_df = (

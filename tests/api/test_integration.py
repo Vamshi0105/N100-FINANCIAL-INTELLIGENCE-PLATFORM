@@ -4,7 +4,6 @@ from fastapi.testclient import TestClient
 from src.api.main import app
 from src.screener.engine import run_screener
 
-
 client = TestClient(app)
 
 
@@ -28,9 +27,7 @@ def test_dashboard_screener_matches_api_screener():
 
     # API uses "ticker" as the company identifier.
     api_ids = {
-        company["ticker"]
-        for company in api_data["companies"]
-        if company.get("ticker")
+        company["ticker"] for company in api_data["companies"] if company.get("ticker")
     }
 
     # Streamlit dashboard uses the same screener engine.
@@ -43,11 +40,7 @@ def test_dashboard_screener_matches_api_screener():
     assert isinstance(dashboard_results, pd.DataFrame)
     assert "company_id" in dashboard_results.columns
 
-    dashboard_ids = set(
-        dashboard_results["company_id"]
-        .dropna()
-        .astype(str)
-    )
+    dashboard_ids = set(dashboard_results["company_id"].dropna().astype(str))
 
     # Both paths must return the same companies.
     assert dashboard_ids == api_ids

@@ -8,20 +8,11 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
-DEFAULT_DB_PATH = (
-    PROJECT_ROOT
-    / "data"
-    / "nifty100.db"
-)
+DEFAULT_DB_PATH = PROJECT_ROOT / "data" / "nifty100.db"
 
-DEFAULT_OUTPUT_PATH = (
-    PROJECT_ROOT
-    / "output"
-    / "peer_comparison.xlsx"
-)
+DEFAULT_OUTPUT_PATH = PROJECT_ROOT / "output" / "peer_comparison.xlsx"
 
 
 # -------------------------------------------------
@@ -130,6 +121,7 @@ BOLD_FONT = Font(
 # Database helpers
 # -------------------------------------------------
 
+
 def get_latest_annual_year(
     connection: sqlite3.Connection,
 ) -> str:
@@ -140,18 +132,14 @@ def get_latest_annual_year(
         2024-03
     """
 
-    row = connection.execute(
-        """
+    row = connection.execute("""
         SELECT MAX(year)
         FROM financial_ratios
         WHERE year LIKE '%-03'
-        """
-    ).fetchone()
+        """).fetchone()
 
     if row is None or row[0] is None:
-        raise ValueError(
-            "No annual financial ratio data found."
-        )
+        raise ValueError("No annual financial ratio data found.")
 
     return str(row[0])
 
@@ -182,18 +170,9 @@ def load_peer_groups(
     if df.empty:
         return df
 
-    df["company_id"] = (
-        df["company_id"]
-        .astype(str)
-        .str.strip()
-        .str.upper()
-    )
+    df["company_id"] = df["company_id"].astype(str).str.strip().str.upper()
 
-    df["is_benchmark"] = (
-        df["is_benchmark"]
-        .fillna(0)
-        .astype(int)
-    )
+    df["is_benchmark"] = df["is_benchmark"].fillna(0).astype(int)
 
     return df
 
@@ -220,12 +199,7 @@ def load_company_names(
     if df.empty:
         return df
 
-    df["company_id"] = (
-        df["company_id"]
-        .astype(str)
-        .str.strip()
-        .str.upper()
-    )
+    df["company_id"] = df["company_id"].astype(str).str.strip().str.upper()
 
     return df
 
@@ -239,10 +213,7 @@ def load_financial_metrics(
     for the selected annual year.
     """
 
-    metric_columns = ",\n".join(
-        metric["db_column"]
-        for metric in METRICS
-    )
+    metric_columns = ",\n".join(metric["db_column"] for metric in METRICS)
 
     query = f"""
         SELECT
@@ -262,12 +233,7 @@ def load_financial_metrics(
     if df.empty:
         return df
 
-    df["company_id"] = (
-        df["company_id"]
-        .astype(str)
-        .str.strip()
-        .str.upper()
-    )
+    df["company_id"] = df["company_id"].astype(str).str.strip().str.upper()
 
     return df
 
@@ -301,12 +267,7 @@ def load_peer_percentiles(
     if df.empty:
         return df
 
-    df["company_id"] = (
-        df["company_id"]
-        .astype(str)
-        .str.strip()
-        .str.upper()
-    )
+    df["company_id"] = df["company_id"].astype(str).str.strip().str.upper()
 
     return df
 
@@ -314,6 +275,7 @@ def load_peer_percentiles(
 # -------------------------------------------------
 # Data preparation
 # -------------------------------------------------
+
 
 def build_peer_group_dataframe(
     peer_group_name: str,
@@ -328,8 +290,7 @@ def build_peer_group_dataframe(
     """
 
     group_df = peer_groups_df[
-        peer_groups_df["peer_group_name"]
-        == peer_group_name
+        peer_groups_df["peer_group_name"] == peer_group_name
     ].copy()
 
     # Add company names.
@@ -355,41 +316,22 @@ def build_peer_group_dataframe(
 
     for metric in METRICS:
 
-        metric_label = metric[
-            "percentile_metric"
-        ]
+        metric_label = metric["percentile_metric"]
 
-        percentile_column = (
-            f"{metric['label']} Percentile"
-        )
+        percentile_column = f"{metric['label']} Percentile"
 
-        metric_percentiles = (
-            percentiles_df[
-                (
-                    percentiles_df["peer_group_name"]
-                    == peer_group_name
-                )
-                &
-                (
-                    percentiles_df["metric"]
-                    == metric_label
-                )
-            ][
-                [
-                    "company_id",
-                    "percentile_rank",
-                ]
+        metric_percentiles = percentiles_df[
+            (percentiles_df["peer_group_name"] == peer_group_name)
+            & (percentiles_df["metric"] == metric_label)
+        ][
+            [
+                "company_id",
+                "percentile_rank",
             ]
-            .copy()
-        )
+        ].copy()
 
-        metric_percentiles = (
-            metric_percentiles.rename(
-                columns={
-                    "percentile_rank":
-                        percentile_column
-                }
-            )
+        metric_percentiles = metric_percentiles.rename(
+            columns={"percentile_rank": percentile_column}
         )
 
         group_df = group_df.merge(
@@ -407,13 +349,9 @@ def build_peer_group_dataframe(
 
     for metric in METRICS:
 
-        rename_map[
-            metric["db_column"]
-        ] = metric["label"]
+        rename_map[metric["db_column"]] = metric["label"]
 
-    group_df = group_df.rename(
-        columns=rename_map
-    )
+    group_df = group_df.rename(columns=rename_map)
 
     # -------------------------------------------------
     # Final column order.
@@ -427,21 +365,11 @@ def build_peer_group_dataframe(
 
     for metric in METRICS:
 
-        columns.append(
-            metric["label"]
-        )
+        columns.append(metric["label"])
 
-        columns.append(
-            f"{metric['label']} Percentile"
-        )
+        columns.append(f"{metric['label']} Percentile")
 
-    group_df = group_df[
-        [
-            column
-            for column in columns
-            if column in group_df.columns
-        ]
-    ]
+    group_df = group_df[[column for column in columns if column in group_df.columns]]
 
     # Put benchmark company first.
     group_df = group_df.sort_values(
@@ -455,14 +383,13 @@ def build_peer_group_dataframe(
         ],
     )
 
-    return group_df.reset_index(
-        drop=True
-    )
+    return group_df.reset_index(drop=True)
 
 
 # -------------------------------------------------
 # Excel formatting
 # -------------------------------------------------
+
 
 def write_peer_group_sheet(
     workbook: Workbook,
@@ -476,9 +403,7 @@ def write_peer_group_sheet(
 
     sheet_name = peer_group_name[:31]
 
-    worksheet = workbook.create_sheet(
-        title=sheet_name
-    )
+    worksheet = workbook.create_sheet(title=sheet_name)
 
     # -------------------------------------------------
     # Title
@@ -496,10 +421,7 @@ def write_peer_group_sheet(
         column=1,
     )
 
-    title_cell.value = (
-        f"{peer_group_name} "
-        f"Peer Comparison — {year}"
-    )
+    title_cell.value = f"{peer_group_name} " f"Peer Comparison — {year}"
 
     title_cell.font = Font(
         bold=True,
@@ -509,19 +431,13 @@ def write_peer_group_sheet(
 
     title_cell.fill = HEADER_FILL
 
-    title_cell.alignment = Alignment(
-        horizontal="center"
-    )
+    title_cell.alignment = Alignment(horizontal="center")
 
     # -------------------------------------------------
     # Header row
     # -------------------------------------------------
 
-    excel_columns = [
-        column
-        for column in group_df.columns
-        if column != "is_benchmark"
-    ]
+    excel_columns = [column for column in group_df.columns if column != "is_benchmark"]
 
     header_row = 3
 
@@ -552,37 +468,21 @@ def write_peer_group_sheet(
 
     data_start_row = header_row + 1
 
-    percentile_columns = {
-        f"{metric['label']} Percentile"
-        for metric in METRICS
-    }
+    percentile_columns = {f"{metric['label']} Percentile" for metric in METRICS}
 
-    metric_columns = {
-        metric["label"]
-        for metric in METRICS
-    }
+    metric_columns = {metric["label"] for metric in METRICS}
 
-    for dataframe_index, dataframe_row in (
-        group_df.iterrows()
-    ):
+    for dataframe_index, dataframe_row in group_df.iterrows():
 
-        excel_row = (
-            data_start_row
-            + dataframe_index
-        )
+        excel_row = data_start_row + dataframe_index
 
-        is_benchmark = (
-            dataframe_row["is_benchmark"]
-            == 1
-        )
+        is_benchmark = dataframe_row["is_benchmark"] == 1
 
         excel_column = 1
 
         for column_name in excel_columns:
 
-            value = dataframe_row[
-                column_name
-            ]
+            value = dataframe_row[column_name]
 
             if pd.isna(value):
                 value = None
@@ -593,9 +493,7 @@ def write_peer_group_sheet(
                 value=value,
             )
 
-            cell.alignment = Alignment(
-                vertical="center"
-            )
+            cell.alignment = Alignment(vertical="center")
 
             # -------------------------------------------------
             # Benchmark highlighting.
@@ -605,11 +503,7 @@ def write_peer_group_sheet(
             # visually useful.
             # -------------------------------------------------
 
-            if (
-                is_benchmark
-                and column_name
-                not in percentile_columns
-            ):
+            if is_benchmark and column_name not in percentile_columns:
 
                 cell.fill = BENCHMARK_FILL
 
@@ -619,15 +513,9 @@ def write_peer_group_sheet(
             # Percentile colour coding.
             # -------------------------------------------------
 
-            if (
-                column_name
-                in percentile_columns
-                and value is not None
-            ):
+            if column_name in percentile_columns and value is not None:
 
-                percentile_value = float(
-                    value
-                )
+                percentile_value = float(value)
 
                 if percentile_value >= 0.75:
 
@@ -641,9 +529,7 @@ def write_peer_group_sheet(
 
                     cell.fill = YELLOW_FILL
 
-                cell.number_format = (
-                    "0.0%"
-                )
+                cell.number_format = "0.0%"
 
             # -------------------------------------------------
             # Metric number formatting.
@@ -651,26 +537,17 @@ def write_peer_group_sheet(
 
             if column_name in metric_columns:
 
-                cell.number_format = (
-                    "0.00"
-                )
+                cell.number_format = "0.00"
 
             excel_column += 1
 
-    data_end_row = (
-        data_start_row
-        + len(group_df)
-        - 1
-    )
+    data_end_row = data_start_row + len(group_df) - 1
 
     # -------------------------------------------------
     # Median summary row.
     # -------------------------------------------------
 
-    summary_row = (
-        data_end_row
-        + 2
-    )
+    summary_row = data_end_row + 2
 
     worksheet.cell(
         row=summary_row,
@@ -708,11 +585,7 @@ def write_peer_group_sheet(
         # raw financial metric columns.
         if column_name in metric_columns:
 
-            column_letter = (
-                get_column_letter(
-                    column_number
-                )
-            )
+            column_letter = get_column_letter(column_number)
 
             cell.value = (
                 f"=MEDIAN("
@@ -723,9 +596,7 @@ def write_peer_group_sheet(
                 f")"
             )
 
-            cell.number_format = (
-                "0.00"
-            )
+            cell.number_format = "0.00"
 
     # -------------------------------------------------
     # Freeze panes and filters.
@@ -734,9 +605,7 @@ def write_peer_group_sheet(
     worksheet.freeze_panes = "C4"
 
     worksheet.auto_filter.ref = (
-        f"A{header_row}:"
-        f"{get_column_letter(len(excel_columns))}"
-        f"{data_end_row}"
+        f"A{header_row}:" f"{get_column_letter(len(excel_columns))}" f"{data_end_row}"
     )
 
     # -------------------------------------------------
@@ -748,11 +617,7 @@ def write_peer_group_sheet(
         start=1,
     ):
 
-        column_letter = (
-            get_column_letter(
-                column_number
-            )
-        )
+        column_letter = get_column_letter(column_number)
 
         if column_name == "company_id":
 
@@ -770,23 +635,18 @@ def write_peer_group_sheet(
 
             width = 18
 
-        worksheet.column_dimensions[
-            column_letter
-        ].width = width
+        worksheet.column_dimensions[column_letter].width = width
 
     # Row heights.
-    worksheet.row_dimensions[
-        header_row
-    ].height = 32
+    worksheet.row_dimensions[header_row].height = 32
 
-    worksheet.row_dimensions[
-        1
-    ].height = 24
+    worksheet.row_dimensions[1].height = 24
 
 
 # -------------------------------------------------
 # Main workflow
 # -------------------------------------------------
+
 
 def generate_peer_comparison_report(
     db_path: str | Path = DEFAULT_DB_PATH,
@@ -796,120 +656,74 @@ def generate_peer_comparison_report(
     Generate the Day 20 peer comparison Excel report.
     """
 
-    db_path = Path(
-        db_path
-    )
+    db_path = Path(db_path)
 
-    output_path = Path(
-        output_path
-    )
+    output_path = Path(output_path)
 
     output_path.parent.mkdir(
         parents=True,
         exist_ok=True,
     )
 
-    with sqlite3.connect(
-        db_path
-    ) as connection:
+    with sqlite3.connect(db_path) as connection:
 
-        year = get_latest_annual_year(
-            connection
+        year = get_latest_annual_year(connection)
+
+        peer_groups_df = load_peer_groups(connection)
+
+        company_names_df = load_company_names(connection)
+
+        financial_df = load_financial_metrics(
+            connection,
+            year,
         )
 
-        peer_groups_df = (
-            load_peer_groups(
-                connection
-            )
-        )
-
-        company_names_df = (
-            load_company_names(
-                connection
-            )
-        )
-
-        financial_df = (
-            load_financial_metrics(
-                connection,
-                year,
-            )
-        )
-
-        percentiles_df = (
-            load_peer_percentiles(
-                connection,
-                year,
-            )
+        percentiles_df = load_peer_percentiles(
+            connection,
+            year,
         )
 
     if peer_groups_df.empty:
 
-        raise ValueError(
-            "No peer groups found."
-        )
+        raise ValueError("No peer groups found.")
 
     if percentiles_df.empty:
 
-        raise ValueError(
-            "No peer percentile rankings found. "
-            "Run Day 18 first."
-        )
+        raise ValueError("No peer percentile rankings found. " "Run Day 18 first.")
 
     workbook = Workbook()
 
     # Remove default sheet.
     default_sheet = workbook.active
 
-    workbook.remove(
-        default_sheet
-    )
+    workbook.remove(default_sheet)
 
     peer_group_names = sorted(
-        peer_groups_df[
-            "peer_group_name"
-        ]
-        .dropna()
-        .unique()
-        .tolist()
+        peer_groups_df["peer_group_name"].dropna().unique().tolist()
     )
 
     for peer_group_name in peer_group_names:
 
-        group_df = (
-            build_peer_group_dataframe(
-                peer_group_name=
-                    peer_group_name,
-                peer_groups_df=
-                    peer_groups_df,
-                company_names_df=
-                    company_names_df,
-                financial_df=
-                    financial_df,
-                percentiles_df=
-                    percentiles_df,
-            )
+        group_df = build_peer_group_dataframe(
+            peer_group_name=peer_group_name,
+            peer_groups_df=peer_groups_df,
+            company_names_df=company_names_df,
+            financial_df=financial_df,
+            percentiles_df=percentiles_df,
         )
 
         write_peer_group_sheet(
             workbook=workbook,
-            peer_group_name=
-                peer_group_name,
+            peer_group_name=peer_group_name,
             group_df=group_df,
             year=year,
         )
 
-    workbook.save(
-        output_path
-    )
+    workbook.save(output_path)
 
-    print(
-        "Peer comparison report created:"
-    )
+    print("Peer comparison report created:")
 
-    print(
-        output_path
-    )
+    print(output_path)
 
     print()
 

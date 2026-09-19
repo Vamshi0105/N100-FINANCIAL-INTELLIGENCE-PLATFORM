@@ -10,7 +10,6 @@ from fastapi import APIRouter
 
 from src.api.config import get_db_connection
 
-
 router = APIRouter()
 
 
@@ -39,11 +38,7 @@ def _percentile(values, percentile):
     if not values:
         return None
 
-    values = sorted(
-        float(value)
-        for value in values
-        if value is not None
-    )
+    values = sorted(float(value) for value in values if value is not None)
 
     if not values:
         return None
@@ -61,13 +56,8 @@ def _percentile(values, percentile):
 
     fraction = position - lower_index
 
-    result = (
-        values[lower_index]
-        + fraction
-        * (
-            values[upper_index]
-            - values[lower_index]
-        )
+    result = values[lower_index] + fraction * (
+        values[upper_index] - values[lower_index]
     )
 
     return round(result, 4)
@@ -81,8 +71,7 @@ def _latest_metric_values(
     Return the latest available non-null value for each company.
     """
 
-    rows = connection.execute(
-        f"""
+    rows = connection.execute(f"""
         SELECT
             fr.company_id,
             fr.{metric_column} AS value
@@ -94,14 +83,9 @@ def _latest_metric_values(
               WHERE fr2.company_id = fr.company_id
                 AND fr2.{metric_column} IS NOT NULL
           )
-        """
-    ).fetchall()
+        """).fetchall()
 
-    return [
-        row["value"]
-        for row in rows
-        if row["value"] is not None
-    ]
+    return [row["value"] for row in rows if row["value"] is not None]
 
 
 @router.get("/portfolio/stats")

@@ -5,7 +5,6 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DATABASE_PATH = PROJECT_ROOT / "data" / "nifty100.db"
 
@@ -124,14 +123,9 @@ def calculate_yoy_change(values):
 
         else:
 
-            yoy_change = (
-                (value - previous_value)
-                / abs(previous_value)
-            ) * 100
+            yoy_change = ((value - previous_value) / abs(previous_value)) * 100
 
-            changes.append(
-                round(yoy_change, 1)
-            )
+            changes.append(round(yoy_change, 1))
 
         previous_value = value
 
@@ -158,18 +152,14 @@ def create_trend_chart(
         if column not in dataframe.columns:
             continue
 
-        metric_dataframe = dataframe[
-            ["year", column]
-        ].copy()
+        metric_dataframe = dataframe[["year", column]].copy()
 
         metric_dataframe = metric_dataframe.dropna()
 
         if metric_dataframe.empty:
             continue
 
-        yoy_changes = calculate_yoy_change(
-            metric_dataframe[column].tolist()
-        )
+        yoy_changes = calculate_yoy_change(metric_dataframe[column].tolist())
 
         text_labels = []
 
@@ -179,9 +169,7 @@ def create_trend_chart(
                 text_labels.append("")
 
             else:
-                text_labels.append(
-                    f"{change:+.1f}%"
-                )
+                text_labels.append(f"{change:+.1f}%")
 
         figure.add_trace(
             go.Scatter(
@@ -232,10 +220,7 @@ def render():
 
     st.title("📈 Financial Trends")
 
-    st.caption(
-        "Analyse long-term financial performance "
-        "and year-over-year changes."
-    )
+    st.caption("Analyse long-term financial performance " "and year-over-year changes.")
 
     # -------------------------------------------------
     # LOAD COMPANIES
@@ -245,9 +230,7 @@ def render():
 
     if companies_dataframe.empty:
 
-        st.error(
-            "No companies were found in the database."
-        )
+        st.error("No companies were found in the database.")
 
         return
 
@@ -257,15 +240,10 @@ def render():
 
     st.subheader("Company Selection")
 
-    company_options = (
-        companies_dataframe
-        .apply(
-            lambda row:
-            f"{row['company_id']} — {row['company_name']}",
-            axis=1,
-        )
-        .tolist()
-    )
+    company_options = companies_dataframe.apply(
+        lambda row: f"{row['company_id']} — {row['company_name']}",
+        axis=1,
+    ).tolist()
 
     selected_company_display = st.selectbox(
         "Search and select a company",
@@ -273,10 +251,7 @@ def render():
         index=0,
     )
 
-    selected_company_id = (
-        selected_company_display
-        .split(" — ")[0]
-    )
+    selected_company_id = selected_company_display.split(" — ")[0]
 
     # -------------------------------------------------
     # METRIC SELECTOR
@@ -296,9 +271,7 @@ def render():
 
     if not selected_metrics:
 
-        st.warning(
-            "Please select at least one metric."
-        )
+        st.warning("Please select at least one metric.")
 
         return
 
@@ -306,15 +279,12 @@ def render():
     # LOAD COMPANY DATA
     # -------------------------------------------------
 
-    trends_dataframe = load_company_trends(
-        selected_company_id
-    )
+    trends_dataframe = load_company_trends(selected_company_id)
 
     if trends_dataframe.empty:
 
         st.warning(
-            f"No annual financial trend data found "
-            f"for {selected_company_id}."
+            f"No annual financial trend data found " f"for {selected_company_id}."
         )
 
         return
@@ -324,32 +294,20 @@ def render():
     # -------------------------------------------------
 
     trends_dataframe = (
-        trends_dataframe
-        .sort_values("year")
-        .tail(10)
-        .reset_index(drop=True)
+        trends_dataframe.sort_values("year").tail(10).reset_index(drop=True)
     )
 
     # -------------------------------------------------
     # COMPANY SUMMARY
     # -------------------------------------------------
 
-    selected_company_name = (
-        companies_dataframe[
-            companies_dataframe["company_id"]
-            .astype(str)
-            == selected_company_id
-        ]["company_name"]
-        .iloc[0]
-    )
+    selected_company_name = companies_dataframe[
+        companies_dataframe["company_id"].astype(str) == selected_company_id
+    ]["company_name"].iloc[0]
 
-    latest_year = trends_dataframe[
-        "year"
-    ].iloc[-1]
+    latest_year = trends_dataframe["year"].iloc[-1]
 
-    oldest_year = trends_dataframe[
-        "year"
-    ].iloc[0]
+    oldest_year = trends_dataframe["year"].iloc[0]
 
     col1, col2, col3 = st.columns(3)
 
@@ -374,9 +332,7 @@ def render():
     # TREND CHART
     # -------------------------------------------------
 
-    st.subheader(
-        f"{selected_company_name} — Financial Trends"
-    )
+    st.subheader(f"{selected_company_name} — Financial Trends")
 
     trend_chart = create_trend_chart(
         trends_dataframe,
@@ -405,9 +361,7 @@ def render():
         if column in trends_dataframe.columns:
             display_columns.append(column)
 
-    display_dataframe = trends_dataframe[
-        display_columns
-    ].copy()
+    display_dataframe = trends_dataframe[display_columns].copy()
 
     rename_columns = {
         "year": "Financial Year",
@@ -419,9 +373,7 @@ def render():
 
         rename_columns[column] = metric_name
 
-    display_dataframe = display_dataframe.rename(
-        columns=rename_columns
-    )
+    display_dataframe = display_dataframe.rename(columns=rename_columns)
 
     st.dataframe(
         display_dataframe,

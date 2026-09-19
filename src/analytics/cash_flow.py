@@ -191,29 +191,11 @@ def generate_capital_allocation_csv(
             cfi = record["cfi"]
             cff = record["cff"]
 
-            cfo_sign = (
-                "+"
-                if cfo > 0
-                else "-"
-                if cfo < 0
-                else "0"
-            )
+            cfo_sign = "+" if cfo > 0 else "-" if cfo < 0 else "0"
 
-            cfi_sign = (
-                "+"
-                if cfi > 0
-                else "-"
-                if cfi < 0
-                else "0"
-            )
+            cfi_sign = "+" if cfi > 0 else "-" if cfi < 0 else "0"
 
-            cff_sign = (
-                "+"
-                if cff > 0
-                else "-"
-                if cff < 0
-                else "0"
-            )
+            cff_sign = "+" if cff > 0 else "-" if cff < 0 else "0"
 
             pattern_label = capital_allocation_pattern(
                 cfo,

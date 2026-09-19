@@ -4,7 +4,6 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-
 DATABASE_PATH = Path("data/nifty100.db")
 
 
@@ -30,6 +29,7 @@ def _query_database(query, params=None):
 # ============================================================
 # DAY 22 — SHARED DATABASE FUNCTIONS
 # ============================================================
+
 
 @st.cache_data(ttl=600)
 def get_companies():
@@ -214,6 +214,7 @@ def get_valuation(ticker):
 # DAY 23 — HOME SCREEN FUNCTIONS
 # ============================================================
 
+
 @st.cache_data(ttl=600)
 def get_available_years():
     """
@@ -274,26 +275,15 @@ def get_home_metrics(year=None):
         }
 
     return {
-        "average_roe": float(
-            dataframe["return_on_equity_pct"].mean()
-        ),
-        "median_pe": float(
-            dataframe["pe_ratio"].median()
-        ),
-        "median_debt_to_equity": float(
-            dataframe["debt_to_equity"].median()
-        ),
-        "total_companies": int(
-            dataframe["company_id"].nunique()
-        ),
-        "median_revenue_cagr_5yr": float(
-            dataframe["revenue_cagr_5yr"].median()
-        ),
+        "average_roe": float(dataframe["return_on_equity_pct"].mean()),
+        "median_pe": float(dataframe["pe_ratio"].median()),
+        "median_debt_to_equity": float(dataframe["debt_to_equity"].median()),
+        "total_companies": int(dataframe["company_id"].nunique()),
+        "median_revenue_cagr_5yr": float(dataframe["revenue_cagr_5yr"].median()),
         "debt_free_companies": int(
             dataframe.loc[
-                dataframe["debt_to_equity"].fillna(float("inf"))
-                <= 0.000001,
-                "company_id"
+                dataframe["debt_to_equity"].fillna(float("inf")) <= 0.000001,
+                "company_id",
             ].nunique()
         ),
     }
@@ -360,12 +350,15 @@ def get_top_companies(year):
     return dataframe.sort_values(
         "composite_quality_score",
         ascending=False,
-    ).head(5)[columns]
+    ).head(
+        5
+    )[columns]
 
 
 # ============================================================
 # DAY 23 — COMPANY PROFILE FUNCTIONS
 # ============================================================
+
 
 @st.cache_data(ttl=600)
 def get_company_profile(ticker):
@@ -550,9 +543,12 @@ def get_pros_cons(ticker):
         query,
         params=(ticker,),
     )
+
+
 # ============================================================
 # DAY 23 — COMPANY PROFILE FUNCTIONS
 # ============================================================
+
 
 @st.cache_data(ttl=600)
 def get_company_profile(ticker):
@@ -716,6 +712,8 @@ def get_company_pros_cons(ticker):
         "pros": pros,
         "cons": cons,
     }
+
+
 @st.cache_data(ttl=600)
 def get_company_profile(ticker):
     """

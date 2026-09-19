@@ -9,19 +9,9 @@ import re
 import pandas as pd
 import numpy as np
 
-from .normaliser import (
-    normalize_ticker,
-    normalize_year
-)
+from .normaliser import normalize_ticker, normalize_year
 
-
-BANK_TERMS = {
-    "Financials",
-    "Financial Services",
-    "Banks",
-    "Banking",
-    "Finance"
-}
+BANK_TERMS = {"Financials", "Financial Services", "Banks", "Banking", "Finance"}
 
 
 def create_issue(
@@ -32,7 +22,7 @@ def create_issue(
     year=None,
     field=None,
     message="",
-    raw_value=None
+    raw_value=None,
 ):
 
     return {
@@ -43,7 +33,7 @@ def create_issue(
         "year": year,
         "field": field,
         "issue": message,
-        "raw_value": raw_value
+        "raw_value": raw_value,
     }
 
 
@@ -53,18 +43,13 @@ def validate_all(frames):
 
     companies = frames["companies"].copy()
 
-    company_ids = (
-        companies["id"]
-        .map(normalize_ticker)
-    )
+    company_ids = companies["id"].map(normalize_ticker)
 
     # ---------------------------------------------------------
     # DQ-01 Company Primary Key Uniqueness
     # ---------------------------------------------------------
 
-    duplicates = company_ids[
-        company_ids.duplicated(keep=False)
-    ]
+    duplicates = company_ids[company_ids.duplicated(keep=False)]
 
     for company_id in duplicates.unique():
 
@@ -76,7 +61,7 @@ def validate_all(frames):
                 company_id=company_id,
                 field="id",
                 message="Duplicate company primary key",
-                raw_value=company_id
+                raw_value=company_id,
             )
         )
 
@@ -86,33 +71,18 @@ def validate_all(frames):
     # DQ-02 / DQ-03 / DQ-07 / DQ-08
     # ---------------------------------------------------------
 
-    annual_tables = [
-        "profitandloss",
-        "balancesheet",
-        "cashflow"
-    ]
+    annual_tables = ["profitandloss", "balancesheet", "cashflow"]
 
     for table_name in annual_tables:
 
         df = frames[table_name].copy()
 
-        df["company_id"] = (
-            df["company_id"]
-            .map(normalize_ticker)
-        )
+        df["company_id"] = df["company_id"].map(normalize_ticker)
 
         # DQ-02
-        duplicate_groups = (
-            df.groupby(
-                ["company_id", "year"],
-                dropna=False
-            )
-            .size()
-        )
+        duplicate_groups = df.groupby(["company_id", "year"], dropna=False).size()
 
-        duplicate_groups = duplicate_groups[
-            duplicate_groups > 1
-        ]
+        duplicate_groups = duplicate_groups[duplicate_groups > 1]
 
         for key, count in duplicate_groups.items():
 
@@ -127,16 +97,14 @@ def validate_all(frames):
                     year,
                     "company_id,year",
                     "Duplicate annual key",
-                    int(count)
+                    int(count),
                 )
             )
 
         # Row-level validation
         for _, row in df.iterrows():
 
-            company_id = normalize_ticker(
-                row["company_id"]
-            )
+            company_id = normalize_ticker(row["company_id"])
 
             raw_year = row.get("year", "")
 
@@ -152,7 +120,7 @@ def validate_all(frames):
                         raw_year,
                         "company_id",
                         "Orphan company_id",
-                        company_id
+                        company_id,
                     )
                 )
 
@@ -172,7 +140,7 @@ def validate_all(frames):
                         raw_year,
                         "year",
                         "Unparseable year",
-                        raw_year
+                        raw_year,
                     )
                 )
 
@@ -188,7 +156,7 @@ def validate_all(frames):
                         raw_year,
                         "company_id",
                         "Ticker length outside 2-12 characters",
-                        company_id
+                        company_id,
                     )
                 )
 
@@ -198,28 +166,13 @@ def validate_all(frames):
 
     bs = frames["balancesheet"].copy()
 
-    if {
-        "total_assets",
-        "total_liabilities"
-    }.issubset(bs.columns):
+    if {"total_assets", "total_liabilities"}.issubset(bs.columns):
 
-        denominator = (
-            bs["total_assets"]
-            .replace(0, np.nan)
-        )
+        denominator = bs["total_assets"].replace(0, np.nan)
 
-        difference = (
-            (
-                bs["total_assets"]
-                - bs["total_liabilities"]
-            )
-            .abs()
-            / denominator
-        )
+        difference = (bs["total_assets"] - bs["total_liabilities"]).abs() / denominator
 
-        for index in bs.index[
-            difference >= 0.01
-        ]:
+        for index in bs.index[difference >= 0.01]:
 
             row = bs.loc[index]
 
@@ -232,7 +185,7 @@ def validate_all(frames):
                     row.get("year"),
                     "total_assets",
                     "Assets/liabilities imbalance >= 1%",
-                    float(difference.loc[index])
+                    float(difference.loc[index]),
                 )
             )
 
@@ -242,31 +195,17 @@ def validate_all(frames):
 
     pl = frames["profitandloss"].copy()
 
-    required_columns = {
-        "sales",
-        "operating_profit",
-        "opm_percentage"
-    }
+    required_columns = {"sales", "operating_profit", "opm_percentage"}
 
     if required_columns.issubset(pl.columns):
 
         calculated_opm = np.where(
-            pl["sales"] != 0,
-            pl["operating_profit"]
-            / pl["sales"]
-            * 100,
-            np.nan
+            pl["sales"] != 0, pl["operating_profit"] / pl["sales"] * 100, np.nan
         )
 
-        difference = (
-            pl["opm_percentage"]
-            - calculated_opm
-        ).abs()
+        difference = (pl["opm_percentage"] - calculated_opm).abs()
 
-        for index in pl.index[
-            (difference >= 1)
-            & np.isfinite(difference)
-        ]:
+        for index in pl.index[(difference >= 1) & np.isfinite(difference)]:
 
             row = pl.loc[index]
 
@@ -279,7 +218,7 @@ def validate_all(frames):
                     row.get("year"),
                     "opm_percentage",
                     "Source OPM differs from computed OPM by >= 1 percentage point",
-                    float(difference.loc[index])
+                    float(difference.loc[index]),
                 )
             )
 
@@ -291,28 +230,20 @@ def validate_all(frames):
 
         sector_map = {}
 
-        if {
-            "company_id",
-            "broad_sector"
-        }.issubset(frames["sectors"].columns):
+        if {"company_id", "broad_sector"}.issubset(frames["sectors"].columns):
 
             sector_map = dict(
                 zip(
-                    frames["sectors"]["company_id"]
-                    .map(normalize_ticker),
-                    frames["sectors"]["broad_sector"]
+                    frames["sectors"]["company_id"].map(normalize_ticker),
+                    frames["sectors"]["broad_sector"],
                 )
             )
 
-        for index in pl.index[
-            pl["sales"] <= 0
-        ]:
+        for index in pl.index[pl["sales"] <= 0]:
 
             row = pl.loc[index]
 
-            company_id = normalize_ticker(
-                row.get("company_id")
-            )
+            company_id = normalize_ticker(row.get("company_id"))
 
             sector = sector_map.get(company_id)
 
@@ -327,7 +258,7 @@ def validate_all(frames):
                         row.get("year"),
                         "sales",
                         "Sales <= 0 for non-financial company",
-                        row.get("sales")
+                        row.get("sales"),
                     )
                 )
 
@@ -341,31 +272,20 @@ def validate_all(frames):
         "operating_activity",
         "investing_activity",
         "financing_activity",
-        "net_cash_flow"
+        "net_cash_flow",
     }
 
     if cashflow_columns.issubset(cf.columns):
 
         calculated_cashflow = (
-            cf[
-                [
-                    "operating_activity",
-                    "investing_activity",
-                    "financing_activity"
-                ]
-            ]
+            cf[["operating_activity", "investing_activity", "financing_activity"]]
             .fillna(0)
             .sum(axis=1)
         )
 
-        difference = (
-            cf["net_cash_flow"]
-            - calculated_cashflow
-        ).abs()
+        difference = (cf["net_cash_flow"] - calculated_cashflow).abs()
 
-        for index in cf.index[
-            difference > 10
-        ]:
+        for index in cf.index[difference > 10]:
 
             row = cf.loc[index]
 
@@ -378,7 +298,7 @@ def validate_all(frames):
                     row.get("year"),
                     "net_cash_flow",
                     "Net cash differs from CFO + CFI + CFF by > 10 Cr",
-                    float(difference.loc[index])
+                    float(difference.loc[index]),
                 )
             )
 
@@ -388,9 +308,7 @@ def validate_all(frames):
 
     if "fixed_assets" in bs.columns:
 
-        for index in bs.index[
-            bs["fixed_assets"] < 0
-        ]:
+        for index in bs.index[bs["fixed_assets"] < 0]:
 
             row = bs.loc[index]
 
@@ -403,7 +321,7 @@ def validate_all(frames):
                     row.get("year"),
                     "fixed_assets",
                     "Negative fixed assets",
-                    row.get("fixed_assets")
+                    row.get("fixed_assets"),
                 )
             )
 
@@ -413,11 +331,7 @@ def validate_all(frames):
 
     if "tax_percentage" in pl.columns:
 
-        mask = (
-            (pl["tax_percentage"] < 0)
-            |
-            (pl["tax_percentage"] > 60)
-        )
+        mask = (pl["tax_percentage"] < 0) | (pl["tax_percentage"] > 60)
 
         for index in pl.index[mask]:
 
@@ -432,7 +346,7 @@ def validate_all(frames):
                     row.get("year"),
                     "tax_percentage",
                     "Tax rate outside 0-60%",
-                    row.get("tax_percentage")
+                    row.get("tax_percentage"),
                 )
             )
 
@@ -442,9 +356,7 @@ def validate_all(frames):
 
     if "dividend_payout" in pl.columns:
 
-        for index in pl.index[
-            pl["dividend_payout"] > 200
-        ]:
+        for index in pl.index[pl["dividend_payout"] > 200]:
 
             row = pl.loc[index]
 
@@ -457,7 +369,7 @@ def validate_all(frames):
                     row.get("year"),
                     "dividend_payout",
                     "Dividend payout > 200%",
-                    row.get("dividend_payout")
+                    row.get("dividend_payout"),
                 )
             )
 
@@ -472,21 +384,14 @@ def validate_all(frames):
     else:
 
         documents = frames["documents"].rename(
-            columns={
-                "annual_report": "Annual_Report"
-            }
+            columns={"annual_report": "Annual_Report"}
         )
 
     for _, row in documents.iterrows():
 
-        url = str(
-            row.get("Annual_Report", "")
-        ).strip()
+        url = str(row.get("Annual_Report", "")).strip()
 
-        if (
-            not url
-            or url.lower() in {"nan", "null"}
-        ):
+        if not url or url.lower() in {"nan", "null"}:
 
             issues.append(
                 create_issue(
@@ -497,14 +402,11 @@ def validate_all(frames):
                     row.get("year"),
                     "Annual_Report",
                     "Missing annual report URL",
-                    url
+                    url,
                 )
             )
 
-        elif not re.match(
-            r"^https?://",
-            url
-        ):
+        elif not re.match(r"^https?://", url):
 
             issues.append(
                 create_issue(
@@ -515,7 +417,7 @@ def validate_all(frames):
                     row.get("year"),
                     "Annual_Report",
                     "Invalid URL syntax",
-                    url
+                    url,
                 )
             )
 
@@ -523,16 +425,9 @@ def validate_all(frames):
     # DQ-14 EPS Sign Consistency
     # ---------------------------------------------------------
 
-    if {
-        "net_profit",
-        "eps"
-    }.issubset(pl.columns):
+    if {"net_profit", "eps"}.issubset(pl.columns):
 
-        mask = (
-            (pl["net_profit"] > 0)
-            &
-            (pl["eps"] <= 0)
-        )
+        mask = (pl["net_profit"] > 0) & (pl["eps"] <= 0)
 
         for index in pl.index[mask]:
 
@@ -547,7 +442,7 @@ def validate_all(frames):
                     row.get("year"),
                     "eps",
                     "EPS <= 0 while net profit > 0",
-                    row.get("eps")
+                    row.get("eps"),
                 )
             )
 
@@ -555,15 +450,9 @@ def validate_all(frames):
     # DQ-15 Strict Balance
     # ---------------------------------------------------------
 
-    if {
-        "total_assets",
-        "total_liabilities"
-    }.issubset(bs.columns):
+    if {"total_assets", "total_liabilities"}.issubset(bs.columns):
 
-        mask = (
-            bs["total_assets"]
-            != bs["total_liabilities"]
-        )
+        mask = bs["total_assets"] != bs["total_liabilities"]
 
         for index in bs.index[mask]:
 
@@ -578,10 +467,7 @@ def validate_all(frames):
                     row.get("year"),
                     "total_assets",
                     "Strict asset/liability equality check",
-                    float(
-                        row["total_assets"]
-                        - row["total_liabilities"]
-                    )
+                    float(row["total_assets"] - row["total_liabilities"]),
                 )
             )
     # ---------------------------------------------------------
@@ -590,19 +476,11 @@ def validate_all(frames):
 
     for company_id in sorted(company_set):
 
-        for table_name in [
-            "profitandloss",
-            "balancesheet",
-            "cashflow"
-        ]:
+        for table_name in ["profitandloss", "balancesheet", "cashflow"]:
 
             df = frames[table_name]
 
-            company_rows = df[
-                df["company_id"]
-                .map(normalize_ticker)
-                == company_id
-            ]
+            company_rows = df[df["company_id"].map(normalize_ticker) == company_id]
 
             years = set()
 
@@ -610,9 +488,7 @@ def validate_all(frames):
 
                 try:
 
-                    years.add(
-                        normalize_year(year)
-                    )
+                    years.add(normalize_year(year))
 
                 except Exception:
 
@@ -631,7 +507,7 @@ def validate_all(frames):
                         None,
                         "year",
                         f"Coverage below 5 years: {count}",
-                        count
+                        count,
                     )
                 )
 
@@ -645,6 +521,6 @@ def validate_all(frames):
             "year",
             "field",
             "issue",
-            "raw_value"
-        ]
+            "raw_value",
+        ],
     )

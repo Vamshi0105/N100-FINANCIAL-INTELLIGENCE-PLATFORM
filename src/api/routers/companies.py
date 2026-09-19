@@ -13,7 +13,6 @@ from fastapi.responses import FileResponse
 
 from src.api.config import get_db_connection
 
-
 router = APIRouter()
 
 
@@ -103,6 +102,7 @@ def rows_to_dicts(rows):
 # GET /companies
 # ---------------------------------------------------------------------------
 
+
 @router.get("/companies")
 def get_companies(
     sector: Optional[str] = Query(
@@ -185,6 +185,7 @@ def get_companies(
 # GET /companies/{ticker}
 # ---------------------------------------------------------------------------
 
+
 @router.get("/companies/{ticker}")
 def get_company_profile(ticker: str):
     """
@@ -249,22 +250,12 @@ def get_company_profile(ticker: str):
         return {
             "id": company_id,
             "company": dict(company),
-            "latest_year_kpis": (
-                dict(latest_ratio) if latest_ratio else None
-            ),
-            "latest_profitandloss": (
-                dict(latest_pl) if latest_pl else None
-            ),
+            "latest_year_kpis": (dict(latest_ratio) if latest_ratio else None),
+            "latest_profitandloss": (dict(latest_pl) if latest_pl else None),
             "latest_market_cap": (
-                dict(latest_market_cap)
-                if latest_market_cap
-                else None
+                dict(latest_market_cap) if latest_market_cap else None
             ),
-            "sector": (
-                dict(sector)
-                if sector
-                else None
-            ),
+            "sector": (dict(sector) if sector else None),
         }
 
     finally:
@@ -274,6 +265,7 @@ def get_company_profile(ticker: str):
 # ---------------------------------------------------------------------------
 # Financial history helper
 # ---------------------------------------------------------------------------
+
 
 def get_financial_history(
     ticker: str,
@@ -334,6 +326,7 @@ def get_financial_history(
 # GET /companies/{ticker}/pl
 # ---------------------------------------------------------------------------
 
+
 @router.get("/companies/{ticker}/pl")
 def get_company_profit_and_loss(
     ticker: str,
@@ -359,6 +352,7 @@ def get_company_profit_and_loss(
 # ---------------------------------------------------------------------------
 # GET /companies/{ticker}/bs
 # ---------------------------------------------------------------------------
+
 
 @router.get("/companies/{ticker}/bs")
 def get_company_balance_sheet(
@@ -386,6 +380,7 @@ def get_company_balance_sheet(
 # GET /companies/{ticker}/cashflow
 # ---------------------------------------------------------------------------
 
+
 @router.get("/companies/{ticker}/cashflow")
 def get_company_cashflow(
     ticker: str,
@@ -411,6 +406,7 @@ def get_company_cashflow(
 # ---------------------------------------------------------------------------
 # GET /companies/{ticker}/ratios
 # ---------------------------------------------------------------------------
+
 
 @router.get("/companies/{ticker}/ratios")
 def get_company_ratios(
@@ -465,6 +461,7 @@ def get_company_ratios(
 # ---------------------------------------------------------------------------
 # GET /companies/{ticker}/tearsheet
 # ---------------------------------------------------------------------------
+
 
 @router.get(
     "/companies/{ticker}/tearsheet",

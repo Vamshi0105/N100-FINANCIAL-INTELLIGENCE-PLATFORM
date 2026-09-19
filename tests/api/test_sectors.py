@@ -2,7 +2,6 @@ from fastapi.testclient import TestClient
 
 from src.api.main import app
 
-
 client = TestClient(app)
 
 
@@ -19,9 +18,7 @@ def test_get_sectors_returns_expected_sector_count():
 
 
 def test_information_technology_sector_returns_it_companies_only():
-    response = client.get(
-        "/api/v1/sectors/Information%20Technology/companies"
-    )
+    response = client.get("/api/v1/sectors/Information%20Technology/companies")
 
     assert response.status_code == 200
 

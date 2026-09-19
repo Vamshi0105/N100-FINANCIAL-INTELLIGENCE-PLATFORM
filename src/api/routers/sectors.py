@@ -1,4 +1,3 @@
-
 """
 Sector API endpoints.
 
@@ -11,13 +10,13 @@ from fastapi import APIRouter, HTTPException
 
 from src.api.config import get_db_connection
 
-
 router = APIRouter()
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _latest_non_null_metric(
     connection,
@@ -44,10 +43,7 @@ def _latest_non_null_metric(
 
     rows = connection.execute(sql).fetchall()
 
-    return {
-        row["company_id"]: row["value"]
-        for row in rows
-    }
+    return {row["company_id"]: row["value"] for row in rows}
 
 
 def _latest_ratio_metric(
@@ -72,17 +68,13 @@ def _latest_ratio_metric(
 
     rows = connection.execute(sql).fetchall()
 
-    return {
-        row["company_id"]: row["value"]
-        for row in rows
-    }
+    return {row["company_id"]: row["value"] for row in rows}
 
 
 def _latest_pe(connection) -> dict:
     """Return the latest available P/E ratio for each company."""
 
-    rows = connection.execute(
-        """
+    rows = connection.execute("""
         SELECT
             mc.company_id,
             mc.pe_ratio
@@ -92,23 +84,15 @@ def _latest_pe(connection) -> dict:
             FROM market_cap mc2
             WHERE mc2.company_id = mc.company_id
         )
-        """
-    ).fetchall()
+        """).fetchall()
 
-    return {
-        row["company_id"]: row["pe_ratio"]
-        for row in rows
-    }
+    return {row["company_id"]: row["pe_ratio"] for row in rows}
 
 
 def _median(values):
     """Return median rounded to four decimal places."""
 
-    cleaned = [
-        float(value)
-        for value in values
-        if value is not None
-    ]
+    cleaned = [float(value) for value in values if value is not None]
 
     if not cleaned:
         return None
@@ -119,6 +103,7 @@ def _median(values):
 # ---------------------------------------------------------------------------
 # GET /sectors
 # ---------------------------------------------------------------------------
+
 
 @router.get("/sectors")
 def get_sectors():
@@ -135,8 +120,7 @@ def get_sectors():
     connection = get_db_connection()
 
     try:
-        sector_rows = connection.execute(
-            """
+        sector_rows = connection.execute("""
             SELECT
                 company_id,
                 broad_sector
@@ -144,8 +128,7 @@ def get_sectors():
             WHERE broad_sector IS NOT NULL
               AND TRIM(broad_sector) <> ''
             ORDER BY broad_sector, company_id
-            """
-        ).fetchall()
+            """).fetchall()
 
         # ROE uses latest available non-null value.
         latest_roe = _latest_non_null_metric(
@@ -176,45 +159,29 @@ def get_sectors():
                     "de": [],
                 }
 
-            sector_data[sector]["company_ids"].append(
-                company_id
-            )
+            sector_data[sector]["company_ids"].append(company_id)
 
             if company_id in latest_roe:
-                sector_data[sector]["roe"].append(
-                    latest_roe[company_id]
-                )
+                sector_data[sector]["roe"].append(latest_roe[company_id])
 
             if company_id in latest_pe:
-                sector_data[sector]["pe"].append(
-                    latest_pe[company_id]
-                )
+                sector_data[sector]["pe"].append(latest_pe[company_id])
 
             if company_id in latest_de:
-                sector_data[sector]["de"].append(
-                    latest_de[company_id]
-                )
+                sector_data[sector]["de"].append(latest_de[company_id])
 
         sectors = []
 
-        for sector, data in sorted(
-            sector_data.items()
-        ):
-            sectors.append({
-                "sector": sector,
-                "company_count": len(
-                    data["company_ids"]
-                ),
-                "median_roe": _median(
-                    data["roe"]
-                ),
-                "median_pe": _median(
-                    data["pe"]
-                ),
-                "median_de": _median(
-                    data["de"]
-                ),
-            })
+        for sector, data in sorted(sector_data.items()):
+            sectors.append(
+                {
+                    "sector": sector,
+                    "company_count": len(data["company_ids"]),
+                    "median_roe": _median(data["roe"]),
+                    "median_pe": _median(data["pe"]),
+                    "median_de": _median(data["de"]),
+                }
+            )
 
         return {
             "count": len(sectors),
@@ -228,6 +195,7 @@ def get_sectors():
 # ---------------------------------------------------------------------------
 # GET /sectors/{sector}/companies
 # ---------------------------------------------------------------------------
+
 
 @router.get("/sectors/{sector}/companies")
 def get_sector_companies(
@@ -343,40 +311,26 @@ def get_sector_companies(
         companies = []
 
         for row in rows:
-            companies.append({
-                "ticker": row["ticker"],
-                "company_name": row["company_name"],
-                "sector": row["sector"],
-                "sub_sector": row["sub_sector"],
-                "year": row["year"],
-                "roe": row["roe"],
-                "roce": row["roce"],
-                "roa": row["roa"],
-                "net_profit_margin": row[
-                    "net_profit_margin"
-                ],
-                "operating_profit_margin": row[
-                    "operating_profit_margin"
-                ],
-                "debt_to_equity": row[
-                    "debt_to_equity"
-                ],
-                "interest_coverage": row[
-                    "interest_coverage"
-                ],
-                "free_cash_flow_cr": row[
-                    "free_cash_flow_cr"
-                ],
-                "revenue_cagr_5yr": row[
-                    "revenue_cagr_5yr"
-                ],
-                "pat_cagr_5yr": row[
-                    "pat_cagr_5yr"
-                ],
-                "composite_quality_score": row[
-                    "composite_quality_score"
-                ],
-            })
+            companies.append(
+                {
+                    "ticker": row["ticker"],
+                    "company_name": row["company_name"],
+                    "sector": row["sector"],
+                    "sub_sector": row["sub_sector"],
+                    "year": row["year"],
+                    "roe": row["roe"],
+                    "roce": row["roce"],
+                    "roa": row["roa"],
+                    "net_profit_margin": row["net_profit_margin"],
+                    "operating_profit_margin": row["operating_profit_margin"],
+                    "debt_to_equity": row["debt_to_equity"],
+                    "interest_coverage": row["interest_coverage"],
+                    "free_cash_flow_cr": row["free_cash_flow_cr"],
+                    "revenue_cagr_5yr": row["revenue_cagr_5yr"],
+                    "pat_cagr_5yr": row["pat_cagr_5yr"],
+                    "composite_quality_score": row["composite_quality_score"],
+                }
+            )
 
         return {
             "sector": actual_sector,
@@ -386,4 +340,3 @@ def get_sector_companies(
 
     finally:
         connection.close()
-

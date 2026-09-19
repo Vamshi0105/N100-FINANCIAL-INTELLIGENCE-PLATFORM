@@ -8,16 +8,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 DEFAULT_DB_PATH = PROJECT_ROOT / "data" / "nifty100.db"
 
-DEFAULT_OUTPUT_DIR = (
-    PROJECT_ROOT
-    / "reports"
-    / "radar_charts"
-)
+DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "reports" / "radar_charts"
 
 
 # These 7 metrics already have percentile rankings
@@ -55,18 +50,14 @@ def get_latest_annual_year(
         2024-03
     """
 
-    row = connection.execute(
-        """
+    row = connection.execute("""
         SELECT MAX(year)
         FROM peer_percentiles
         WHERE year LIKE '%-03'
-        """
-    ).fetchone()
+        """).fetchone()
 
     if row is None or row[0] is None:
-        raise ValueError(
-            "No annual peer percentile data found."
-        )
+        raise ValueError("No annual peer percentile data found.")
 
     return str(row[0])
 
@@ -100,12 +91,7 @@ def load_peer_percentile_data(
     if df.empty:
         return df
 
-    df["company_id"] = (
-        df["company_id"]
-        .astype(str)
-        .str.strip()
-        .str.upper()
-    )
+    df["company_id"] = df["company_id"].astype(str).str.strip().str.upper()
 
     return df
 
@@ -136,12 +122,7 @@ def load_composite_scores(
     if df.empty:
         return df
 
-    df["company_id"] = (
-        df["company_id"]
-        .astype(str)
-        .str.strip()
-        .str.upper()
-    )
+    df["company_id"] = df["company_id"].astype(str).str.strip().str.upper()
 
     return df
 
@@ -165,12 +146,7 @@ def load_all_companies(
         connection,
     )
 
-    df["company_id"] = (
-        df["company_id"]
-        .astype(str)
-        .str.strip()
-        .str.upper()
-    )
+    df["company_id"] = df["company_id"].astype(str).str.strip().str.upper()
 
     return df
 
@@ -240,16 +216,12 @@ def normalise_composite_scores(
                 indexes,
                 "composite_normalised",
             ] = (
-                (
-                    df.loc[
-                        indexes,
-                        "composite_quality_score",
-                    ]
-                    - minimum
-                )
-                /
-                (maximum - minimum)
-            )
+                df.loc[
+                    indexes,
+                    "composite_quality_score",
+                ]
+                - minimum
+            ) / (maximum - minimum)
 
     return df
 
@@ -281,24 +253,19 @@ def build_radar_dataset(
         ]
     ].drop_duplicates()
 
-    composite_normalised = (
-        normalise_composite_scores(
-            composite_df,
-            peer_mapping,
-        )
+    composite_normalised = normalise_composite_scores(
+        composite_df,
+        peer_mapping,
     )
 
     rows = []
 
-    companies = (
-        peer_df[
-            [
-                "company_id",
-                "peer_group_name",
-            ]
+    companies = peer_df[
+        [
+            "company_id",
+            "peer_group_name",
         ]
-        .drop_duplicates()
-    )
+    ].drop_duplicates()
 
     for row in companies.itertuples(index=False):
 
@@ -306,15 +273,8 @@ def build_radar_dataset(
         peer_group_name = row.peer_group_name
 
         company_metrics = peer_df[
-            (
-                peer_df["company_id"]
-                == company_id
-            )
-            &
-            (
-                peer_df["peer_group_name"]
-                == peer_group_name
-            )
+            (peer_df["company_id"] == company_id)
+            & (peer_df["peer_group_name"] == peer_group_name)
         ]
 
         result_row = {
@@ -324,10 +284,7 @@ def build_radar_dataset(
 
         for axis_name, metric_name in PEER_METRICS:
 
-            metric_match = company_metrics[
-                company_metrics["metric"]
-                == metric_name
-            ]
+            metric_match = company_metrics[company_metrics["metric"] == metric_name]
 
             if metric_match.empty:
 
@@ -335,41 +292,20 @@ def build_radar_dataset(
 
             else:
 
-                result_row[axis_name] = float(
-                    metric_match.iloc[0][
-                        "percentile_rank"
-                    ]
-                )
+                result_row[axis_name] = float(metric_match.iloc[0]["percentile_rank"])
 
-        composite_match = (
-            composite_normalised[
-                (
-                    composite_normalised[
-                        "company_id"
-                    ]
-                    == company_id
-                )
-                &
-                (
-                    composite_normalised[
-                        "peer_group_name"
-                    ]
-                    == peer_group_name
-                )
-            ]
-        )
+        composite_match = composite_normalised[
+            (composite_normalised["company_id"] == company_id)
+            & (composite_normalised["peer_group_name"] == peer_group_name)
+        ]
 
         if composite_match.empty:
 
-            result_row[
-                "Composite Score"
-            ] = np.nan
+            result_row["Composite Score"] = np.nan
 
         else:
 
-            result_row[
-                "Composite Score"
-            ] = composite_match.iloc[0][
+            result_row["Composite Score"] = composite_match.iloc[0][
                 "composite_normalised"
             ]
 
@@ -387,25 +323,18 @@ def get_peer_group_average(
     for a peer group.
     """
 
-    group_df = radar_df[
-        radar_df["peer_group_name"]
-        == peer_group_name
-    ]
+    group_df = radar_df[radar_df["peer_group_name"] == peer_group_name]
 
     averages = []
 
     for axis in AXES:
 
-        value = group_df[
-            axis
-        ].mean()
+        value = group_df[axis].mean()
 
         if pd.isna(value):
             value = 0.0
 
-        averages.append(
-            float(value)
-        )
+        averages.append(float(value))
 
     return averages
 
@@ -441,24 +370,16 @@ def create_radar_chart(
     angles += angles[:1]
 
     company_values = [
-        0.0
-        if pd.isna(value)
-        else float(value)
-        for value in company_values
+        0.0 if pd.isna(value) else float(value) for value in company_values
     ]
 
     peer_average_values = [
-        0.0
-        if pd.isna(value)
-        else float(value)
-        for value in peer_average_values
+        0.0 if pd.isna(value) else float(value) for value in peer_average_values
     ]
 
     company_values += company_values[:1]
 
-    peer_average_values += (
-        peer_average_values[:1]
-    )
+    peer_average_values += peer_average_values[:1]
 
     fig, ax = plt.subplots(
         figsize=(10, 10),
@@ -467,17 +388,11 @@ def create_radar_chart(
         },
     )
 
-    ax.set_theta_offset(
-        np.pi / 2
-    )
+    ax.set_theta_offset(np.pi / 2)
 
-    ax.set_theta_direction(
-        -1
-    )
+    ax.set_theta_direction(-1)
 
-    ax.set_xticks(
-        angles[:-1]
-    )
+    ax.set_xticks(angles[:-1])
 
     ax.set_xticklabels(
         AXES,
@@ -490,9 +405,7 @@ def create_radar_chart(
         1,
     )
 
-    ax.set_yticks(
-        [0.2, 0.4, 0.6, 0.8, 1.0]
-    )
+    ax.set_yticks([0.2, 0.4, 0.6, 0.8, 1.0])
 
     ax.set_yticklabels(
         [
@@ -525,9 +438,7 @@ def create_radar_chart(
         linewidth=2.0,
         linestyle="--",
         marker="s",
-        label=(
-            "Peer Group Average"
-        ),
+        label=("Peer Group Average"),
     )
 
     ax.set_title(
@@ -652,8 +563,7 @@ def create_standalone_chart(
         if pd.notna(value):
 
             ax.text(
-                bar.get_x()
-                + bar.get_width() / 2,
+                bar.get_x() + bar.get_width() / 2,
                 bar.get_height(),
                 f"{value:.2f}",
                 ha="center",
@@ -713,42 +623,28 @@ def generate_radar_charts(
 
     db_path = Path(db_path)
 
-    output_dir = Path(
-        output_dir
-    )
+    output_dir = Path(output_dir)
 
     output_dir.mkdir(
         parents=True,
         exist_ok=True,
     )
 
-    with sqlite3.connect(
-        db_path
-    ) as connection:
+    with sqlite3.connect(db_path) as connection:
 
-        year = get_latest_annual_year(
-            connection
+        year = get_latest_annual_year(connection)
+
+        peer_df = load_peer_percentile_data(
+            connection,
+            year,
         )
 
-        peer_df = (
-            load_peer_percentile_data(
-                connection,
-                year,
-            )
+        composite_df = load_composite_scores(
+            connection,
+            year,
         )
 
-        composite_df = (
-            load_composite_scores(
-                connection,
-                year,
-            )
-        )
-
-        companies_df = (
-            load_all_companies(
-                connection
-            )
-        )
+        companies_df = load_all_companies(connection)
 
     radar_df = build_radar_dataset(
         peer_df,
@@ -761,9 +657,7 @@ def generate_radar_charts(
     # Companies with peer groups
     # ----------------------------------
 
-    for row in radar_df.to_dict(
-        orient="records"
-    ):
+    for row in radar_df.to_dict(orient="records"):
 
         company_values = []
 
@@ -771,35 +665,22 @@ def generate_radar_charts(
 
             value = row[axis]
 
-            company_values.append(
-                value
-            )
+            company_values.append(value)
 
-        peer_average_values = (
-            get_peer_group_average(
-                radar_df,
-                row["peer_group_name"],
-            )
+        peer_average_values = get_peer_group_average(
+            radar_df,
+            row["peer_group_name"],
         )
 
-        safe_company_id = (
-            str(row["company_id"])
-            .replace("/", "_")
-            .replace("\\", "_")
-        )
+        safe_company_id = str(row["company_id"]).replace("/", "_").replace("\\", "_")
 
-        output_path = (
-            output_dir
-            / f"{safe_company_id}_radar.png"
-        )
+        output_path = output_dir / f"{safe_company_id}_radar.png"
 
         create_radar_chart(
             company_id=row["company_id"],
             peer_group_name=row["peer_group_name"],
             company_values=company_values,
-            peer_average_values=(
-                peer_average_values
-            ),
+            peer_average_values=(peer_average_values),
             year=year,
             output_path=output_path,
         )
@@ -810,72 +691,34 @@ def generate_radar_charts(
     # Companies without peer groups
     # ----------------------------------
 
-    peer_company_ids = set(
-        radar_df[
-            "company_id"
-        ].astype(str)
-    )
+    peer_company_ids = set(radar_df["company_id"].astype(str))
 
-    standalone_companies = (
-        companies_df[
-            ~companies_df[
-                "company_id"
-            ].isin(
-                peer_company_ids
-            )
-        ]
-    )
+    standalone_companies = companies_df[
+        ~companies_df["company_id"].isin(peer_company_ids)
+    ]
 
-    nifty_average = (
-        composite_df[
-            "composite_quality_score"
-        ].mean()
-    )
+    nifty_average = composite_df["composite_quality_score"].mean()
 
-    for row in standalone_companies.itertuples(
-        index=False
-    ):
+    for row in standalone_companies.itertuples(index=False):
 
-        score_match = composite_df[
-            composite_df[
-                "company_id"
-            ]
-            == row.company_id
-        ]
+        score_match = composite_df[composite_df["company_id"] == row.company_id]
 
         if score_match.empty:
             continue
 
-        company_score = (
-            score_match.iloc[0][
-                "composite_quality_score"
-            ]
-        )
+        company_score = score_match.iloc[0]["composite_quality_score"]
 
-        if pd.isna(
-            company_score
-        ):
+        if pd.isna(company_score):
             continue
 
-        safe_company_id = (
-            str(row.company_id)
-            .replace("/", "_")
-            .replace("\\", "_")
-        )
+        safe_company_id = str(row.company_id).replace("/", "_").replace("\\", "_")
 
-        output_path = (
-            output_dir
-            / f"{safe_company_id}_radar.png"
-        )
+        output_path = output_dir / f"{safe_company_id}_radar.png"
 
         create_standalone_chart(
             company_id=row.company_id,
-            company_score=float(
-                company_score
-            ),
-            nifty_average=float(
-                nifty_average
-            ),
+            company_score=float(company_score),
+            nifty_average=float(nifty_average),
             year=year,
             output_path=output_path,
         )
@@ -887,16 +730,8 @@ def generate_radar_charts(
 
 if __name__ == "__main__":
 
-    charts_created = (
-        generate_radar_charts()
-    )
+    charts_created = generate_radar_charts()
 
-    print(
-        f"Radar charts created: "
-        f"{charts_created}"
-    )
+    print(f"Radar charts created: " f"{charts_created}")
 
-    print(
-        f"Output directory: "
-        f"{DEFAULT_OUTPUT_DIR}"
-    )
+    print(f"Output directory: " f"{DEFAULT_OUTPUT_DIR}")

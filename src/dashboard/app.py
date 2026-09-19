@@ -3,7 +3,6 @@ import sys
 import streamlit as st
 import importlib.util
 
-
 # --------------------------------------------------
 # PATHS
 # --------------------------------------------------
@@ -64,6 +63,7 @@ selected_page = st.sidebar.radio(
 # PAGE LOADER
 # --------------------------------------------------
 
+
 def load_page(page_file):
 
     page_path = PAGES_DIR / page_file
@@ -87,9 +87,7 @@ def load_page(page_file):
         if hasattr(module, "render"):
             module.render()
         else:
-            st.warning(
-                f"{page_file} loaded, but no render() function was found."
-            )
+            st.warning(f"{page_file} loaded, but no render() function was found.")
 
     except Exception as error:
         st.error(f"Error loading {page_file}")

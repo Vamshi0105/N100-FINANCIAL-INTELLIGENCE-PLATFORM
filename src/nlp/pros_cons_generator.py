@@ -46,26 +46,13 @@ import pandas as pd
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
-DB_PATH = (
-PROJECT_ROOT
-/ "data"
-/ "nifty100.db"
-)
+DB_PATH = PROJECT_ROOT / "data" / "nifty100.db"
 
-OUTPUT_DIR = (
-PROJECT_ROOT
-/ "output"
-)
+OUTPUT_DIR = PROJECT_ROOT / "output"
 
-OUTPUT_PATH = (
-OUTPUT_DIR
-/ "pros_cons_generated.csv"
-)
+OUTPUT_PATH = OUTPUT_DIR / "pros_cons_generated.csv"
 
-LOG_PATH = (
-OUTPUT_DIR
-/ "pros_cons_generator.log"
-)
+LOG_PATH = OUTPUT_DIR / "pros_cons_generator.log"
 
 # ---------------------------------------------------------
 
@@ -80,6 +67,7 @@ MIN_CONFIDENCE = 60.0
 # Logging
 
 # ---------------------------------------------------------
+
 
 def configure_logging() -> None:
     """
@@ -96,36 +84,24 @@ def configure_logging() -> None:
     if logger.handlers:
         return
 
-    logger.setLevel(
-        logging.INFO
-    )
+    logger.setLevel(logging.INFO)
 
-    formatter = logging.Formatter(
-        "%(levelname)s | %(message)s"
-    )
+    formatter = logging.Formatter("%(levelname)s | %(message)s")
 
     file_handler = logging.FileHandler(
         LOG_PATH,
         encoding="utf-8",
     )
 
-    file_handler.setFormatter(
-        formatter
-    )
+    file_handler.setFormatter(formatter)
 
     stream_handler = logging.StreamHandler()
 
-    stream_handler.setFormatter(
-        formatter
-    )
+    stream_handler.setFormatter(formatter)
 
-    logger.addHandler(
-        file_handler
-    )
+    logger.addHandler(file_handler)
 
-    logger.addHandler(
-        stream_handler
-    )
+    logger.addHandler(stream_handler)
 
     # ---------------------------------------------------------
 
@@ -133,9 +109,10 @@ def configure_logging() -> None:
 
     # ---------------------------------------------------------
 
+
 def normalize_company_id(
     value: Any,
-    ) -> str | None:
+) -> str | None:
     """
     Normalize company identifiers.
     """
@@ -146,18 +123,17 @@ def normalize_company_id(
     if pd.isna(value):
         return None
 
-    company_id = str(
-        value
-    ).strip().upper()
+    company_id = str(value).strip().upper()
 
     if not company_id:
         return None
 
     return company_id
 
+
 def normalize_year(
     value: Any,
-    ) -> int | None:
+) -> int | None:
     """
     Convert year values into integers.
 
@@ -174,26 +150,23 @@ def normalize_year(
     if pd.isna(value):
         return None
 
-    text = str(
-        value
-    ).strip()
+    text = str(value).strip()
 
     if not text:
         return None
 
     try:
-        return int(
-            text[:4]
-        )
+        return int(text[:4])
     except (
         TypeError,
         ValueError,
     ):
         return None
 
+
 def to_numeric(
     value: Any,
-    ) -> float | None:
+) -> float | None:
     """
     Safely convert a value to float.
     """
@@ -206,9 +179,7 @@ def to_numeric(
 
     try:
 
-        result = float(
-            value
-        )
+        result = float(value)
 
         if pd.isna(result):
             return None
@@ -227,6 +198,7 @@ def to_numeric(
 
     # ---------------------------------------------------------
 
+
 def load_data() -> dict[str, pd.DataFrame]:
     """
     Load all data required for Day 30 rules.
@@ -239,19 +211,15 @@ def load_data() -> dict[str, pd.DataFrame]:
 
     if not DB_PATH.exists():
 
-        raise FileNotFoundError(
-            f"Database not found: {DB_PATH}"
-        )
+        raise FileNotFoundError(f"Database not found: {DB_PATH}")
 
     queries = {
-
         "companies": """
             SELECT
                 CAST(id AS TEXT) AS company_id,
                 company_name
             FROM companies
         """,
-
         "ratios": """
             SELECT
                 CAST(company_id AS TEXT) AS company_id,
@@ -271,7 +239,6 @@ def load_data() -> dict[str, pd.DataFrame]:
                 eps_cagr_5yr
             FROM financial_ratios
         """,
-
         "profitandloss": """
             SELECT
                 CAST(company_id AS TEXT) AS company_id,
@@ -283,7 +250,6 @@ def load_data() -> dict[str, pd.DataFrame]:
                 eps
             FROM profitandloss
         """,
-
         "balancesheet": """
             SELECT
                 CAST(company_id AS TEXT) AS company_id,
@@ -292,7 +258,6 @@ def load_data() -> dict[str, pd.DataFrame]:
                 total_assets
             FROM balancesheet
         """,
-
         "market_cap": """
             SELECT
                 CAST(company_id AS TEXT) AS company_id,
@@ -300,7 +265,6 @@ def load_data() -> dict[str, pd.DataFrame]:
                 dividend_yield_pct
             FROM market_cap
         """,
-
         "sectors": """
             SELECT
                 CAST(company_id AS TEXT) AS company_id,
@@ -315,9 +279,7 @@ def load_data() -> dict[str, pd.DataFrame]:
         pd.DataFrame,
     ] = {}
 
-    with sqlite3.connect(
-        DB_PATH
-    ) as connection:
+    with sqlite3.connect(DB_PATH) as connection:
 
         for name, query in queries.items():
 
@@ -326,37 +288,15 @@ def load_data() -> dict[str, pd.DataFrame]:
                 connection,
             )
 
-            if (
-                "company_id"
-                in df.columns
-            ):
+            if "company_id" in df.columns:
 
-                df[
-                    "company_id"
-                ] = df[
-                    "company_id"
-                ].apply(
-                    normalize_company_id
-                )
+                df["company_id"] = df["company_id"].apply(normalize_company_id)
 
-                df = df[
-                    df[
-                        "company_id"
-                    ].notna()
-                ].copy()
+                df = df[df["company_id"].notna()].copy()
 
-            if (
-                "year"
-                in df.columns
-            ):
+            if "year" in df.columns:
 
-                df[
-                    "year_numeric"
-                ] = df[
-                    "year"
-                ].apply(
-                    normalize_year
-                )
+                df["year_numeric"] = df["year"].apply(normalize_year)
 
             data[name] = df
 
@@ -374,9 +314,10 @@ def load_data() -> dict[str, pd.DataFrame]:
 
     # ---------------------------------------------------------
 
+
 def latest_row(
     df: pd.DataFrame,
-    ) -> pd.Series | None:
+) -> pd.Series | None:
     """
     Return latest row ordered by year.
     """
@@ -384,10 +325,7 @@ def latest_row(
     if df.empty:
         return None
 
-    if (
-        "year_numeric"
-        not in df.columns
-    ):
+    if "year_numeric" not in df.columns:
         return df.iloc[-1]
 
     working_df = df.sort_values(
@@ -398,80 +336,58 @@ def latest_row(
 
     return working_df.iloc[0]
 
+
 def latest_value(
     df: pd.DataFrame,
     column: str,
-    ) -> float | None:
+) -> float | None:
     """
     Return latest available non-null numeric value.
     """
 
-    if (
-        df.empty
-        or column
-        not in df.columns
-    ):
+    if df.empty or column not in df.columns:
         return None
 
     working_df = df.copy()
 
-    working_df[
-        column
-    ] = pd.to_numeric(
+    working_df[column] = pd.to_numeric(
         working_df[column],
         errors="coerce",
     )
 
-    working_df = working_df[
-        working_df[
-            column
-        ].notna()
-    ].copy()
+    working_df = working_df[working_df[column].notna()].copy()
 
     if working_df.empty:
         return None
 
-    row = latest_row(
-        working_df
-    )
+    row = latest_row(working_df)
 
     if row is None:
         return None
 
-    return to_numeric(
-        row[column]
-    )
+    return to_numeric(row[column])
+
 
 def latest_n_values(
     df: pd.DataFrame,
     column: str,
     count: int,
-    ) -> list[float]:
+) -> list[float]:
     """
     Return the latest N chronological numeric values.
     """
 
-    if (
-        df.empty
-        or column
-        not in df.columns
-    ):
+    if df.empty or column not in df.columns:
         return []
 
     working_df = df.copy()
 
-    working_df[
-        column
-    ] = pd.to_numeric(
+    working_df[column] = pd.to_numeric(
         working_df[column],
         errors="coerce",
     )
 
-    working_df = working_df[
-        working_df[
-            column
-        ].notna()
-    ].copy()
+    working_df = working_df[working_df[column].notna()].copy()
 
     working_df = working_df.sort_values(
         by="year_numeric",
@@ -479,19 +395,13 @@ def latest_n_values(
         na_position="last",
     )
 
-    return [
-        float(value)
-        for value
-        in working_df[
-            column
-        ].tail(count)
-        .tolist()
-    ]
+    return [float(value) for value in working_df[column].tail(count).tolist()]
+
 
 def has_consecutive_positive(
     values: list[float],
     count: int,
-    ) -> bool:
+) -> bool:
     """
     Check whether latest values are positive.
     """
@@ -499,15 +409,12 @@ def has_consecutive_positive(
     if len(values) < count:
         return False
 
-    return all(
-        value > 0
-        for value
-        in values[-count:]
-    )
+    return all(value > 0 for value in values[-count:])
+
 
 def strictly_increasing(
     values: list[float],
-    ) -> bool:
+) -> bool:
     """
     Check strict increase.
     """
@@ -516,18 +423,17 @@ def strictly_increasing(
         return False
 
     return all(
-        values[index]
-        > values[index - 1]
-        for index
-        in range(
+        values[index] > values[index - 1]
+        for index in range(
             1,
             len(values),
         )
     )
 
+
 def strictly_decreasing(
     values: list[float],
-    ) -> bool:
+) -> bool:
     """
     Check strict decline.
     """
@@ -536,20 +442,19 @@ def strictly_decreasing(
         return False
 
     return all(
-        values[index]
-        < values[index - 1]
-        for index
-        in range(
+        values[index] < values[index - 1]
+        for index in range(
             1,
             len(values),
         )
     )
 
+
 def sustained_above(
     values: list[float],
     threshold: float,
     count: int,
-    ) -> bool:
+) -> bool:
     """
     Check whether latest values remain above threshold.
     """
@@ -557,15 +462,12 @@ def sustained_above(
     if len(values) < count:
         return False
 
-    return all(
-        value > threshold
-        for value
-        in values[-count:]
-    )
+    return all(value > threshold for value in values[-count:])
+
 
 def is_financial_company(
     sector_row: pd.Series | None,
-    ) -> bool:
+) -> bool:
     """
     Identify financial companies where D/E is less useful.
 
@@ -601,12 +503,7 @@ def is_financial_company(
         "INSURANCE",
     ]
 
-    return any(
-        keyword
-        in sector_text
-        for keyword
-        in financial_keywords
-    )
+    return any(keyword in sector_text for keyword in financial_keywords)
 
     # ---------------------------------------------------------
 
@@ -614,12 +511,13 @@ def is_financial_company(
 
     # ---------------------------------------------------------
 
+
 def confidence_from_margin(
     actual: float,
     threshold: float,
     scale: float,
     direction: str = "above",
-    ) -> float:
+) -> float:
     """
     Calculate confidence based on distance from threshold.
 
@@ -641,16 +539,13 @@ def confidence_from_margin(
 
         margin = threshold - actual
 
-    score = (
-        65.0
-        + (
-            max(
-                margin,
-                0.0,
-            )
-            / scale
-            * 35.0
+    score = 65.0 + (
+        max(
+            margin,
+            0.0,
         )
+        / scale
+        * 35.0
     )
 
     return round(
@@ -664,10 +559,11 @@ def confidence_from_margin(
         2,
     )
 
+
 def confidence_from_series(
     values: list[float],
     count: int,
-    ) -> float:
+) -> float:
     """
     Confidence for consecutive historical signals.
     """
@@ -680,8 +576,7 @@ def confidence_from_series(
     return round(
         min(
             95.0,
-            70.0
-            + evidence_ratio * 25.0,
+            70.0 + evidence_ratio * 25.0,
         ),
         2,
     )
@@ -692,13 +587,14 @@ def confidence_from_series(
 
     # ---------------------------------------------------------
 
+
 def build_record(
     company_id: str,
     signal_type: str,
     rule_id: str,
     text: str,
     confidence: float,
-    ) -> dict[str, Any] | None:
+) -> dict[str, Any] | None:
     """
     Create output record only when confidence > 60.
     """
@@ -725,13 +621,14 @@ def build_record(
 
     # ---------------------------------------------------------
 
+
 def evaluate_pro_rules(
     company_id: str,
     ratios: pd.DataFrame,
     pnl: pd.DataFrame,
     balance_sheet: pd.DataFrame,
     market_cap: pd.DataFrame,
-    ) -> list[dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     Evaluate all 12 Pro rules.
     """
@@ -756,9 +653,7 @@ def evaluate_pro_rules(
     ):
 
         confidence = confidence_from_margin(
-            min(
-                roe_values[-3:]
-            ),
+            min(roe_values[-3:]),
             20.0,
             20.0,
         )
@@ -776,9 +671,7 @@ def evaluate_pro_rules(
         )
 
         if record:
-            records.append(
-                record
-            )
+            records.append(record)
 
     # -----------------------------------------------------
     # Pro Rule 2
@@ -814,9 +707,7 @@ def evaluate_pro_rules(
         )
 
         if record:
-            records.append(
-                record
-            )
+            records.append(record)
 
     # -----------------------------------------------------
     # Pro Rule 3
@@ -828,11 +719,7 @@ def evaluate_pro_rules(
         "debt_to_equity",
     )
 
-    if (
-        latest_de is not None
-        and abs(latest_de)
-        < 0.000001
-    ):
+    if latest_de is not None and abs(latest_de) < 0.000001:
 
         record = build_record(
             company_id,
@@ -847,9 +734,7 @@ def evaluate_pro_rules(
         )
 
         if record:
-            records.append(
-                record
-            )
+            records.append(record)
 
     # -----------------------------------------------------
     # Pro Rule 4
@@ -861,10 +746,7 @@ def evaluate_pro_rules(
         "revenue_cagr_5yr",
     )
 
-    if (
-        revenue_cagr is not None
-        and revenue_cagr > 15.0
-    ):
+    if revenue_cagr is not None and revenue_cagr > 15.0:
 
         record = build_record(
             company_id,
@@ -883,9 +765,7 @@ def evaluate_pro_rules(
         )
 
         if record:
-            records.append(
-                record
-            )
+            records.append(record)
 
     # -----------------------------------------------------
     # Pro Rule 5
@@ -897,10 +777,7 @@ def evaluate_pro_rules(
         "operating_profit_margin_pct",
     )
 
-    if (
-        latest_opm is not None
-        and latest_opm > 25.0
-    ):
+    if latest_opm is not None and latest_opm > 25.0:
 
         record = build_record(
             company_id,
@@ -919,9 +796,7 @@ def evaluate_pro_rules(
         )
 
         if record:
-            records.append(
-                record
-            )
+            records.append(record)
 
     # -----------------------------------------------------
     # Pro Rule 6
@@ -933,10 +808,7 @@ def evaluate_pro_rules(
         "pat_cagr_5yr",
     )
 
-    if (
-        pat_cagr is not None
-        and pat_cagr > 20.0
-    ):
+    if pat_cagr is not None and pat_cagr > 20.0:
 
         record = build_record(
             company_id,
@@ -955,9 +827,7 @@ def evaluate_pro_rules(
         )
 
         if record:
-            records.append(
-                record
-            )
+            records.append(record)
 
     # -----------------------------------------------------
     # Pro Rule 7
@@ -969,22 +839,11 @@ def evaluate_pro_rules(
         "interest_coverage",
     )
 
-    if (
-        (
-            latest_icr is not None
-            and latest_icr > 10.0
-        )
-        or (
-            latest_de is not None
-            and abs(latest_de)
-            < 0.000001
-        )
+    if (latest_icr is not None and latest_icr > 10.0) or (
+        latest_de is not None and abs(latest_de) < 0.000001
     ):
 
-        if (
-            latest_icr is not None
-            and latest_icr > 10.0
-        ):
+        if latest_icr is not None and latest_icr > 10.0:
 
             confidence = confidence_from_margin(
                 latest_icr,
@@ -1009,9 +868,7 @@ def evaluate_pro_rules(
         )
 
         if record:
-            records.append(
-                record
-            )
+            records.append(record)
 
     # -----------------------------------------------------
     # Pro Rule 8
@@ -1039,10 +896,7 @@ def evaluate_pro_rules(
             company_id,
             "pro",
             "PRO_08",
-            (
-                "Consistent dividend yield above 2% "
-                "backed by positive free cash flow"
-            ),
+            ("Consistent dividend yield above 2% " "backed by positive free cash flow"),
             confidence_from_margin(
                 dividend_yield,
                 2.0,
@@ -1051,9 +905,7 @@ def evaluate_pro_rules(
         )
 
         if record:
-            records.append(
-                record
-            )
+            records.append(record)
 
     # -----------------------------------------------------
     # Pro Rule 9
@@ -1065,10 +917,7 @@ def evaluate_pro_rules(
         "eps_cagr_5yr",
     )
 
-    if (
-        eps_cagr is not None
-        and eps_cagr > 15.0
-    ):
+    if eps_cagr is not None and eps_cagr > 15.0:
 
         record = build_record(
             company_id,
@@ -1087,21 +936,14 @@ def evaluate_pro_rules(
         )
 
         if record:
-            records.append(
-                record
-            )
+            records.append(record)
 
     # -----------------------------------------------------
     # Pro Rule 10
     # ROE improving for 3 consecutive years
     # -----------------------------------------------------
 
-    if (
-        len(roe_values) >= 3
-        and strictly_increasing(
-            roe_values[-3:]
-        )
-    ):
+    if len(roe_values) >= 3 and strictly_increasing(roe_values[-3:]):
 
         confidence = confidence_from_series(
             roe_values[-3:],
@@ -1121,9 +963,7 @@ def evaluate_pro_rules(
         )
 
         if record:
-            records.append(
-                record
-            )
+            records.append(record)
 
     # -----------------------------------------------------
     # Pro Rule 11
@@ -1136,11 +976,7 @@ def evaluate_pro_rules(
     # Therefore PAT CAGR must exceed Revenue CAGR.
     # -----------------------------------------------------
 
-    if (
-        revenue_cagr is not None
-        and pat_cagr is not None
-        and pat_cagr > revenue_cagr
-    ):
+    if revenue_cagr is not None and pat_cagr is not None and pat_cagr > revenue_cagr:
 
         record = build_record(
             company_id,
@@ -1159,9 +995,7 @@ def evaluate_pro_rules(
         )
 
         if record:
-            records.append(
-                record
-            )
+            records.append(record)
 
     # -----------------------------------------------------
     # Pro Rule 12
@@ -1183,12 +1017,8 @@ def evaluate_pro_rules(
     if (
         len(asset_values) >= 3
         and len(debt_values) >= 3
-        and strictly_increasing(
-            asset_values[-3:]
-        )
-        and strictly_decreasing(
-            debt_values[-3:]
-        )
+        and strictly_increasing(asset_values[-3:])
+        and strictly_decreasing(debt_values[-3:])
     ):
 
         confidence = 90.0
@@ -1206,9 +1036,7 @@ def evaluate_pro_rules(
         )
 
         if record:
-            records.append(
-                record
-            )
+            records.append(record)
 
     return records
 
@@ -1218,24 +1046,21 @@ def evaluate_pro_rules(
 
     # ---------------------------------------------------------
 
+
 def evaluate_con_rules(
     company_id: str,
     ratios: pd.DataFrame,
     pnl: pd.DataFrame,
     balance_sheet: pd.DataFrame,
     sector_row: pd.Series | None,
-    ) -> list[dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     Evaluate all 12 Con rules.
     """
 
     records = []
 
-    financial_company = (
-        is_financial_company(
-            sector_row
-        )
-    )
+    financial_company = is_financial_company(sector_row)
 
     latest_de = latest_value(
         ratios,
@@ -1247,11 +1072,7 @@ def evaluate_con_rules(
     # D/E > 2 for non-financial companies
     # -----------------------------------------------------
 
-    if (
-        not financial_company
-        and latest_de is not None
-        and latest_de > 2.0
-    ):
+    if not financial_company and latest_de is not None and latest_de > 2.0:
 
         record = build_record(
             company_id,
@@ -1271,9 +1092,7 @@ def evaluate_con_rules(
         )
 
         if record:
-            records.append(
-                record
-            )
+            records.append(record)
 
     # -----------------------------------------------------
     # Con Rule 2
@@ -1286,14 +1105,7 @@ def evaluate_con_rules(
         3,
     )
 
-    if (
-        len(fcf_values) >= 3
-        and all(
-            value < 0
-            for value
-            in fcf_values[-3:]
-        )
-    ):
+    if len(fcf_values) >= 3 and all(value < 0 for value in fcf_values[-3:]):
 
         record = build_record(
             company_id,
@@ -1311,9 +1123,7 @@ def evaluate_con_rules(
         )
 
         if record:
-            records.append(
-                record
-            )
+            records.append(record)
 
     # -----------------------------------------------------
     # Con Rule 3
@@ -1326,12 +1136,7 @@ def evaluate_con_rules(
         3,
     )
 
-    if (
-        len(opm_values) >= 3
-        and strictly_decreasing(
-            opm_values[-3:]
-        )
-    ):
+    if len(opm_values) >= 3 and strictly_decreasing(opm_values[-3:]):
 
         record = build_record(
             company_id,
@@ -1349,9 +1154,7 @@ def evaluate_con_rules(
         )
 
         if record:
-            records.append(
-                record
-            )
+            records.append(record)
 
     # -----------------------------------------------------
     # Con Rule 4
@@ -1363,26 +1166,18 @@ def evaluate_con_rules(
         "net_profit",
     )
 
-    if (
-        latest_net_profit is not None
-        and latest_net_profit < 0
-    ):
+    if latest_net_profit is not None and latest_net_profit < 0:
 
         record = build_record(
             company_id,
             "con",
             "CON_04",
-            (
-                "Company reported a net loss in "
-                "the most recent financial year"
-            ),
+            ("Company reported a net loss in " "the most recent financial year"),
             confidence_from_margin(
                 latest_net_profit,
                 0.0,
                 max(
-                    abs(
-                        latest_net_profit
-                    ),
+                    abs(latest_net_profit),
                     1.0,
                 ),
                 direction="below",
@@ -1390,9 +1185,7 @@ def evaluate_con_rules(
         )
 
         if record:
-            records.append(
-                record
-            )
+            records.append(record)
 
     # -----------------------------------------------------
     # Con Rule 5
@@ -1407,10 +1200,8 @@ def evaluate_con_rules(
 
     if (
         len(revenue_values) >= 3
-        and revenue_values[-1]
-        < revenue_values[-2]
-        and revenue_values[-2]
-        < revenue_values[-3]
+        and revenue_values[-1] < revenue_values[-2]
+        and revenue_values[-2] < revenue_values[-3]
     ):
 
         record = build_record(
@@ -1426,9 +1217,7 @@ def evaluate_con_rules(
         )
 
         if record:
-            records.append(
-                record
-            )
+            records.append(record)
 
     # -----------------------------------------------------
     # Con Rule 6
@@ -1440,10 +1229,7 @@ def evaluate_con_rules(
         "interest_coverage",
     )
 
-    if (
-        latest_icr is not None
-        and latest_icr < 1.5
-    ):
+    if latest_icr is not None and latest_icr < 1.5:
 
         record = build_record(
             company_id,
@@ -1463,9 +1249,7 @@ def evaluate_con_rules(
         )
 
         if record:
-            records.append(
-                record
-            )
+            records.append(record)
 
     # -----------------------------------------------------
     # Con Rule 7
@@ -1477,10 +1261,7 @@ def evaluate_con_rules(
         "dividend_payout_ratio_pct",
     )
 
-    if (
-        payout is not None
-        and payout > 100.0
-    ):
+    if payout is not None and payout > 100.0:
 
         record = build_record(
             company_id,
@@ -1499,9 +1280,7 @@ def evaluate_con_rules(
         )
 
         if record:
-            records.append(
-                record
-            )
+            records.append(record)
 
     # -----------------------------------------------------
     # Con Rule 8
@@ -1517,9 +1296,7 @@ def evaluate_con_rules(
     if (
         not financial_company
         and len(de_values) >= 3
-        and strictly_increasing(
-            de_values[-3:]
-        )
+        and strictly_increasing(de_values[-3:])
     ):
 
         record = build_record(
@@ -1538,9 +1315,7 @@ def evaluate_con_rules(
         )
 
         if record:
-            records.append(
-                record
-            )
+            records.append(record)
 
     # -----------------------------------------------------
     # Con Rule 9
@@ -1553,12 +1328,7 @@ def evaluate_con_rules(
         3,
     )
 
-    if (
-        len(eps_values) >= 3
-        and strictly_decreasing(
-            eps_values[-3:]
-        )
-    ):
+    if len(eps_values) >= 3 and strictly_decreasing(eps_values[-3:]):
 
         record = build_record(
             company_id,
@@ -1576,9 +1346,7 @@ def evaluate_con_rules(
         )
 
         if record:
-            records.append(
-                record
-            )
+            records.append(record)
 
     # -----------------------------------------------------
     # Con Rule 10
@@ -1590,10 +1358,7 @@ def evaluate_con_rules(
         "return_on_capital_employed_pct",
     )
 
-    if (
-        latest_roce is not None
-        and latest_roce < 10.0
-    ):
+    if latest_roce is not None and latest_roce < 10.0:
 
         record = build_record(
             company_id,
@@ -1614,9 +1379,7 @@ def evaluate_con_rules(
         )
 
         if record:
-            records.append(
-                record
-            )
+            records.append(record)
 
     # -----------------------------------------------------
     # Con Rule 11
@@ -1630,47 +1393,21 @@ def evaluate_con_rules(
         "net_debt_cr",
     )
 
-    latest_pnl = latest_row(
-        pnl
-    )
+    latest_pnl = latest_row(pnl)
 
-    if (
-        latest_net_debt is not None
-        and latest_pnl is not None
-    ):
+    if latest_net_debt is not None and latest_pnl is not None:
 
-        operating_profit = to_numeric(
-            latest_pnl.get(
-                "operating_profit"
-            )
-        )
+        operating_profit = to_numeric(latest_pnl.get("operating_profit"))
 
-        depreciation = to_numeric(
-            latest_pnl.get(
-                "depreciation"
-            )
-        )
+        depreciation = to_numeric(latest_pnl.get("depreciation"))
 
-        if (
-            operating_profit is not None
-            and depreciation is not None
-        ):
+        if operating_profit is not None and depreciation is not None:
 
-            ebitda = (
-                operating_profit
-                + depreciation
-            )
+            ebitda = operating_profit + depreciation
 
-            if (
-                ebitda > 0
-                and latest_net_debt
-                > 3.0 * ebitda
-            ):
+            if ebitda > 0 and latest_net_debt > 3.0 * ebitda:
 
-                leverage_ratio = (
-                    latest_net_debt
-                    / ebitda
-                )
+                leverage_ratio = latest_net_debt / ebitda
 
                 record = build_record(
                     company_id,
@@ -1689,9 +1426,7 @@ def evaluate_con_rules(
                 )
 
                 if record:
-                    records.append(
-                        record
-                    )
+                    records.append(record)
 
     # -----------------------------------------------------
     # Con Rule 12
@@ -1703,10 +1438,7 @@ def evaluate_con_rules(
         "revenue_cagr_5yr",
     )
 
-    if (
-        revenue_cagr is not None
-        and revenue_cagr < 5.0
-    ):
+    if revenue_cagr is not None and revenue_cagr < 5.0:
 
         record = build_record(
             company_id,
@@ -1726,9 +1458,7 @@ def evaluate_con_rules(
         )
 
         if record:
-            records.append(
-                record
-            )
+            records.append(record)
 
     return records
 
@@ -1738,10 +1468,11 @@ def evaluate_con_rules(
 
     # ---------------------------------------------------------
 
+
 def generate_fallback_pro(
     company_id: str,
     ratios: pd.DataFrame,
-    ) -> dict[str, Any]:
+) -> dict[str, Any]:
     """
     Generate a conservative fallback Pro.
 
@@ -1753,10 +1484,7 @@ def generate_fallback_pro(
         "return_on_equity_pct",
     )
 
-    if (
-        latest_roe is not None
-        and latest_roe > 0
-    ):
+    if latest_roe is not None and latest_roe > 0:
 
         text = (
             "Positive return on equity indicates "
@@ -1784,10 +1512,11 @@ def generate_fallback_pro(
         "confidence_pct": confidence,
     }
 
+
 def generate_fallback_con(
     company_id: str,
     ratios: pd.DataFrame,
-    ) -> dict[str, Any]:
+) -> dict[str, Any]:
     """
     Generate a conservative fallback Con.
 
@@ -1799,10 +1528,7 @@ def generate_fallback_con(
         "revenue_cagr_5yr",
     )
 
-    if (
-        revenue_cagr is not None
-        and revenue_cagr < 10.0
-    ):
+    if revenue_cagr is not None and revenue_cagr < 10.0:
 
         text = (
             "Moderate revenue growth warrants "
@@ -1836,47 +1562,29 @@ def generate_fallback_con(
 
     # ---------------------------------------------------------
 
+
 def generate_pros_cons(
     data: dict[str, pd.DataFrame],
-    ) -> pd.DataFrame:
+) -> pd.DataFrame:
     """
     Generate all Pro and Con signals.
     """
 
-    companies_df = data[
-        "companies"
-    ]
+    companies_df = data["companies"]
 
-    ratios_df = data[
-        "ratios"
-    ]
+    ratios_df = data["ratios"]
 
-    pnl_df = data[
-        "profitandloss"
-    ]
+    pnl_df = data["profitandloss"]
 
-    balance_df = data[
-        "balancesheet"
-    ]
+    balance_df = data["balancesheet"]
 
-    market_cap_df = data[
-        "market_cap"
-    ]
+    market_cap_df = data["market_cap"]
 
-    sectors_df = data[
-        "sectors"
-    ]
+    sectors_df = data["sectors"]
 
     records = []
 
-    company_ids = sorted(
-        companies_df[
-            "company_id"
-        ]
-        .dropna()
-        .unique()
-        .tolist()
-    )
+    company_ids = sorted(companies_df["company_id"].dropna().unique().tolist())
 
     logging.info(
         "Companies to process: %s",
@@ -1885,40 +1593,17 @@ def generate_pros_cons(
 
     for company_id in company_ids:
 
-        company_ratios = ratios_df[
-            ratios_df[
-                "company_id"
-            ]
-            == company_id
-        ].copy()
+        company_ratios = ratios_df[ratios_df["company_id"] == company_id].copy()
 
-        company_pnl = pnl_df[
-            pnl_df[
-                "company_id"
-            ]
-            == company_id
-        ].copy()
+        company_pnl = pnl_df[pnl_df["company_id"] == company_id].copy()
 
-        company_balance = balance_df[
-            balance_df[
-                "company_id"
-            ]
-            == company_id
-        ].copy()
+        company_balance = balance_df[balance_df["company_id"] == company_id].copy()
 
         company_market_cap = market_cap_df[
-            market_cap_df[
-                "company_id"
-            ]
-            == company_id
+            market_cap_df["company_id"] == company_id
         ].copy()
 
-        company_sector_df = sectors_df[
-            sectors_df[
-                "company_id"
-            ]
-            == company_id
-        ].copy()
+        company_sector_df = sectors_df[sectors_df["company_id"] == company_id].copy()
 
         if company_sector_df.empty:
 
@@ -1926,28 +1611,22 @@ def generate_pros_cons(
 
         else:
 
-            sector_row = (
-                company_sector_df.iloc[0]
-            )
+            sector_row = company_sector_df.iloc[0]
 
-        pro_records = (
-            evaluate_pro_rules(
-                company_id=company_id,
-                ratios=company_ratios,
-                pnl=company_pnl,
-                balance_sheet=company_balance,
-                market_cap=company_market_cap,
-            )
+        pro_records = evaluate_pro_rules(
+            company_id=company_id,
+            ratios=company_ratios,
+            pnl=company_pnl,
+            balance_sheet=company_balance,
+            market_cap=company_market_cap,
         )
 
-        con_records = (
-            evaluate_con_rules(
-                company_id=company_id,
-                ratios=company_ratios,
-                pnl=company_pnl,
-                balance_sheet=company_balance,
-                sector_row=sector_row,
-            )
+        con_records = evaluate_con_rules(
+            company_id=company_id,
+            ratios=company_ratios,
+            pnl=company_pnl,
+            balance_sheet=company_balance,
+            sector_row=sector_row,
         )
 
         if not pro_records:
@@ -1968,13 +1647,9 @@ def generate_pros_cons(
                 )
             )
 
-        records.extend(
-            pro_records
-        )
+        records.extend(pro_records)
 
-        records.extend(
-            con_records
-        )
+        records.extend(con_records)
 
     output_columns = [
         "company_id",
@@ -1992,12 +1667,7 @@ def generate_pros_cons(
     if output_df.empty:
         return output_df
 
-    output_df = output_df[
-        output_df[
-            "confidence_pct"
-        ]
-        > MIN_CONFIDENCE
-    ].copy()
+    output_df = output_df[output_df["confidence_pct"] > MIN_CONFIDENCE].copy()
 
     output_df = output_df.sort_values(
         by=[
@@ -2012,9 +1682,7 @@ def generate_pros_cons(
         ],
     )
 
-    output_df = output_df.reset_index(
-        drop=True
-    )
+    output_df = output_df.reset_index(drop=True)
 
     return output_df
 
@@ -2024,10 +1692,11 @@ def generate_pros_cons(
 
     # ---------------------------------------------------------
 
+
 def verify_company_coverage(
     output_df: pd.DataFrame,
     companies_df: pd.DataFrame,
-    ) -> None:
+) -> None:
     """
     Verify every company has:
 
@@ -2035,64 +1704,26 @@ def verify_company_coverage(
     at least one Con
     """
 
-    expected_companies = set(
-        companies_df[
-            "company_id"
-        ]
-        .dropna()
-        .tolist()
-    )
+    expected_companies = set(companies_df["company_id"].dropna().tolist())
 
-    pro_companies = set(
-        output_df[
-            output_df["type"]
-            == "pro"
-        ][
-            "company_id"
-        ]
-        .tolist()
-    )
+    pro_companies = set(output_df[output_df["type"] == "pro"]["company_id"].tolist())
 
-    con_companies = set(
-        output_df[
-            output_df["type"]
-            == "con"
-        ][
-            "company_id"
-        ]
-        .tolist()
-    )
+    con_companies = set(output_df[output_df["type"] == "con"]["company_id"].tolist())
 
-    missing_pros = (
-        expected_companies
-        - pro_companies
-    )
+    missing_pros = expected_companies - pro_companies
 
-    missing_cons = (
-        expected_companies
-        - con_companies
-    )
+    missing_cons = expected_companies - con_companies
 
     if missing_pros:
 
         raise ValueError(
-            "Companies missing Pro signals: "
-            + ", ".join(
-                sorted(
-                    missing_pros
-                )
-            )
+            "Companies missing Pro signals: " + ", ".join(sorted(missing_pros))
         )
 
     if missing_cons:
 
         raise ValueError(
-            "Companies missing Con signals: "
-            + ", ".join(
-                sorted(
-                    missing_cons
-                )
-            )
+            "Companies missing Con signals: " + ", ".join(sorted(missing_cons))
         )
 
     logging.info(
@@ -2106,9 +1737,10 @@ def verify_company_coverage(
 
     # ---------------------------------------------------------
 
+
 def save_output(
     output_df: pd.DataFrame,
-    ) -> None:
+) -> None:
     """
     Save generated Pros/Cons CSV.
     """
@@ -2134,6 +1766,7 @@ def save_output(
 
     # ---------------------------------------------------------
 
+
 def run_generator() -> None:
     """
     Execute Day 30 Auto Pros/Cons Generator.
@@ -2141,92 +1774,45 @@ def run_generator() -> None:
 
     configure_logging()
 
-    logging.info(
-        "Starting Day 30 NLP Auto Pros/Cons Generator"
-    )
+    logging.info("Starting Day 30 NLP Auto Pros/Cons Generator")
 
     data = load_data()
 
-    output_df = (
-        generate_pros_cons(
-            data
-        )
-    )
+    output_df = generate_pros_cons(data)
 
     verify_company_coverage(
         output_df,
-        data[
-            "companies"
-        ],
+        data["companies"],
     )
 
-    save_output(
-        output_df
-    )
+    save_output(output_df)
 
-    total_companies = (
-        data[
-            "companies"
-        ][
-            "company_id"
-        ]
-        .nunique()
-    )
+    total_companies = data["companies"]["company_id"].nunique()
 
-    pro_count = len(
-        output_df[
-            output_df["type"]
-            == "pro"
-        ]
-    )
+    pro_count = len(output_df[output_df["type"] == "pro"])
 
-    con_count = len(
-        output_df[
-            output_df["type"]
-            == "con"
-        ]
-    )
+    con_count = len(output_df[output_df["type"] == "con"])
 
-    print(
-        "\nDay 30 NLP Auto Pros/Cons Generator "
-        "completed successfully."
-    )
+    print("\nDay 30 NLP Auto Pros/Cons Generator " "completed successfully.")
 
-    print(
-        f"Companies processed: {total_companies}"
-    )
+    print(f"Companies processed: {total_companies}")
 
-    print(
-        f"Pro signals generated: {pro_count}"
-    )
+    print(f"Pro signals generated: {pro_count}")
 
-    print(
-        f"Con signals generated: {con_count}"
-    )
+    print(f"Con signals generated: {con_count}")
 
-    print(
-        f"Total signals: {len(output_df)}"
-    )
+    print(f"Total signals: {len(output_df)}")
 
-    print(
-        "\nCoverage verification:"
-    )
+    print("\nCoverage verification:")
 
-    print(
-        "  Every company has at least 1 Pro"
-    )
+    print("  Every company has at least 1 Pro")
 
-    print(
-        "  Every company has at least 1 Con"
-    )
+    print("  Every company has at least 1 Con")
 
-    print(
-        "\nGenerated file:"
-    )
+    print("\nGenerated file:")
 
-    print(
-        f"  {OUTPUT_PATH}"
-    )
+    print(f"  {OUTPUT_PATH}")
+
 
 if __name__ == "__main__":
     run_generator()

@@ -2,27 +2,21 @@ import sqlite3
 import logging
 import os
 
-
 DB_PATH = "data/nifty100.db"
 
 OUTPUT = "output/ratio_edge_cases.log"
 
-os.makedirs(
-    "output",
-    exist_ok=True
-)
+os.makedirs("output", exist_ok=True)
 
 
 logging.basicConfig(
     filename=OUTPUT,
     level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(message)s"
+    format="%(asctime)s | %(levelname)s | %(message)s",
 )
 
 
-conn = sqlite3.connect(
-    DB_PATH
-)
+conn = sqlite3.connect(DB_PATH)
 
 cursor = conn.cursor()
 
@@ -58,19 +52,12 @@ cursor.execute("""
 """)
 
 
-for (
-    company_id,
-    year,
-    computed,
-    source
-) in cursor.fetchall():
+for company_id, year, computed, source in cursor.fetchall():
 
     if computed is None or source is None:
         continue
 
-    difference = abs(
-        computed - source
-    )
+    difference = abs(computed - source)
 
     if difference > 5:
 
@@ -84,7 +71,7 @@ for (
             year,
             computed,
             source,
-            difference
+            difference,
         )
 
 
@@ -105,19 +92,12 @@ cursor.execute("""
 """)
 
 
-for (
-    company_id,
-    year,
-    computed,
-    source
-) in cursor.fetchall():
+for company_id, year, computed, source in cursor.fetchall():
 
     if computed is None or source is None:
         continue
 
-    difference = abs(
-        computed - source
-    )
+    difference = abs(computed - source)
 
     if difference > 5:
 
@@ -131,7 +111,7 @@ for (
             year,
             computed,
             source,
-            difference
+            difference,
         )
 
 
@@ -152,24 +132,17 @@ cursor.execute("""
 
 financials = cursor.fetchall()
 
-print(
-    "Financials companies:",
-    len(financials)
-)
+print("Financials companies:", len(financials))
 
 
 for company_id, sector in financials:
 
     logging.info(
-        "Financials carve-out | "
-        "company=%s | "
-        "high leverage warning suppressed",
-        company_id
+        "Financials carve-out | " "company=%s | " "high leverage warning suppressed",
+        company_id,
     )
 
 
 conn.close()
 
-print(
-    f"Edge case log created: {OUTPUT}"
-)
+print(f"Edge case log created: {OUTPUT}")

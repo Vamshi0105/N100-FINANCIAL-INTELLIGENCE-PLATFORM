@@ -94,9 +94,7 @@ def get_cached_screener_data(database_path=DATABASE_PATH):
 
             dataframe = load_financial_ratios(database_path)
 
-            dataframe = calculate_composite_quality_score(
-                dataframe
-            )
+            dataframe = calculate_composite_quality_score(dataframe)
 
             _SCREENER_CACHE[cache_key] = dataframe
 
@@ -119,24 +117,16 @@ def get_latest_company_records(dataframe: pd.DataFrame) -> pd.DataFrame:
     df = dataframe.copy()
 
     # Use annual reporting periods only.
-    annual_df = df[
-        df["year"].astype(str).str.endswith("-03")
-    ].copy()
+    annual_df = df[df["year"].astype(str).str.endswith("-03")].copy()
 
     annual_df["year_sort"] = pd.to_datetime(
         annual_df["year"].astype(str),
         errors="coerce",
     )
 
-    annual_df = annual_df.sort_values(
-        ["company_id", "year_sort"]
-    )
+    annual_df = annual_df.sort_values(["company_id", "year_sort"])
 
-    latest = (
-        annual_df.groupby("company_id")
-        .tail(1)
-        .copy()
-    )
+    latest = annual_df.groupby("company_id").tail(1).copy()
 
     logger.info(
         "Latest annual company records retained: %s",
@@ -165,15 +155,11 @@ def apply_debt_declining_filter(df: pd.DataFrame) -> pd.DataFrame:
 
     df = df.sort_values(["company_id", "year_sort"])
 
-    df["previous_debt_to_equity"] = (
-        df.groupby("company_id")["debt_to_equity"].shift(1)
-    )
+    df["previous_debt_to_equity"] = df.groupby("company_id")["debt_to_equity"].shift(1)
 
     latest = df.groupby("company_id").tail(1).copy()
 
-    result = latest[
-        latest["debt_to_equity"] < latest["previous_debt_to_equity"]
-    ].copy()
+    result = latest[latest["debt_to_equity"] < latest["previous_debt_to_equity"]].copy()
 
     return result.drop(
         columns=["year_sort", "previous_debt_to_equity"],
@@ -194,7 +180,9 @@ def apply_filters(dataframe, filters):
 
     # 1. ROE minimum
     if filters.get("return_on_equity_pct_min") is not None:
-        result = result[result["return_on_equity_pct"] >= filters["return_on_equity_pct_min"]]
+        result = result[
+            result["return_on_equity_pct"] >= filters["return_on_equity_pct_min"]
+        ]
 
     # 2. Debt-to-Equity maximum
     # Financial companies automatically skip this filter.
@@ -222,9 +210,7 @@ def apply_filters(dataframe, filters):
         non_financials = result[~financials_mask]
         financials = result[financials_mask]
 
-        non_financials = non_financials[
-            non_financials["debt_to_equity"] <= 0.000001
-        ]
+        non_financials = non_financials[non_financials["debt_to_equity"] <= 0.000001]
 
         result = pd.concat([non_financials, financials], ignore_index=True)
 
@@ -258,14 +244,17 @@ def apply_filters(dataframe, filters):
 
     # 9. Dividend Yield minimum
     if filters.get("dividend_yield_pct_min") is not None:
-        result = result[result["dividend_yield_pct"] >= filters["dividend_yield_pct_min"]]
+        result = result[
+            result["dividend_yield_pct"] >= filters["dividend_yield_pct_min"]
+        ]
 
     # Dividend Payout maximum
     # Dividend Payout maximum
     if filters.get("dividend_payout_ratio_pct_max") is not None:
         result = result[
             result["dividend_payout_ratio_pct"]
-            <= filters["dividend_payout_ratio_pct_max"]]
+            <= filters["dividend_payout_ratio_pct_max"]
+        ]
 
     # 10. Interest Coverage Ratio minimum
     # Debt Free companies always pass.
@@ -312,6 +301,8 @@ def sort_results(dataframe, sorting):
         return dataframe
 
     return dataframe.sort_values(by=column, ascending=ascending, na_position="last")
+
+
 def keep_latest_company_records(dataframe):
     """
     Keep the latest available financial record for each company.
@@ -319,29 +310,18 @@ def keep_latest_company_records(dataframe):
 
     result = dataframe.copy()
 
-    result["year_sort"] = pd.to_datetime(
-        result["year"],
-        errors="coerce"
-    )
+    result["year_sort"] = pd.to_datetime(result["year"], errors="coerce")
 
-    result = result.sort_values(
-        ["company_id", "year_sort"],
-        ascending=[True, False]
-    )
+    result = result.sort_values(["company_id", "year_sort"], ascending=[True, False])
 
-    result = result.drop_duplicates(
-        subset=["company_id"],
-        keep="first"
-    )
+    result = result.drop_duplicates(subset=["company_id"], keep="first")
 
     result = result.drop(columns=["year_sort"])
 
-    logger.info(
-        "Latest company records retained: %s",
-        len(result)
-    )
+    logger.info("Latest company records retained: %s", len(result))
 
     return result
+
 
 def run_screener(filters=None, database_path=DATABASE_PATH, config_path=CONFIG_PATH):
     """Run the complete financial screener."""
@@ -369,7 +349,9 @@ def run_screener(filters=None, database_path=DATABASE_PATH, config_path=CONFIG_P
         ].copy()
 
         filter_values = {
-            key: value for key, value in filters.items() if key != "debt_to_equity_declining"
+            key: value
+            for key, value in filters.items()
+            if key != "debt_to_equity_declining"
         }
 
         filtered_dataframe = apply_filters(annual_dataframe, filter_values)
@@ -381,10 +363,7 @@ def run_screener(filters=None, database_path=DATABASE_PATH, config_path=CONFIG_P
     sorted_dataframe = sort_results(filtered_dataframe, sorting)
 
     logger.info("Screener completed successfully")
-    logger.info(
-        "Final result count: %s",
-        len(sorted_dataframe)
-    )
+    logger.info("Final result count: %s", len(sorted_dataframe))
 
     return sorted_dataframe
 
@@ -415,4 +394,3 @@ if __name__ == "__main__":
 
     print("\nSample results:")
     print(results[available_columns].head(20).to_string(index=False))
-

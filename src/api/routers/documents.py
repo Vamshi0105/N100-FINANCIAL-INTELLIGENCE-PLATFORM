@@ -8,7 +8,6 @@ from fastapi import APIRouter, HTTPException
 
 from src.api.config import get_db_connection
 
-
 router = APIRouter()
 
 
@@ -84,13 +83,13 @@ def get_company_documents(ticker: str):
         for row in rows:
             annual_report = row["annual_report"]
 
-            documents.append({
-                "year": row["year"],
-                "annual_report": annual_report,
-                "is_url_valid": _is_valid_url(
-                    annual_report
-                ),
-            })
+            documents.append(
+                {
+                    "year": row["year"],
+                    "annual_report": annual_report,
+                    "is_url_valid": _is_valid_url(annual_report),
+                }
+            )
 
         return {
             "ticker": actual_ticker,

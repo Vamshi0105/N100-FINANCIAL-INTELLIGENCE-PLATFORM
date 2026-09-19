@@ -7,20 +7,11 @@ from analytics.cash_flow import (
     generate_capital_allocation_csv,
 )
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
-DB_PATH = (
-    PROJECT_ROOT
-    / "data"
-    / "nifty100.db"
-)
+DB_PATH = PROJECT_ROOT / "data" / "nifty100.db"
 
-OUTPUT_PATH = (
-    PROJECT_ROOT
-    / "output"
-    / "capital_allocation.csv"
-)
+OUTPUT_PATH = PROJECT_ROOT / "output" / "capital_allocation.csv"
 
 
 def main():
@@ -45,8 +36,7 @@ def main():
         # We use March year-end records (YYYY-03).
         # ---------------------------------------------
 
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT
                 cf.company_id,
                 cf.year,
@@ -72,20 +62,15 @@ def main():
                 AND cf.year = latest.latest_year
 
             ORDER BY cf.company_id
-            """
-        )
+            """)
 
         rows = cursor.fetchall()
 
-    print(
-        f"\nLatest annual records found: {len(rows)}"
-    )
+    print(f"\nLatest annual records found: {len(rows)}")
 
     if not rows:
 
-        print(
-            "WARNING: No annual cash flow records found."
-        )
+        print("WARNING: No annual cash flow records found.")
         return
 
     records = []
@@ -117,13 +102,9 @@ def main():
         output_path=OUTPUT_PATH,
     )
 
-    print(
-        f"\nCreated: {OUTPUT_PATH}"
-    )
+    print(f"\nCreated: {OUTPUT_PATH}")
 
-    print(
-        f"Rows written: {len(records)}"
-    )
+    print(f"Rows written: {len(records)}")
 
     # ---------------------------------------------
     # Print pattern summary.
@@ -153,12 +134,8 @@ def main():
 
     print("\nPattern counts:")
 
-    for pattern, count in sorted(
-        pattern_counts.items()
-    ):
-        print(
-            f"{pattern}: {count}"
-        )
+    for pattern, count in sorted(pattern_counts.items()):
+        print(f"{pattern}: {count}")
 
 
 if __name__ == "__main__":

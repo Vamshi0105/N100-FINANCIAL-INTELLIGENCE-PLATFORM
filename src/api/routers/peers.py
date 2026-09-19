@@ -8,7 +8,6 @@ from fastapi import APIRouter, HTTPException
 
 from src.api.config import get_db_connection
 
-
 router = APIRouter()
 
 
@@ -21,8 +20,7 @@ def get_peer_groups():
     connection = get_db_connection()
 
     try:
-        rows = connection.execute(
-            """
+        rows = connection.execute("""
             SELECT
                 peer_group_name,
                 COUNT(DISTINCT company_id) AS company_count
@@ -31,8 +29,7 @@ def get_peer_groups():
               AND TRIM(peer_group_name) <> ''
             GROUP BY peer_group_name
             ORDER BY peer_group_name
-            """
-        ).fetchall()
+            """).fetchall()
 
         return {
             "count": len(rows),
@@ -142,15 +139,17 @@ def get_peer_group(group_name: str):
         for row in company_rows:
             company_id = row["company_id"]
 
-            companies.append({
-                "ticker": company_id,
-                "company_name": row["company_name"],
-                "is_benchmark": bool(row["is_benchmark"]),
-                "metrics": percentile_data.get(
-                    company_id,
-                    {},
-                ),
-            })
+            companies.append(
+                {
+                    "ticker": company_id,
+                    "company_name": row["company_name"],
+                    "is_benchmark": bool(row["is_benchmark"]),
+                    "metrics": percentile_data.get(
+                        company_id,
+                        {},
+                    ),
+                }
+            )
 
         return {
             "peer_group": actual_group_name,
@@ -254,12 +253,14 @@ def compare_company_with_peers(ticker: str):
             if metric not in metric_values:
                 metric_values[metric] = []
 
-            metric_values[metric].append({
-                "company_id": row["company_id"],
-                "value": row["value"],
-                "year": row["year"],
-                "is_benchmark": bool(row["is_benchmark"]),
-            })
+            metric_values[metric].append(
+                {
+                    "company_id": row["company_id"],
+                    "value": row["value"],
+                    "year": row["year"],
+                    "is_benchmark": bool(row["is_benchmark"]),
+                }
+            )
 
         radar = []
 
@@ -273,15 +274,11 @@ def compare_company_with_peers(ticker: str):
             )
 
             numeric_values = [
-                float(item["value"])
-                for item in values
-                if item["value"] is not None
+                float(item["value"]) for item in values if item["value"] is not None
             ]
 
             peer_average = (
-                sum(numeric_values) / len(numeric_values)
-                if numeric_values
-                else None
+                sum(numeric_values) / len(numeric_values) if numeric_values else None
             )
 
             company_value = None
@@ -292,10 +289,7 @@ def compare_company_with_peers(ticker: str):
 
             for item in values:
 
-                if (
-                    item["company_id"].lower()
-                    == actual_ticker.lower()
-                ):
+                if item["company_id"].lower() == actual_ticker.lower():
                     company_value = item["value"]
                     company_year = item["year"]
 
@@ -304,19 +298,19 @@ def compare_company_with_peers(ticker: str):
                     benchmark_ticker = item["company_id"]
                     benchmark_year = item["year"]
 
-            radar.append({
-                "metric": display_metric,
-                "company": company_value,
-                "peer_average": (
-                    round(peer_average, 4)
-                    if peer_average is not None
-                    else None
-                ),
-                "benchmark": benchmark_value,
-                "company_year": company_year,
-                "benchmark_ticker": benchmark_ticker,
-                "benchmark_year": benchmark_year,
-            })
+            radar.append(
+                {
+                    "metric": display_metric,
+                    "company": company_value,
+                    "peer_average": (
+                        round(peer_average, 4) if peer_average is not None else None
+                    ),
+                    "benchmark": benchmark_value,
+                    "company_year": company_year,
+                    "benchmark_ticker": benchmark_ticker,
+                    "benchmark_year": benchmark_year,
+                }
+            )
 
         return {
             "ticker": actual_ticker,

@@ -8,7 +8,6 @@ from fastapi import APIRouter, HTTPException
 
 from src.api.config import get_db_connection
 
-
 router = APIRouter()
 
 
@@ -81,21 +80,17 @@ def get_market_cap_history(ticker: str):
         history = []
 
         for row in rows:
-            history.append({
-                "year": row["year"],
-                "market_cap_crore": row[
-                    "market_cap_crore"
-                ],
-                "enterprise_value_crore": row[
-                    "enterprise_value_crore"
-                ],
-                "pe": row["pe_ratio"],
-                "pb": row["pb_ratio"],
-                "ev_ebitda": row["ev_ebitda"],
-                "dividend_yield_pct": row[
-                    "dividend_yield_pct"
-                ],
-            })
+            history.append(
+                {
+                    "year": row["year"],
+                    "market_cap_crore": row["market_cap_crore"],
+                    "enterprise_value_crore": row["enterprise_value_crore"],
+                    "pe": row["pe_ratio"],
+                    "pb": row["pb_ratio"],
+                    "ev_ebitda": row["ev_ebitda"],
+                    "dividend_yield_pct": row["dividend_yield_pct"],
+                }
+            )
 
         return {
             "ticker": actual_ticker,

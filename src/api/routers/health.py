@@ -24,15 +24,13 @@ def health_check():
     connection = get_db_connection()
 
     try:
-        tables = connection.execute(
-            """
+        tables = connection.execute("""
             SELECT name
             FROM sqlite_master
             WHERE type = 'table'
               AND name NOT LIKE 'sqlite_%'
             ORDER BY name
-            """
-        ).fetchall()
+            """).fetchall()
 
         db_row_counts = {}
 

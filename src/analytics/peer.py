@@ -6,13 +6,10 @@ from typing import Optional
 
 import pandas as pd
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 DEFAULT_DB_PATH = PROJECT_ROOT / "data" / "nifty100.db"
-DEFAULT_PEER_GROUPS_PATH = (
-    PROJECT_ROOT / "data" / "supporting" / "peer_groups.xlsx"
-)
+DEFAULT_PEER_GROUPS_PATH = PROJECT_ROOT / "data" / "supporting" / "peer_groups.xlsx"
 
 
 # Metric name shown in peer_percentiles -> source column in financial_ratios
@@ -44,9 +41,7 @@ def load_peer_groups(
     peer_groups_path = Path(peer_groups_path)
 
     if not peer_groups_path.exists():
-        raise FileNotFoundError(
-            f"Peer groups file not found: {peer_groups_path}"
-        )
+        raise FileNotFoundError(f"Peer groups file not found: {peer_groups_path}")
 
     df = pd.read_excel(peer_groups_path)
 
@@ -63,22 +58,11 @@ def load_peer_groups(
             + ", ".join(sorted(missing_columns))
         )
 
-    df = df[
-        ["company_id", "peer_group_name"]
-    ].copy()
+    df = df[["company_id", "peer_group_name"]].copy()
 
-    df["company_id"] = (
-        df["company_id"]
-        .astype(str)
-        .str.strip()
-        .str.upper()
-    )
+    df["company_id"] = df["company_id"].astype(str).str.strip().str.upper()
 
-    df["peer_group_name"] = (
-        df["peer_group_name"]
-        .astype(str)
-        .str.strip()
-    )
+    df["peer_group_name"] = df["peer_group_name"].astype(str).str.strip()
 
     df = df.drop_duplicates(
         subset=["company_id"],
@@ -95,8 +79,7 @@ def create_peer_percentiles_table(
     Create the peer_percentiles table if it does not already exist.
     """
 
-    connection.execute(
-        """
+    connection.execute("""
         CREATE TABLE IF NOT EXISTS peer_percentiles (
             company_id TEXT NOT NULL,
             peer_group_name TEXT NOT NULL,
@@ -111,8 +94,7 @@ def create_peer_percentiles_table(
                 year
             )
         )
-        """
-    )
+        """)
 
     connection.commit()
 
@@ -124,11 +106,7 @@ def _normalise_company_id(
     Convert company IDs into a consistent format for joins.
     """
 
-    return (
-        series.astype(str)
-        .str.strip()
-        .str.upper()
-    )
+    return series.astype(str).str.strip().str.upper()
 
 
 def _get_financial_ratios(
@@ -188,9 +166,7 @@ def _get_financial_ratios(
     if df.empty:
         return df
 
-    df["company_id"] = _normalise_company_id(
-        df["company_id"]
-    )
+    df["company_id"] = _normalise_company_id(df["company_id"])
 
     return df
 
@@ -229,13 +205,9 @@ def calculate_peer_percentiles(
     ratios = ratios_df.copy()
     peers = peer_groups_df.copy()
 
-    ratios["company_id"] = _normalise_company_id(
-        ratios["company_id"]
-    )
+    ratios["company_id"] = _normalise_company_id(ratios["company_id"])
 
-    peers["company_id"] = _normalise_company_id(
-        peers["company_id"]
-    )
+    peers["company_id"] = _normalise_company_id(peers["company_id"])
 
     merged = ratios.merge(
         peers,
@@ -244,9 +216,7 @@ def calculate_peer_percentiles(
     )
 
     # Companies without a peer group are not ranked.
-    merged = merged[
-        merged["peer_group_name"].notna()
-    ].copy()
+    merged = merged[merged["peer_group_name"].notna()].copy()
 
     if merged.empty:
         return pd.DataFrame(
@@ -280,36 +250,26 @@ def calculate_peer_percentiles(
         )
 
         # Ignore missing metric values.
-        metric_df = metric_df[
-            metric_df["value"].notna()
-        ].copy()
+        metric_df = metric_df[metric_df["value"].notna()].copy()
 
         if metric_df.empty:
             continue
 
         # pandas pct=False ranking gives standard rank.
-        metric_df["rank"] = (
-            metric_df
-            .groupby("peer_group_name")["value"]
-            .rank(
-                method="min",
-                ascending=True,
-            )
+        metric_df["rank"] = metric_df.groupby("peer_group_name")["value"].rank(
+            method="min",
+            ascending=True,
         )
 
-        metric_df["group_size"] = (
-            metric_df
-            .groupby("peer_group_name")["value"]
-            .transform("count")
-        )
+        metric_df["group_size"] = metric_df.groupby("peer_group_name")[
+            "value"
+        ].transform("count")
 
         # Equivalent to PERCENT_RANK:
         #
         # (rank - 1) / (N - 1)
-        metric_df["percentile_rank"] = (
-            (metric_df["rank"] - 1)
-            /
-            (metric_df["group_size"] - 1)
+        metric_df["percentile_rank"] = (metric_df["rank"] - 1) / (
+            metric_df["group_size"] - 1
         )
 
         # If only one company has a valid value
@@ -321,9 +281,7 @@ def calculate_peer_percentiles(
 
         # Lower D/E is better.
         if metric_name == "D/E":
-            metric_df["percentile_rank"] = (
-                1.0 - metric_df["percentile_rank"]
-            )
+            metric_df["percentile_rank"] = 1.0 - metric_df["percentile_rank"]
 
         metric_df["metric"] = metric_name
 
@@ -399,9 +357,7 @@ def save_peer_percentiles(
             float(row.percentile_rank),
             str(row.year),
         )
-        for row in percentiles_df.itertuples(
-            index=False
-        )
+        for row in percentiles_df.itertuples(index=False)
     ]
 
     connection.executemany(
@@ -437,23 +393,14 @@ def get_peer_group_for_company(
     No exception is raised.
     """
 
-    normalised_company_id = (
-        str(company_id)
-        .strip()
-        .upper()
-    )
+    normalised_company_id = str(company_id).strip().upper()
 
-    match = peer_groups_df[
-        peer_groups_df["company_id"]
-        == normalised_company_id
-    ]
+    match = peer_groups_df[peer_groups_df["company_id"] == normalised_company_id]
 
     if match.empty:
         return "No peer group assigned"
 
-    return str(
-        match.iloc[0]["peer_group_name"]
-    )
+    return str(match.iloc[0]["peer_group_name"])
 
 
 def run_peer_percentile_ranking(
@@ -473,15 +420,11 @@ def run_peer_percentile_ranking(
 
     db_path = Path(db_path)
 
-    peer_groups_df = load_peer_groups(
-        peer_groups_path
-    )
+    peer_groups_df = load_peer_groups(peer_groups_path)
 
     with sqlite3.connect(db_path) as connection:
 
-        create_peer_percentiles_table(
-            connection
-        )
+        create_peer_percentiles_table(connection)
 
         ratios_df = _get_financial_ratios(
             connection,
@@ -505,17 +448,10 @@ if __name__ == "__main__":
 
     result = run_peer_percentile_ranking()
 
-    print(
-        f"Peer percentile rankings created: "
-        f"{len(result)}"
-    )
+    print(f"Peer percentile rankings created: " f"{len(result)}")
 
     if not result.empty:
 
         print("\nPreview:")
 
-        print(
-            result.head(20).to_string(
-                index=False
-            )
-        )
+        print(result.head(20).to_string(index=False))

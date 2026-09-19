@@ -4,23 +4,11 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-sys.path.insert(
-    0,
-    str(
-        Path(__file__)
-        .resolve()
-        .parents[2]
-    )
-)
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from src.etl.loader import read_excel
 
-
-PROJECT_ROOT = (
-    Path(__file__)
-    .resolve()
-    .parents[2]
-)
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
 EXPECTED_ROWS = {
@@ -130,9 +118,7 @@ def test_core_column_names():
             table_name,
         )
 
-        assert columns.issubset(
-            set(df.columns)
-        )
+        assert columns.issubset(set(df.columns))
 
 
 def test_remaining_column_names():
@@ -170,9 +156,7 @@ def test_remaining_column_names():
             table_name,
         )
 
-        assert columns.issubset(
-            set(df.columns)
-        )
+        assert columns.issubset(set(df.columns))
 
 
 def test_loader_normalizes_year_columns():
@@ -190,15 +174,9 @@ def test_loader_normalizes_year_columns():
 
         assert "year" in df.columns
 
-        valid_years = (
-            df["year"]
-            .dropna()
-            .astype(str)
-        )
+        valid_years = df["year"].dropna().astype(str)
 
-        assert valid_years.str.match(
-            r"^\d{4}-\d{2}$"
-        ).all()
+        assert valid_years.str.match(r"^\d{4}-\d{2}$").all()
 
 
 def test_loader_converts_numeric_columns():
@@ -220,6 +198,4 @@ def test_loader_converts_numeric_columns():
 
         assert column in df.columns
 
-        assert pd.api.types.is_numeric_dtype(
-            df[column]
-        )
+        assert pd.api.types.is_numeric_dtype(df[column])

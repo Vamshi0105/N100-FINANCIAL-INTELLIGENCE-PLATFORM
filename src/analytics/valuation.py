@@ -6,69 +6,42 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-
 # --------------------------------------------------
 # Project paths
 # --------------------------------------------------
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
-DEFAULT_DB_PATH = (
-    PROJECT_ROOT
-    / "data"
-    / "nifty100.db"
-)
+DEFAULT_DB_PATH = PROJECT_ROOT / "data" / "nifty100.db"
 
-DEFAULT_MARKET_CAP_PATH = (
-    PROJECT_ROOT
-    / "data"
-    / "supporting"
-    / "market_cap.xlsx"
-)
+DEFAULT_MARKET_CAP_PATH = PROJECT_ROOT / "data" / "supporting" / "market_cap.xlsx"
 
-DEFAULT_OUTPUT_DIR = (
-    PROJECT_ROOT
-    / "output"
-)
+DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "output"
 
-DEFAULT_SUMMARY_PATH = (
-    DEFAULT_OUTPUT_DIR
-    / "valuation_summary.xlsx"
-)
+DEFAULT_SUMMARY_PATH = DEFAULT_OUTPUT_DIR / "valuation_summary.xlsx"
 
-DEFAULT_FLAGS_PATH = (
-    DEFAULT_OUTPUT_DIR
-    / "valuation_flags.csv"
-)
+DEFAULT_FLAGS_PATH = DEFAULT_OUTPUT_DIR / "valuation_flags.csv"
 
 
 # --------------------------------------------------
 # Load market-cap data
 # --------------------------------------------------
 
+
 def load_market_cap_data(
-    market_cap_path: str | Path = (
-        DEFAULT_MARKET_CAP_PATH
-    ),
+    market_cap_path: str | Path = (DEFAULT_MARKET_CAP_PATH),
 ) -> pd.DataFrame:
     """
     Load valuation data from market_cap.xlsx.
     """
 
-    market_cap_path = Path(
-        market_cap_path
-    )
+    market_cap_path = Path(market_cap_path)
 
     if not market_cap_path.exists():
 
-        raise FileNotFoundError(
-            f"Market cap file not found: "
-            f"{market_cap_path}"
-        )
+        raise FileNotFoundError(f"Market cap file not found: " f"{market_cap_path}")
 
-    df = pd.read_excel(
-        market_cap_path
-    )
+    df = pd.read_excel(market_cap_path)
 
     required_columns = [
         "company_id",
@@ -80,25 +53,16 @@ def load_market_cap_data(
     ]
 
     missing_columns = [
-        column
-        for column in required_columns
-        if column not in df.columns
+        column for column in required_columns if column not in df.columns
     ]
 
     if missing_columns:
 
         raise ValueError(
-            "market_cap.xlsx is missing "
-            f"required columns: "
-            f"{missing_columns}"
+            "market_cap.xlsx is missing " f"required columns: " f"{missing_columns}"
         )
 
-    df["company_id"] = (
-        df["company_id"]
-        .astype(str)
-        .str.strip()
-        .str.upper()
-    )
+    df["company_id"] = df["company_id"].astype(str).str.strip().str.upper()
 
     df["year"] = pd.to_numeric(
         df["year"],
@@ -126,10 +90,7 @@ def load_market_cap_data(
         ]
     )
 
-    df["year"] = (
-        df["year"]
-        .astype(int)
-    )
+    df["year"] = df["year"].astype(int)
 
     return df
 
@@ -138,19 +99,16 @@ def load_market_cap_data(
 # Load company names and sectors
 # --------------------------------------------------
 
+
 def load_company_sector_data(
-    db_path: str | Path = (
-        DEFAULT_DB_PATH
-    ),
+    db_path: str | Path = (DEFAULT_DB_PATH),
 ) -> pd.DataFrame:
     """
     Load company names and broad sectors
     from SQLite.
     """
 
-    db_path = Path(
-        db_path
-    )
+    db_path = Path(db_path)
 
     query = """
         SELECT
@@ -162,21 +120,14 @@ def load_company_sector_data(
             ON c.id = s.company_id
     """
 
-    with sqlite3.connect(
-        db_path
-    ) as connection:
+    with sqlite3.connect(db_path) as connection:
 
         df = pd.read_sql_query(
             query,
             connection,
         )
 
-    df["company_id"] = (
-        df["company_id"]
-        .astype(str)
-        .str.strip()
-        .str.upper()
-    )
+    df["company_id"] = df["company_id"].astype(str).str.strip().str.upper()
 
     return df
 
@@ -185,10 +136,9 @@ def load_company_sector_data(
 # Load free cash flow
 # --------------------------------------------------
 
+
 def load_free_cash_flow_data(
-    db_path: str | Path = (
-        DEFAULT_DB_PATH
-    ),
+    db_path: str | Path = (DEFAULT_DB_PATH),
 ) -> pd.DataFrame:
     """
     Load annual Free Cash Flow from
@@ -204,9 +154,7 @@ def load_free_cash_flow_data(
     market_cap.xlsx.
     """
 
-    db_path = Path(
-        db_path
-    )
+    db_path = Path(db_path)
 
     query = """
         SELECT
@@ -217,9 +165,7 @@ def load_free_cash_flow_data(
         WHERE year LIKE '%-03'
     """
 
-    with sqlite3.connect(
-        db_path
-    ) as connection:
+    with sqlite3.connect(db_path) as connection:
 
         df = pd.read_sql_query(
             query,
@@ -230,25 +176,16 @@ def load_free_cash_flow_data(
 
         return df
 
-    df["company_id"] = (
-        df["company_id"]
-        .astype(str)
-        .str.strip()
-        .str.upper()
-    )
+    df["company_id"] = df["company_id"].astype(str).str.strip().str.upper()
 
     df["market_year"] = pd.to_numeric(
-        df["year"]
-        .astype(str)
-        .str[:4],
+        df["year"].astype(str).str[:4],
         errors="coerce",
     )
 
-    df["free_cash_flow_cr"] = (
-        pd.to_numeric(
-            df["free_cash_flow_cr"],
-            errors="coerce",
-        )
+    df["free_cash_flow_cr"] = pd.to_numeric(
+        df["free_cash_flow_cr"],
+        errors="coerce",
     )
 
     df = df.dropna(
@@ -257,10 +194,7 @@ def load_free_cash_flow_data(
         ]
     )
 
-    df["market_year"] = (
-        df["market_year"]
-        .astype(int)
-    )
+    df["market_year"] = df["market_year"].astype(int)
 
     return df[
         [
@@ -274,6 +208,7 @@ def load_free_cash_flow_data(
 # --------------------------------------------------
 # Latest valuation records
 # --------------------------------------------------
+
 
 def get_latest_market_cap_records(
     market_cap_df: pd.DataFrame,
@@ -308,6 +243,7 @@ def get_latest_market_cap_records(
 # Five-year median P/E
 # --------------------------------------------------
 
+
 def calculate_five_year_median_pe(
     market_cap_df: pd.DataFrame,
 ) -> pd.DataFrame:
@@ -340,12 +276,7 @@ def calculate_five_year_median_pe(
             as_index=False,
         )["pe_ratio"]
         .median()
-        .rename(
-            columns={
-                "pe_ratio":
-                    "5yr_median_PE"
-            }
-        )
+        .rename(columns={"pe_ratio": "5yr_median_PE"})
     )
 
     return result
@@ -354,6 +285,7 @@ def calculate_five_year_median_pe(
 # --------------------------------------------------
 # Sector median P/E
 # --------------------------------------------------
+
 
 def calculate_sector_median_pe(
     latest_df: pd.DataFrame,
@@ -370,12 +302,7 @@ def calculate_sector_median_pe(
             as_index=False,
         )["P/E"]
         .median()
-        .rename(
-            columns={
-                "P/E":
-                    "sector_median_PE"
-            }
-        )
+        .rename(columns={"P/E": "sector_median_PE"})
     )
 
     return result
@@ -384,6 +311,7 @@ def calculate_sector_median_pe(
 # --------------------------------------------------
 # FCF Yield
 # --------------------------------------------------
+
 
 def calculate_fcf_yield(
     free_cash_flow_cr: float,
@@ -395,15 +323,11 @@ def calculate_fcf_yield(
         FCF / Market Cap x 100
     """
 
-    if pd.isna(
-        free_cash_flow_cr
-    ):
+    if pd.isna(free_cash_flow_cr):
 
         return np.nan
 
-    if pd.isna(
-        market_cap_crore
-    ):
+    if pd.isna(market_cap_crore):
 
         return np.nan
 
@@ -411,18 +335,13 @@ def calculate_fcf_yield(
 
         return np.nan
 
-    return (
-        free_cash_flow_cr
-        /
-        market_cap_crore
-        *
-        100
-    )
+    return free_cash_flow_cr / market_cap_crore * 100
 
 
 # --------------------------------------------------
 # Valuation flag
 # --------------------------------------------------
+
 
 def calculate_valuation_flag(
     pe_ratio: float,
@@ -441,15 +360,11 @@ def calculate_valuation_flag(
         -> Fair
     """
 
-    if pd.isna(
-        pe_ratio
-    ):
+    if pd.isna(pe_ratio):
 
         return "Fair"
 
-    if pd.isna(
-        sector_median_pe
-    ):
+    if pd.isna(sector_median_pe):
 
         return "Fair"
 
@@ -457,17 +372,11 @@ def calculate_valuation_flag(
 
         return "Fair"
 
-    if pe_ratio > (
-        sector_median_pe
-        * 1.5
-    ):
+    if pe_ratio > (sector_median_pe * 1.5):
 
         return "Caution"
 
-    if pe_ratio < (
-        sector_median_pe
-        * 0.7
-    ):
+    if pe_ratio < (sector_median_pe * 0.7):
 
         return "Discount"
 
@@ -477,6 +386,7 @@ def calculate_valuation_flag(
 # --------------------------------------------------
 # Build valuation summary
 # --------------------------------------------------
+
 
 def build_valuation_summary(
     market_cap_df: pd.DataFrame,
@@ -492,11 +402,7 @@ def build_valuation_summary(
     # Latest valuation data
     # ----------------------------------------------
 
-    latest_df = (
-        get_latest_market_cap_records(
-            market_cap_df
-        )
-    )
+    latest_df = get_latest_market_cap_records(market_cap_df)
 
     # ----------------------------------------------
     # Company names and sectors
@@ -529,11 +435,7 @@ def build_valuation_summary(
     # Five-year median P/E
     # ----------------------------------------------
 
-    median_pe_df = (
-        calculate_five_year_median_pe(
-            market_cap_df
-        )
-    )
+    median_pe_df = calculate_five_year_median_pe(market_cap_df)
 
     latest_df = latest_df.merge(
         median_pe_df,
@@ -547,16 +449,11 @@ def build_valuation_summary(
 
     latest_df = latest_df.rename(
         columns={
-            "company_name":
-                "company_name",
-            "broad_sector":
-                "sector",
-            "pe_ratio":
-                "P/E",
-            "pb_ratio":
-                "P/B",
-            "ev_ebitda":
-                "EV/EBITDA",
+            "company_name": "company_name",
+            "broad_sector": "sector",
+            "pe_ratio": "P/E",
+            "pb_ratio": "P/B",
+            "ev_ebitda": "EV/EBITDA",
         }
     )
 
@@ -564,18 +461,11 @@ def build_valuation_summary(
     # FCF Yield
     # ----------------------------------------------
 
-    latest_df[
-        "FCF_yield_pct"
-    ] = latest_df.apply(
-        lambda row:
-            calculate_fcf_yield(
-                row[
-                    "free_cash_flow_cr"
-                ],
-                row[
-                    "market_cap_crore"
-                ],
-            ),
+    latest_df["FCF_yield_pct"] = latest_df.apply(
+        lambda row: calculate_fcf_yield(
+            row["free_cash_flow_cr"],
+            row["market_cap_crore"],
+        ),
         axis=1,
     )
 
@@ -583,11 +473,7 @@ def build_valuation_summary(
     # Sector median P/E
     # ----------------------------------------------
 
-    sector_median_df = (
-        calculate_sector_median_pe(
-            latest_df
-        )
-    )
+    sector_median_df = calculate_sector_median_pe(latest_df)
 
     latest_df = latest_df.merge(
         sector_median_df,
@@ -599,24 +485,9 @@ def build_valuation_summary(
     # P/E vs sector median
     # ----------------------------------------------
 
-    latest_df[
-        "PE_vs_sector_median_pct"
-    ] = np.where(
-        latest_df[
-            "sector_median_PE"
-        ]
-        > 0,
-        (
-            (
-                latest_df["P/E"]
-                /
-                latest_df[
-                    "sector_median_PE"
-                ]
-            )
-            - 1
-        )
-        * 100,
+    latest_df["PE_vs_sector_median_pct"] = np.where(
+        latest_df["sector_median_PE"] > 0,
+        ((latest_df["P/E"] / latest_df["sector_median_PE"]) - 1) * 100,
         np.nan,
     )
 
@@ -624,17 +495,12 @@ def build_valuation_summary(
     # Valuation flags
     # ----------------------------------------------
 
-    latest_df["flag"] = (
-        latest_df.apply(
-            lambda row:
-                calculate_valuation_flag(
-                    row["P/E"],
-                    row[
-                        "sector_median_PE"
-                    ],
-                ),
-            axis=1,
-        )
+    latest_df["flag"] = latest_df.apply(
+        lambda row: calculate_valuation_flag(
+            row["P/E"],
+            row["sector_median_PE"],
+        ),
+        axis=1,
     )
 
     # ----------------------------------------------
@@ -654,9 +520,7 @@ def build_valuation_summary(
         "flag",
     ]
 
-    summary_df = latest_df[
-        output_columns
-    ].copy()
+    summary_df = latest_df[output_columns].copy()
 
     summary_df = summary_df.sort_values(
         [
@@ -672,19 +536,12 @@ def build_valuation_summary(
 # Generate valuation files
 # --------------------------------------------------
 
+
 def generate_valuation_outputs(
-    market_cap_path: str | Path = (
-        DEFAULT_MARKET_CAP_PATH
-    ),
-    db_path: str | Path = (
-        DEFAULT_DB_PATH
-    ),
-    summary_path: str | Path = (
-        DEFAULT_SUMMARY_PATH
-    ),
-    flags_path: str | Path = (
-        DEFAULT_FLAGS_PATH
-    ),
+    market_cap_path: str | Path = (DEFAULT_MARKET_CAP_PATH),
+    db_path: str | Path = (DEFAULT_DB_PATH),
+    summary_path: str | Path = (DEFAULT_SUMMARY_PATH),
+    flags_path: str | Path = (DEFAULT_FLAGS_PATH),
 ) -> pd.DataFrame:
     """
     Main Day 26 workflow.
@@ -697,13 +554,9 @@ def generate_valuation_outputs(
     6. Write valuation_flags.csv
     """
 
-    summary_path = Path(
-        summary_path
-    )
+    summary_path = Path(summary_path)
 
-    flags_path = Path(
-        flags_path
-    )
+    flags_path = Path(flags_path)
 
     summary_path.parent.mkdir(
         parents=True,
@@ -719,34 +572,20 @@ def generate_valuation_outputs(
     # Load data
     # ----------------------------------------------
 
-    market_cap_df = (
-        load_market_cap_data(
-            market_cap_path
-        )
-    )
+    market_cap_df = load_market_cap_data(market_cap_path)
 
-    company_sector_df = (
-        load_company_sector_data(
-            db_path
-        )
-    )
+    company_sector_df = load_company_sector_data(db_path)
 
-    free_cash_flow_df = (
-        load_free_cash_flow_data(
-            db_path
-        )
-    )
+    free_cash_flow_df = load_free_cash_flow_data(db_path)
 
     # ----------------------------------------------
     # Build summary
     # ----------------------------------------------
 
-    summary_df = (
-        build_valuation_summary(
-            market_cap_df,
-            company_sector_df,
-            free_cash_flow_df,
-        )
+    summary_df = build_valuation_summary(
+        market_cap_df,
+        company_sector_df,
+        free_cash_flow_df,
     )
 
     # ----------------------------------------------
@@ -764,10 +603,7 @@ def generate_valuation_outputs(
 
     for column in numeric_columns:
 
-        summary_df[column] = (
-            summary_df[column]
-            .round(2)
-        )
+        summary_df[column] = summary_df[column].round(2)
 
     # ----------------------------------------------
     # Write Excel summary
@@ -805,61 +641,24 @@ def generate_valuation_outputs(
 
 if __name__ == "__main__":
 
-    summary = (
-        generate_valuation_outputs()
-    )
+    summary = generate_valuation_outputs()
 
-    caution_count = (
-        summary[
-            summary["flag"]
-            == "Caution"
-        ].shape[0]
-    )
+    caution_count = summary[summary["flag"] == "Caution"].shape[0]
 
-    discount_count = (
-        summary[
-            summary["flag"]
-            == "Discount"
-        ].shape[0]
-    )
+    discount_count = summary[summary["flag"] == "Discount"].shape[0]
 
-    fair_count = (
-        summary[
-            summary["flag"]
-            == "Fair"
-        ].shape[0]
-    )
+    fair_count = summary[summary["flag"] == "Fair"].shape[0]
 
-    print(
-        "Valuation analysis complete."
-    )
+    print("Valuation analysis complete.")
 
-    print(
-        f"Companies analysed: "
-        f"{len(summary)}"
-    )
+    print(f"Companies analysed: " f"{len(summary)}")
 
-    print(
-        f"Caution: "
-        f"{caution_count}"
-    )
+    print(f"Caution: " f"{caution_count}")
 
-    print(
-        f"Discount: "
-        f"{discount_count}"
-    )
+    print(f"Discount: " f"{discount_count}")
 
-    print(
-        f"Fair: "
-        f"{fair_count}"
-    )
+    print(f"Fair: " f"{fair_count}")
 
-    print(
-        f"\nSummary: "
-        f"{DEFAULT_SUMMARY_PATH}"
-    )
+    print(f"\nSummary: " f"{DEFAULT_SUMMARY_PATH}")
 
-    print(
-        f"Flags: "
-        f"{DEFAULT_FLAGS_PATH}"
-    )
+    print(f"Flags: " f"{DEFAULT_FLAGS_PATH}")

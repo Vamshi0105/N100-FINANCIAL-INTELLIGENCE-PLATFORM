@@ -93,13 +93,9 @@ def test_higher_value_gets_higher_percentile():
         peers,
     )
 
-    roe = result[
-        result["metric"] == "ROE"
-    ].sort_values("value")
+    roe = result[result["metric"] == "ROE"].sort_values("value")
 
-    assert list(
-        roe["percentile_rank"]
-    ) == [0.0, 0.5, 1.0]
+    assert list(roe["percentile_rank"]) == [0.0, 0.5, 1.0]
 
 
 def test_debt_to_equity_is_inverted():
@@ -189,16 +185,12 @@ def test_debt_to_equity_is_inverted():
         peers,
     )
 
-    debt = result[
-        result["metric"] == "D/E"
-    ].sort_values(
+    debt = result[result["metric"] == "D/E"].sort_values(
         "value",
         ascending=False,
     )
 
-    assert list(
-        debt["percentile_rank"]
-    ) == [0.0, 0.5, 1.0]
+    assert list(debt["percentile_rank"]) == [0.0, 0.5, 1.0]
 
 
 def test_company_without_peer_group():

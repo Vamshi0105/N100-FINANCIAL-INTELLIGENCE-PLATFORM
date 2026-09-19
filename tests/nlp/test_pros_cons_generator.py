@@ -1,4 +1,3 @@
-
 """
 Tests for Day 30 — NLP Auto Pros/Cons Generator.
 """
@@ -25,7 +24,6 @@ from src.nlp.pros_cons_generator import (
     to_numeric,
     verify_company_coverage,
 )
-
 
 # ---------------------------------------------------------
 # Normalization helper tests
@@ -133,33 +131,23 @@ def test_has_consecutive_positive_false_when_insufficient_values():
 
 
 def test_strictly_increasing_true():
-    assert strictly_increasing(
-        [10.0, 20.0, 30.0]
-    )
+    assert strictly_increasing([10.0, 20.0, 30.0])
 
 
 def test_strictly_increasing_false():
-    assert not strictly_increasing(
-        [10.0, 20.0, 15.0]
-    )
+    assert not strictly_increasing([10.0, 20.0, 15.0])
 
 
 def test_strictly_increasing_equal_values_false():
-    assert not strictly_increasing(
-        [10.0, 10.0, 20.0]
-    )
+    assert not strictly_increasing([10.0, 10.0, 20.0])
 
 
 def test_strictly_decreasing_true():
-    assert strictly_decreasing(
-        [30.0, 20.0, 10.0]
-    )
+    assert strictly_decreasing([30.0, 20.0, 10.0])
 
 
 def test_strictly_decreasing_false():
-    assert not strictly_decreasing(
-        [30.0, 20.0, 25.0]
-    )
+    assert not strictly_decreasing([30.0, 20.0, 25.0])
 
 
 def test_sustained_above_true():
@@ -191,9 +179,7 @@ def test_is_financial_company_bank():
         }
     )
 
-    assert is_financial_company(
-        sector_row
-    )
+    assert is_financial_company(sector_row)
 
 
 def test_is_financial_company_insurance():
@@ -204,9 +190,7 @@ def test_is_financial_company_insurance():
         }
     )
 
-    assert is_financial_company(
-        sector_row
-    )
+    assert is_financial_company(sector_row)
 
 
 def test_is_financial_company_false_for_it():
@@ -217,15 +201,11 @@ def test_is_financial_company_false_for_it():
         }
     )
 
-    assert not is_financial_company(
-        sector_row
-    )
+    assert not is_financial_company(sector_row)
 
 
 def test_is_financial_company_none_returns_false():
-    assert not is_financial_company(
-        None
-    )
+    assert not is_financial_company(None)
 
 
 # ---------------------------------------------------------
@@ -464,16 +444,11 @@ def test_verify_company_coverage_fails_missing_pro():
             companies_df,
         )
 
-        assert False, (
-            "Expected ValueError"
-        )
+        assert False, "Expected ValueError"
 
     except ValueError as error:
 
-        assert (
-            "missing Pro signals"
-            in str(error)
-        )
+        assert "missing Pro signals" in str(error)
 
 
 def test_verify_company_coverage_fails_missing_con():
@@ -503,14 +478,8 @@ def test_verify_company_coverage_fails_missing_con():
             companies_df,
         )
 
-        assert False, (
-            "Expected ValueError"
-        )
+        assert False, "Expected ValueError"
 
     except ValueError as error:
 
-        assert (
-            "missing Con signals"
-            in str(error)
-        )
-
+        assert "missing Con signals" in str(error)

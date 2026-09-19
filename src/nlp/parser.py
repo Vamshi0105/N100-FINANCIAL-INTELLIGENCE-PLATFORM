@@ -64,43 +64,19 @@ import pandas as pd
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
-ANALYSIS_PATH = (
-PROJECT_ROOT
-/ "data"
-/ "raw"
-/ "analysis.xlsx"
-)
+ANALYSIS_PATH = PROJECT_ROOT / "data" / "raw" / "analysis.xlsx"
 
-DB_PATH = (
-PROJECT_ROOT
-/ "data"
-/ "nifty100.db"
-)
+DB_PATH = PROJECT_ROOT / "data" / "nifty100.db"
 
-OUTPUT_DIR = (
-PROJECT_ROOT
-/ "output"
-)
+OUTPUT_DIR = PROJECT_ROOT / "output"
 
-PARSED_OUTPUT_PATH = (
-OUTPUT_DIR
-/ "analysis_parsed.csv"
-)
+PARSED_OUTPUT_PATH = OUTPUT_DIR / "analysis_parsed.csv"
 
-FAILURES_OUTPUT_PATH = (
-OUTPUT_DIR
-/ "parse_failures.csv"
-)
+FAILURES_OUTPUT_PATH = OUTPUT_DIR / "parse_failures.csv"
 
-MANUAL_REVIEW_OUTPUT_PATH = (
-OUTPUT_DIR
-/ "cagr_manual_review.csv"
-)
+MANUAL_REVIEW_OUTPUT_PATH = OUTPUT_DIR / "cagr_manual_review.csv"
 
-LOG_PATH = (
-OUTPUT_DIR
-/ "nlp_parser.log"
-)
+LOG_PATH = OUTPUT_DIR / "nlp_parser.log"
 
 # ---------------------------------------------------------
 
@@ -109,10 +85,10 @@ OUTPUT_DIR
 # ---------------------------------------------------------
 
 TARGET_FIELDS = [
-"compounded_sales_growth",
-"compounded_profit_growth",
-"stock_price_cagr",
-"roe",
+    "compounded_sales_growth",
+    "compounded_profit_growth",
+    "stock_price_cagr",
+    "roe",
 ]
 
 # Base pattern requested in Day 29.
@@ -136,21 +112,21 @@ TARGET_FIELDS = [
 #
 
 PERIOD_PATTERN = re.compile(
-r"(\d+)\s*Years?\s*:?\s*(-?[\d.]+)\s*%",
-re.IGNORECASE,
+    r"(\d+)\s*Years?\s*:?\s*(-?[\d.]+)\s*%",
+    re.IGNORECASE,
 )
 
 CAGR_COLUMN_MAP = {
-"compounded_sales_growth": {
-3: "revenue_cagr_3yr",
-5: "revenue_cagr_5yr",
-10: "revenue_cagr_10yr",
-},
-"compounded_profit_growth": {
-3: "pat_cagr_3yr",
-5: "pat_cagr_5yr",
-10: "pat_cagr_10yr",
-},
+    "compounded_sales_growth": {
+        3: "revenue_cagr_3yr",
+        5: "revenue_cagr_5yr",
+        10: "revenue_cagr_10yr",
+    },
+    "compounded_profit_growth": {
+        3: "pat_cagr_3yr",
+        5: "pat_cagr_5yr",
+        10: "pat_cagr_10yr",
+    },
 }
 
 DIVERGENCE_THRESHOLD = 5.0
@@ -160,6 +136,7 @@ DIVERGENCE_THRESHOLD = 5.0
 # Logging
 
 # ---------------------------------------------------------
+
 
 def configure_logging() -> None:
     """
@@ -176,36 +153,25 @@ def configure_logging() -> None:
     if logger.handlers:
         return
 
-    logger.setLevel(
-        logging.INFO
-    )
+    logger.setLevel(logging.INFO)
 
-    formatter = logging.Formatter(
-        "%(levelname)s | %(message)s"
-    )
+    formatter = logging.Formatter("%(levelname)s | %(message)s")
 
     file_handler = logging.FileHandler(
         LOG_PATH,
         encoding="utf-8",
     )
 
-    file_handler.setFormatter(
-        formatter
-    )
+    file_handler.setFormatter(formatter)
 
     stream_handler = logging.StreamHandler()
 
-    stream_handler.setFormatter(
-        formatter
-    )
+    stream_handler.setFormatter(formatter)
 
-    logger.addHandler(
-        file_handler
-    )
+    logger.addHandler(file_handler)
 
-    logger.addHandler(
-        stream_handler
-    )
+    logger.addHandler(stream_handler)
+
 
 # ---------------------------------------------------------
 
@@ -213,9 +179,10 @@ def configure_logging() -> None:
 
 # ---------------------------------------------------------
 
+
 def normalize_column_name(
     value: Any,
-    ) -> str:
+) -> str:
     """
     Normalize a column name for comparison.
     """
@@ -223,17 +190,12 @@ def normalize_column_name(
     if value is None:
         return ""
 
-    return (
-        str(value)
-        .strip()
-        .lower()
-        .replace("\n", " ")
-        .replace("\r", " ")
-    )
+    return str(value).strip().lower().replace("\n", " ").replace("\r", " ")
+
 
 def normalize_company_id(
     value: Any,
-    ) -> str | None:
+) -> str | None:
     """
     Normalize stock-symbol company identifiers.
     """
@@ -244,20 +206,17 @@ def normalize_company_id(
     if pd.isna(value):
         return None
 
-    company_id = (
-        str(value)
-        .strip()
-        .upper()
-    )
+    company_id = str(value).strip().upper()
 
     if not company_id:
         return None
 
     return company_id
 
+
 def normalize_text(
     value: Any,
-    ) -> str | None:
+) -> str | None:
     """
     Safely normalize an analysis text value.
     """
@@ -268,21 +227,17 @@ def normalize_text(
     if pd.isna(value):
         return None
 
-    text = (
-        str(value)
-        .replace("\n", " ")
-        .replace("\r", " ")
-        .strip()
-    )
+    text = str(value).replace("\n", " ").replace("\r", " ").strip()
 
     if not text:
         return None
 
     return text
 
+
 def normalize_year(
     value: Any,
-    ) -> int | None:
+) -> int | None:
     """
     Convert year values such as:
 
@@ -313,19 +268,16 @@ def normalize_year(
     )
 
     if match:
-        return int(
-            match.group(1)
-        )
+        return int(match.group(1))
 
     try:
-        return int(
-            float(text)
-        )
+        return int(float(text))
     except (
         TypeError,
         ValueError,
     ):
         return None
+
 
 # ---------------------------------------------------------
 
@@ -333,9 +285,10 @@ def normalize_year(
 
 # ---------------------------------------------------------
 
+
 def find_header_row(
     raw_df: pd.DataFrame,
-    ) -> int:
+) -> int:
     """
     Find the row containing the actual analysis headers.
 
@@ -362,19 +315,16 @@ def find_header_row(
     for index in raw_df.index:
 
         row_values = {
-            normalize_column_name(value)
-            for value in raw_df.loc[index].tolist()
+            normalize_column_name(value) for value in raw_df.loc[index].tolist()
         }
 
-        if required.issubset(
-            row_values
-        ):
+        if required.issubset(row_values):
             return int(index)
 
     raise ValueError(
-        "Could not find analysis header row "
-        "containing all required fields."
+        "Could not find analysis header row " "containing all required fields."
     )
+
 
 def load_analysis_data() -> pd.DataFrame:
     """
@@ -387,18 +337,14 @@ def load_analysis_data() -> pd.DataFrame:
     )
 
     if not ANALYSIS_PATH.exists():
-        raise FileNotFoundError(
-            f"analysis.xlsx not found: {ANALYSIS_PATH}"
-        )
+        raise FileNotFoundError(f"analysis.xlsx not found: {ANALYSIS_PATH}")
 
     raw_df = pd.read_excel(
         ANALYSIS_PATH,
         header=None,
     )
 
-    header_row = find_header_row(
-        raw_df
-    )
+    header_row = find_header_row(raw_df)
 
     logging.info(
         "Detected analysis header row: %s",
@@ -406,52 +352,28 @@ def load_analysis_data() -> pd.DataFrame:
     )
 
     headers = [
-        normalize_column_name(value)
-        for value in raw_df.loc[
-            header_row
-        ].tolist()
+        normalize_column_name(value) for value in raw_df.loc[header_row].tolist()
     ]
 
-    data_df = raw_df.iloc[
-        header_row + 1:
-    ].copy()
+    data_df = raw_df.iloc[header_row + 1 :].copy()
 
     data_df.columns = headers
 
-    data_df = data_df.dropna(
-        how="all"
-    )
+    data_df = data_df.dropna(how="all")
 
     if "company_id" not in data_df.columns:
-        raise ValueError(
-            "analysis.xlsx does not contain company_id"
-        )
+        raise ValueError("analysis.xlsx does not contain company_id")
 
-    missing_fields = [
-        field
-        for field in TARGET_FIELDS
-        if field not in data_df.columns
-    ]
+    missing_fields = [field for field in TARGET_FIELDS if field not in data_df.columns]
 
     if missing_fields:
         raise ValueError(
-            "analysis.xlsx is missing required fields: "
-            + ", ".join(
-                missing_fields
-            )
+            "analysis.xlsx is missing required fields: " + ", ".join(missing_fields)
         )
 
-    data_df[
-        "company_id"
-    ] = data_df[
-        "company_id"
-    ].apply(
-        normalize_company_id
-    )
+    data_df["company_id"] = data_df["company_id"].apply(normalize_company_id)
 
-    data_df = data_df[
-        data_df["company_id"].notna()
-    ].copy()
+    data_df = data_df[data_df["company_id"].notna()].copy()
 
     logging.info(
         "Analysis rows loaded: %s",
@@ -460,12 +382,11 @@ def load_analysis_data() -> pd.DataFrame:
 
     logging.info(
         "Unique analysis companies: %s",
-        data_df[
-            "company_id"
-        ].nunique(),
+        data_df["company_id"].nunique(),
     )
 
     return data_df
+
 
 # ---------------------------------------------------------
 
@@ -473,14 +394,15 @@ def load_analysis_data() -> pd.DataFrame:
 
 # ---------------------------------------------------------
 
+
 def parse_metric_text(
     company_id: str,
     metric_type: str,
     raw_value: Any,
-    ) -> tuple[
+) -> tuple[
     dict[str, Any] | None,
     dict[str, Any] | None,
-    ]:
+]:
     """
     Parse one analysis metric text field.
 
@@ -502,9 +424,7 @@ def parse_metric_text(
         }
     """
 
-    raw_text = normalize_text(
-        raw_value
-    )
+    raw_text = normalize_text(raw_value)
 
     if raw_text is None:
         return (
@@ -517,9 +437,7 @@ def parse_metric_text(
             },
         )
 
-    match = PERIOD_PATTERN.search(
-        raw_text
-    )
+    match = PERIOD_PATTERN.search(raw_text)
 
     if not match:
         return (
@@ -533,13 +451,9 @@ def parse_metric_text(
         )
 
     try:
-        period_years = int(
-            match.group(1)
-        )
+        period_years = int(match.group(1))
 
-        value_pct = float(
-            match.group(2)
-        )
+        value_pct = float(match.group(2))
 
     except (
         TypeError,
@@ -565,12 +479,13 @@ def parse_metric_text(
         None,
     )
 
+
 def parse_analysis_metrics(
     analysis_df: pd.DataFrame,
-    ) -> tuple[
+) -> tuple[
     pd.DataFrame,
     pd.DataFrame,
-    ]:
+]:
     """
     Parse all target fields from analysis.xlsx.
     """
@@ -581,36 +496,24 @@ def parse_analysis_metrics(
 
     for _, row in analysis_df.iterrows():
 
-        company_id = normalize_company_id(
-            row.get(
-                "company_id"
-            )
-        )
+        company_id = normalize_company_id(row.get("company_id"))
 
         if company_id is None:
             continue
 
         for metric_type in TARGET_FIELDS:
 
-            parsed_record, failure_record = (
-                parse_metric_text(
-                    company_id=company_id,
-                    metric_type=metric_type,
-                    raw_value=row.get(
-                        metric_type
-                    ),
-                )
+            parsed_record, failure_record = parse_metric_text(
+                company_id=company_id,
+                metric_type=metric_type,
+                raw_value=row.get(metric_type),
             )
 
             if parsed_record is not None:
-                parsed_records.append(
-                    parsed_record
-                )
+                parsed_records.append(parsed_record)
 
             if failure_record is not None:
-                failure_records.append(
-                    failure_record
-                )
+                failure_records.append(failure_record)
 
     parsed_columns = [
         "company_id",
@@ -641,11 +544,13 @@ def parse_analysis_metrics(
         failures_df,
     )
 
+
 # ---------------------------------------------------------
 
 # Ratio Engine loading
 
 # ---------------------------------------------------------
+
 
 def load_ratio_engine_data() -> pd.DataFrame:
     """
@@ -672,9 +577,7 @@ def load_ratio_engine_data() -> pd.DataFrame:
     )
 
     if not DB_PATH.exists():
-        raise FileNotFoundError(
-            f"Database not found: {DB_PATH}"
-        )
+        raise FileNotFoundError(f"Database not found: {DB_PATH}")
 
     query = """
         SELECT
@@ -692,9 +595,7 @@ def load_ratio_engine_data() -> pd.DataFrame:
         FROM financial_ratios
     """
 
-    with sqlite3.connect(
-        DB_PATH
-    ) as connection:
+    with sqlite3.connect(DB_PATH) as connection:
 
         ratio_df = pd.read_sql_query(
             query,
@@ -703,33 +604,15 @@ def load_ratio_engine_data() -> pd.DataFrame:
 
     if ratio_df.empty:
 
-        logging.warning(
-            "financial_ratios returned no rows"
-        )
+        logging.warning("financial_ratios returned no rows")
 
         return ratio_df
 
-    ratio_df[
-        "company_id"
-    ] = ratio_df[
-        "company_id"
-    ].apply(
-        normalize_company_id
-    )
+    ratio_df["company_id"] = ratio_df["company_id"].apply(normalize_company_id)
 
-    ratio_df[
-        "year_numeric"
-    ] = ratio_df[
-        "year"
-    ].apply(
-        normalize_year
-    )
+    ratio_df["year_numeric"] = ratio_df["year"].apply(normalize_year)
 
-    ratio_df = ratio_df[
-        ratio_df[
-            "company_id"
-        ].notna()
-    ].copy()
+    ratio_df = ratio_df[ratio_df["company_id"].notna()].copy()
 
     logging.info(
         "Ratio Engine rows loaded: %s",
@@ -738,12 +621,11 @@ def load_ratio_engine_data() -> pd.DataFrame:
 
     logging.info(
         "Ratio Engine companies: %s",
-        ratio_df[
-            "company_id"
-        ].nunique(),
+        ratio_df["company_id"].nunique(),
     )
 
     return ratio_df
+
 
 # ---------------------------------------------------------
 
@@ -751,32 +633,30 @@ def load_ratio_engine_data() -> pd.DataFrame:
 
 # ---------------------------------------------------------
 
+
 def get_ratio_engine_column(
     metric_type: str,
     period_years: int,
-    ) -> str | None:
+) -> str | None:
     """
     Return the matching Ratio Engine CAGR column.
     """
 
-    metric_mapping = CAGR_COLUMN_MAP.get(
-        metric_type
-    )
+    metric_mapping = CAGR_COLUMN_MAP.get(metric_type)
 
     if metric_mapping is None:
         return None
 
-    return metric_mapping.get(
-        period_years
-    )
+    return metric_mapping.get(period_years)
+
 
 def get_latest_ratio_value(
     ratio_company_df: pd.DataFrame,
     ratio_column: str,
-    ) -> tuple[
+) -> tuple[
     float | None,
     Any,
-    ]:
+]:
     """
     Get the latest available non-null Ratio Engine value
     for a company and CAGR metric.
@@ -794,24 +674,14 @@ def get_latest_ratio_value(
             None,
         )
 
-    working_df = (
-        ratio_company_df.copy()
-    )
+    working_df = ratio_company_df.copy()
 
-    working_df[
-        ratio_column
-    ] = pd.to_numeric(
-        working_df[
-            ratio_column
-        ],
+    working_df[ratio_column] = pd.to_numeric(
+        working_df[ratio_column],
         errors="coerce",
     )
 
-    working_df = working_df[
-        working_df[
-            ratio_column
-        ].notna()
-    ].copy()
+    working_df = working_df[working_df[ratio_column].notna()].copy()
 
     if working_df.empty:
         return (
@@ -828,20 +698,15 @@ def get_latest_ratio_value(
     latest_row = working_df.iloc[0]
 
     return (
-        float(
-            latest_row[
-                ratio_column
-            ]
-        ),
-        latest_row[
-            "year"
-        ],
+        float(latest_row[ratio_column]),
+        latest_row["year"],
     )
+
 
 def cross_validate_cagr(
     parsed_df: pd.DataFrame,
     ratio_df: pd.DataFrame,
-    ) -> pd.DataFrame:
+) -> pd.DataFrame:
     """
     Cross-validate parsed CAGR values against
     Ratio Engine values.
@@ -873,28 +738,17 @@ def cross_validate_cagr(
 
         for _, parsed_row in parsed_df.iterrows():
 
-            metric_type = parsed_row[
-                "metric_type"
-            ]
+            metric_type = parsed_row["metric_type"]
 
-            if (
-                metric_type
-                not in CAGR_COLUMN_MAP
-            ):
+            if metric_type not in CAGR_COLUMN_MAP:
                 continue
 
             review_records.append(
                 {
-                    "company_id": parsed_row[
-                        "company_id"
-                    ],
+                    "company_id": parsed_row["company_id"],
                     "metric_type": metric_type,
-                    "period_years": parsed_row[
-                        "period_years"
-                    ],
-                    "parsed_value_pct": parsed_row[
-                        "value_pct"
-                    ],
+                    "period_years": parsed_row["period_years"],
+                    "parsed_value_pct": parsed_row["value_pct"],
                     "ratio_engine_column": None,
                     "ratio_engine_value_pct": None,
                     "ratio_engine_year": None,
@@ -903,53 +757,30 @@ def cross_validate_cagr(
                 }
             )
 
-        return pd.DataFrame(
-            review_records
-        )
+        return pd.DataFrame(review_records)
 
     ratio_company_groups = {
-        company_id: group.copy()
-        for company_id, group
-        in ratio_df.groupby(
-            "company_id"
-        )
+        company_id: group.copy() for company_id, group in ratio_df.groupby("company_id")
     }
 
     for _, parsed_row in parsed_df.iterrows():
 
-        company_id = parsed_row[
-            "company_id"
-        ]
+        company_id = parsed_row["company_id"]
 
-        metric_type = parsed_row[
-            "metric_type"
-        ]
+        metric_type = parsed_row["metric_type"]
 
-        period_years = int(
-            parsed_row[
-                "period_years"
-            ]
-        )
+        period_years = int(parsed_row["period_years"])
 
-        parsed_value = float(
-            parsed_row[
-                "value_pct"
-            ]
-        )
+        parsed_value = float(parsed_row["value_pct"])
 
         # Only validate CAGR metrics that exist
         # in the Ratio Engine.
-        if (
-            metric_type
-            not in CAGR_COLUMN_MAP
-        ):
+        if metric_type not in CAGR_COLUMN_MAP:
             continue
 
-        ratio_column = (
-            get_ratio_engine_column(
-                metric_type,
-                period_years,
-            )
+        ratio_column = get_ratio_engine_column(
+            metric_type,
+            period_years,
         )
 
         if ratio_column is None:
@@ -970,11 +801,7 @@ def cross_validate_cagr(
 
             continue
 
-        company_ratio_df = (
-            ratio_company_groups.get(
-                company_id
-            )
-        )
+        company_ratio_df = ratio_company_groups.get(company_id)
 
         if company_ratio_df is None:
 
@@ -994,11 +821,9 @@ def cross_validate_cagr(
 
             continue
 
-        ratio_value, ratio_year = (
-            get_latest_ratio_value(
-                company_ratio_df,
-                ratio_column,
-            )
+        ratio_value, ratio_year = get_latest_ratio_value(
+            company_ratio_df,
+            ratio_column,
         )
 
         if ratio_value is None:
@@ -1019,10 +844,7 @@ def cross_validate_cagr(
 
             continue
 
-        divergence = abs(
-            parsed_value
-            - ratio_value
-        )
+        divergence = abs(parsed_value - ratio_value)
 
         if divergence > DIVERGENCE_THRESHOLD:
 
@@ -1063,17 +885,19 @@ def cross_validate_cagr(
         columns=review_columns,
     )
 
+
 # ---------------------------------------------------------
 
 # Output writing
 
 # ---------------------------------------------------------
 
+
 def save_outputs(
     parsed_df: pd.DataFrame,
     failures_df: pd.DataFrame,
     review_df: pd.DataFrame,
-    ) -> None:
+) -> None:
     """
     Save all Day 29 output files.
     """
@@ -1113,11 +937,13 @@ def save_outputs(
         MANUAL_REVIEW_OUTPUT_PATH,
     )
 
+
 # ---------------------------------------------------------
 
 # Main execution
 
 # ---------------------------------------------------------
+
 
 def run_parser() -> None:
     """
@@ -1126,29 +952,17 @@ def run_parser() -> None:
 
     configure_logging()
 
-    logging.info(
-        "Starting Day 29 NLP Analysis Parser"
-    )
+    logging.info("Starting Day 29 NLP Analysis Parser")
 
-    analysis_df = (
-        load_analysis_data()
-    )
+    analysis_df = load_analysis_data()
 
-    parsed_df, failures_df = (
-        parse_analysis_metrics(
-            analysis_df
-        )
-    )
+    parsed_df, failures_df = parse_analysis_metrics(analysis_df)
 
-    ratio_df = (
-        load_ratio_engine_data()
-    )
+    ratio_df = load_ratio_engine_data()
 
-    review_df = (
-        cross_validate_cagr(
-            parsed_df,
-            ratio_df,
-        )
+    review_df = cross_validate_cagr(
+        parsed_df,
+        ratio_df,
     )
 
     save_outputs(
@@ -1169,19 +983,9 @@ def run_parser() -> None:
 
     if not review_df.empty:
 
-        manual_review_count = len(
-            review_df[
-                review_df["status"]
-                == "MANUAL_REVIEW"
-            ]
-        )
+        manual_review_count = len(review_df[review_df["status"] == "MANUAL_REVIEW"])
 
-        match_count = len(
-            review_df[
-                review_df["status"]
-                == "MATCH"
-            ]
-        )
+        match_count = len(review_df[review_df["status"] == "MATCH"])
 
     else:
 
@@ -1198,41 +1002,24 @@ def run_parser() -> None:
         manual_review_count,
     )
 
-    print(
-        "\nDay 29 NLP Analysis Parser completed successfully."
-    )
+    print("\nDay 29 NLP Analysis Parser completed successfully.")
 
-    print(
-        f"Parsed records: {len(parsed_df)}"
-    )
+    print(f"Parsed records: {len(parsed_df)}")
 
-    print(
-        f"Parse failures: {len(failures_df)}"
-    )
+    print(f"Parse failures: {len(failures_df)}")
 
-    print(
-        f"CAGR matches: {match_count}"
-    )
+    print(f"CAGR matches: {match_count}")
 
-    print(
-        f"Manual review flags: {manual_review_count}"
-    )
+    print(f"Manual review flags: {manual_review_count}")
 
-    print(
-        "\nGenerated files:"
-    )
+    print("\nGenerated files:")
 
-    print(
-        f"  {PARSED_OUTPUT_PATH}"
-    )
+    print(f"  {PARSED_OUTPUT_PATH}")
 
-    print(
-        f"  {FAILURES_OUTPUT_PATH}"
-    )
+    print(f"  {FAILURES_OUTPUT_PATH}")
 
-    print(
-        f"  {MANUAL_REVIEW_OUTPUT_PATH}"
-    )
+    print(f"  {MANUAL_REVIEW_OUTPUT_PATH}")
+
 
 if __name__ == "__main__":
     run_parser()

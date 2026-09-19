@@ -26,7 +26,6 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-
 # =====================================================================
 # CONFIGURATION
 # =====================================================================
@@ -35,29 +34,17 @@ BASE_DIR = Path(__file__).resolve().parents[2]
 
 DB_PATH = BASE_DIR / "data" / "nifty100.db"
 
-CLUSTER_LABELS_PATH = (
-    BASE_DIR / "output" / "cluster_labels.csv"
-)
+CLUSTER_LABELS_PATH = BASE_DIR / "output" / "cluster_labels.csv"
 
-FCF_CASHFLOW_PATH = (
-    BASE_DIR / "output" / "cashflow_intelligence.xlsx"
-)
+FCF_CASHFLOW_PATH = BASE_DIR / "output" / "cashflow_intelligence.xlsx"
 
-CLUSTER_PROFILE_PATH = (
-    BASE_DIR / "output" / "cluster_profile.csv"
-)
+CLUSTER_PROFILE_PATH = BASE_DIR / "output" / "cluster_profile.csv"
 
-OUTLIER_REPORT_PATH = (
-    BASE_DIR / "output" / "outlier_report.csv"
-)
+OUTLIER_REPORT_PATH = BASE_DIR / "output" / "outlier_report.csv"
 
-PORTFOLIO_STATS_PATH = (
-    BASE_DIR / "output" / "portfolio_stats.csv"
-)
+PORTFOLIO_STATS_PATH = BASE_DIR / "output" / "portfolio_stats.csv"
 
-CORRELATION_HEATMAP_PATH = (
-    BASE_DIR / "reports" / "correlation_heatmap.png"
-)
+CORRELATION_HEATMAP_PATH = BASE_DIR / "reports" / "correlation_heatmap.png"
 
 EXPECTED_COMPANIES = 92
 
@@ -114,17 +101,13 @@ logger = logging.getLogger(__name__)
 # HELPERS
 # =====================================================================
 
+
 def normalize_company_ids(
     series: pd.Series,
 ) -> pd.Series:
     """Normalize company identifiers."""
 
-    return (
-        series
-        .astype(str)
-        .str.strip()
-        .str.upper()
-    )
+    return series.astype(str).str.strip().str.upper()
 
 
 def ensure_directories() -> None:
@@ -144,6 +127,7 @@ def ensure_directories() -> None:
 # =====================================================================
 # LOAD OFFICIAL COMPANY UNIVERSE
 # =====================================================================
+
 
 def load_company_universe() -> pd.DataFrame:
     """
@@ -166,23 +150,11 @@ def load_company_universe() -> pd.DataFrame:
             conn,
         )
 
-    df["company_id"] = normalize_company_ids(
-        df["company_id"]
-    )
+    df["company_id"] = normalize_company_ids(df["company_id"])
 
-    df["company_name"] = (
-        df["company_name"]
-        .astype(str)
-        .str.strip()
-    )
+    df["company_name"] = df["company_name"].astype(str).str.strip()
 
-    df = (
-        df
-        .drop_duplicates(
-            subset=["company_id"]
-        )
-        .reset_index(drop=True)
-    )
+    df = df.drop_duplicates(subset=["company_id"]).reset_index(drop=True)
 
     logger.info(
         "Official company universe: %d",
@@ -192,8 +164,7 @@ def load_company_universe() -> pd.DataFrame:
     if len(df) != EXPECTED_COMPANIES:
 
         raise ValueError(
-            f"Expected {EXPECTED_COMPANIES} companies, "
-            f"found {len(df)}"
+            f"Expected {EXPECTED_COMPANIES} companies, " f"found {len(df)}"
         )
 
     return df
@@ -202,6 +173,7 @@ def load_company_universe() -> pd.DataFrame:
 # =====================================================================
 # LOAD LATEST FINANCIAL RATIOS
 # =====================================================================
+
 
 def load_latest_financial_data() -> pd.DataFrame:
     """
@@ -231,37 +203,22 @@ def load_latest_financial_data() -> pd.DataFrame:
             conn,
         )
 
-    df["company_id"] = normalize_company_ids(
-        df["company_id"]
-    )
+    df["company_id"] = normalize_company_ids(df["company_id"])
 
-    df["year"] = (
-        df["year"]
-        .astype(str)
-        .str.strip()
-    )
+    df["year"] = df["year"].astype(str).str.strip()
 
     # -------------------------------------------------------------
     # Annual YYYY-03 records
     # -------------------------------------------------------------
 
-    annual = df[
-        df["year"].str.match(
-            r"^\d{4}-03$"
-        )
-    ].copy()
+    annual = df[df["year"].str.match(r"^\d{4}-03$")].copy()
 
     if not annual.empty:
 
-        annual["_year_num"] = (
-            annual["year"]
-            .str[:4]
-            .astype(int)
-        )
+        annual["_year_num"] = annual["year"].str[:4].astype(int)
 
         annual = (
-            annual
-            .sort_values(
+            annual.sort_values(
                 [
                     "company_id",
                     "_year_num",
@@ -272,24 +229,16 @@ def load_latest_financial_data() -> pd.DataFrame:
                 as_index=False,
             )
             .tail(1)
-            .drop(
-                columns="_year_num"
-            )
+            .drop(columns="_year_num")
         )
 
-    annual_ids = set(
-        annual["company_id"]
-    )
+    annual_ids = set(annual["company_id"])
 
     # -------------------------------------------------------------
     # Fallback for companies without YYYY-03 records
     # -------------------------------------------------------------
 
-    fallback = df[
-        ~df["company_id"].isin(
-            annual_ids
-        )
-    ].copy()
+    fallback = df[~df["company_id"].isin(annual_ids)].copy()
 
     if not fallback.empty:
 
@@ -299,16 +248,11 @@ def load_latest_financial_data() -> pd.DataFrame:
         )
 
         fallback["_year_sort"] = (
-            fallback["year"]
-            .str.extract(
-                r"(\d{4})"
-            )[0]
-            .astype(float)
+            fallback["year"].str.extract(r"(\d{4})")[0].astype(float)
         )
 
         fallback = (
-            fallback
-            .sort_values(
+            fallback.sort_values(
                 [
                     "company_id",
                     "_year_sort",
@@ -319,16 +263,12 @@ def load_latest_financial_data() -> pd.DataFrame:
                 as_index=False,
             )
             .tail(1)
-            .drop(
-                columns="_year_sort"
-            )
+            .drop(columns="_year_sort")
         )
 
     else:
 
-        fallback = pd.DataFrame(
-            columns=df.columns
-        )
+        fallback = pd.DataFrame(columns=df.columns)
 
     latest = pd.concat(
         [
@@ -338,14 +278,10 @@ def load_latest_financial_data() -> pd.DataFrame:
         ignore_index=True,
     )
 
-    latest = (
-        latest
-        .drop_duplicates(
-            subset=["company_id"],
-            keep="last",
-        )
-        .reset_index(drop=True)
-    )
+    latest = latest.drop_duplicates(
+        subset=["company_id"],
+        keep="last",
+    ).reset_index(drop=True)
 
     logger.info(
         "Latest financial records retained: %d",
@@ -359,6 +295,7 @@ def load_latest_financial_data() -> pd.DataFrame:
 # LOAD FCF CAGR FROM CASHFLOW INTELLIGENCE
 # =====================================================================
 
+
 def load_fcf_data() -> pd.DataFrame:
     """
     Load fcf_cagr_5yr from the Day 31 cash-flow intelligence output.
@@ -369,8 +306,7 @@ def load_fcf_data() -> pd.DataFrame:
     if not FCF_CASHFLOW_PATH.exists():
 
         raise FileNotFoundError(
-            "Missing required Day 31 output: "
-            f"{FCF_CASHFLOW_PATH}"
+            "Missing required Day 31 output: " f"{FCF_CASHFLOW_PATH}"
         )
 
     logger.info(
@@ -378,25 +314,19 @@ def load_fcf_data() -> pd.DataFrame:
         FCF_CASHFLOW_PATH,
     )
 
-    df = pd.read_excel(
-        FCF_CASHFLOW_PATH
-    )
+    df = pd.read_excel(FCF_CASHFLOW_PATH)
 
     required = {
         "company_id",
         "fcf_cagr_5yr",
     }
 
-    missing = (
-        required
-        - set(df.columns)
-    )
+    missing = required - set(df.columns)
 
     if missing:
 
         raise ValueError(
-            "cashflow_intelligence.xlsx missing "
-            f"columns: {sorted(missing)}"
+            "cashflow_intelligence.xlsx missing " f"columns: {sorted(missing)}"
         )
 
     df = df[
@@ -406,22 +336,14 @@ def load_fcf_data() -> pd.DataFrame:
         ]
     ].copy()
 
-    df["company_id"] = normalize_company_ids(
-        df["company_id"]
-    )
+    df["company_id"] = normalize_company_ids(df["company_id"])
 
     df["fcf_cagr_5yr"] = pd.to_numeric(
         df["fcf_cagr_5yr"],
         errors="coerce",
     )
 
-    df = (
-        df
-        .drop_duplicates(
-            subset=["company_id"]
-        )
-        .reset_index(drop=True)
-    )
+    df = df.drop_duplicates(subset=["company_id"]).reset_index(drop=True)
 
     logger.info(
         "FCF CAGR companies loaded: %d",
@@ -434,6 +356,7 @@ def load_fcf_data() -> pd.DataFrame:
 # =====================================================================
 # LOAD SECTOR DATA
 # =====================================================================
+
 
 def load_sector_data() -> pd.DataFrame:
     """Load broad-sector assignments."""
@@ -450,15 +373,9 @@ def load_sector_data() -> pd.DataFrame:
             conn,
         )
 
-    sectors["company_id"] = normalize_company_ids(
-        sectors["company_id"]
-    )
+    sectors["company_id"] = normalize_company_ids(sectors["company_id"])
 
-    sectors["broad_sector"] = (
-        sectors["broad_sector"]
-        .astype(str)
-        .str.strip()
-    )
+    sectors["broad_sector"] = sectors["broad_sector"].astype(str).str.strip()
 
     sectors = (
         sectors[
@@ -467,9 +384,7 @@ def load_sector_data() -> pd.DataFrame:
                 "broad_sector",
             ]
         ]
-        .drop_duplicates(
-            subset=["company_id"]
-        )
+        .drop_duplicates(subset=["company_id"])
         .reset_index(drop=True)
     )
 
@@ -485,19 +400,17 @@ def load_sector_data() -> pd.DataFrame:
 # LOAD CLUSTER LABELS
 # =====================================================================
 
+
 def load_cluster_labels() -> pd.DataFrame:
     """Load validated Day 36 cluster labels."""
 
     if not CLUSTER_LABELS_PATH.exists():
 
         raise FileNotFoundError(
-            "Missing Day 36 cluster output: "
-            f"{CLUSTER_LABELS_PATH}"
+            "Missing Day 36 cluster output: " f"{CLUSTER_LABELS_PATH}"
         )
 
-    df = pd.read_csv(
-        CLUSTER_LABELS_PATH
-    )
+    df = pd.read_csv(CLUSTER_LABELS_PATH)
 
     required = {
         "company_id",
@@ -506,38 +419,23 @@ def load_cluster_labels() -> pd.DataFrame:
         "distance_from_centroid",
     }
 
-    missing = (
-        required
-        - set(df.columns)
-    )
+    missing = required - set(df.columns)
 
     if missing:
 
-        raise ValueError(
-            "cluster_labels.csv missing "
-            f"columns: {sorted(missing)}"
-        )
+        raise ValueError("cluster_labels.csv missing " f"columns: {sorted(missing)}")
 
-    df["company_id"] = normalize_company_ids(
-        df["company_id"]
-    )
+    df["company_id"] = normalize_company_ids(df["company_id"])
 
     if len(df) != EXPECTED_COMPANIES:
 
         raise ValueError(
-            f"Expected {EXPECTED_COMPANIES} cluster labels, "
-            f"found {len(df)}"
+            f"Expected {EXPECTED_COMPANIES} cluster labels, " f"found {len(df)}"
         )
 
-    if (
-        df["company_id"].nunique()
-        != EXPECTED_COMPANIES
-    ):
+    if df["company_id"].nunique() != EXPECTED_COMPANIES:
 
-        raise ValueError(
-            "Cluster labels do not contain "
-            "92 unique companies."
-        )
+        raise ValueError("Cluster labels do not contain " "92 unique companies.")
 
     logger.info(
         "Cluster labels loaded: %d companies",
@@ -551,6 +449,7 @@ def load_cluster_labels() -> pd.DataFrame:
 # BUILD MASTER DATASET
 # =====================================================================
 
+
 def build_master_dataset() -> pd.DataFrame:
     """
     Combine:
@@ -562,25 +461,15 @@ def build_master_dataset() -> pd.DataFrame:
         Day 36 cluster labels
     """
 
-    universe = (
-        load_company_universe()
-    )
+    universe = load_company_universe()
 
-    financials = (
-        load_latest_financial_data()
-    )
+    financials = load_latest_financial_data()
 
-    fcf = (
-        load_fcf_data()
-    )
+    fcf = load_fcf_data()
 
-    sectors = (
-        load_sector_data()
-    )
+    sectors = load_sector_data()
 
-    clusters = (
-        load_cluster_labels()
-    )
+    clusters = load_cluster_labels()
 
     # -------------------------------------------------------------
     # Start from official universe.
@@ -627,15 +516,9 @@ def build_master_dataset() -> pd.DataFrame:
             f"found {len(df)}"
         )
 
-    if (
-        df["company_id"].nunique()
-        != EXPECTED_COMPANIES
-    ):
+    if df["company_id"].nunique() != EXPECTED_COMPANIES:
 
-        raise ValueError(
-            "Master dataset does not contain "
-            "92 unique companies."
-        )
+        raise ValueError("Master dataset does not contain " "92 unique companies.")
 
     # -------------------------------------------------------------
     # Validate sectors.
@@ -643,18 +526,12 @@ def build_master_dataset() -> pd.DataFrame:
 
     if df["broad_sector"].isna().any():
 
-        missing = (
-            df.loc[
-                df["broad_sector"].isna(),
-                "company_id",
-            ]
-            .tolist()
-        )
+        missing = df.loc[
+            df["broad_sector"].isna(),
+            "company_id",
+        ].tolist()
 
-        raise ValueError(
-            "Missing sector assignments: "
-            f"{missing}"
-        )
+        raise ValueError("Missing sector assignments: " f"{missing}")
 
     # -------------------------------------------------------------
     # Validate clusters.
@@ -662,18 +539,12 @@ def build_master_dataset() -> pd.DataFrame:
 
     if df["cluster_id"].isna().any():
 
-        missing = (
-            df.loc[
-                df["cluster_id"].isna(),
-                "company_id",
-            ]
-            .tolist()
-        )
+        missing = df.loc[
+            df["cluster_id"].isna(),
+            "company_id",
+        ].tolist()
 
-        raise ValueError(
-            "Missing cluster assignments: "
-            f"{missing}"
-        )
+        raise ValueError("Missing cluster assignments: " f"{missing}")
 
     logger.info(
         "Master Day 37 dataset: %d companies",
@@ -687,6 +558,7 @@ def build_master_dataset() -> pd.DataFrame:
 # CLUSTER PROFILE
 # =====================================================================
 
+
 def generate_cluster_profile(
     df: pd.DataFrame,
 ) -> pd.DataFrame:
@@ -695,32 +567,17 @@ def generate_cluster_profile(
     features for every cluster.
     """
 
-    logger.info(
-        "Generating cluster profiles..."
-    )
+    logger.info("Generating cluster profiles...")
 
     rows = []
 
-    cluster_ids = sorted(
-        df["cluster_id"]
-        .astype(int)
-        .unique()
-        .tolist()
-    )
+    cluster_ids = sorted(df["cluster_id"].astype(int).unique().tolist())
 
     for cluster_id in cluster_ids:
 
-        subset = df[
-            df["cluster_id"]
-            .astype(int)
-            == cluster_id
-        ]
+        subset = df[df["cluster_id"].astype(int) == cluster_id]
 
-        cluster_name = (
-            subset["cluster_name"]
-            .mode()
-            .iloc[0]
-        )
+        cluster_name = subset["cluster_name"].mode().iloc[0]
 
         row = {
             "cluster_id": cluster_id,
@@ -735,19 +592,13 @@ def generate_cluster_profile(
                 errors="coerce",
             )
 
-            row[
-                f"{feature}_mean"
-            ] = values.mean()
+            row[f"{feature}_mean"] = values.mean()
 
-            row[
-                f"{feature}_median"
-            ] = values.median()
+            row[f"{feature}_median"] = values.median()
 
         rows.append(row)
 
-    profile = pd.DataFrame(
-        rows
-    )
+    profile = pd.DataFrame(rows)
 
     profile.to_csv(
         CLUSTER_PROFILE_PATH,
@@ -763,9 +614,7 @@ def generate_cluster_profile(
     # Log detailed cluster statistics.
     # -------------------------------------------------------------
 
-    logger.info(
-        "Cluster profile summary:"
-    )
+    logger.info("Cluster profile summary:")
 
     for _, row in profile.iterrows():
 
@@ -778,23 +627,15 @@ def generate_cluster_profile(
 
         for feature in CLUSTER_FEATURES:
 
-            mean_value = row[
-                f"{feature}_mean"
-            ]
+            mean_value = row[f"{feature}_mean"]
 
-            median_value = row[
-                f"{feature}_median"
-            ]
+            median_value = row[f"{feature}_median"]
 
             logger.info(
                 "      %-32s mean=%10.3f median=%10.3f",
                 feature,
-                mean_value
-                if pd.notna(mean_value)
-                else np.nan,
-                median_value
-                if pd.notna(median_value)
-                else np.nan,
+                mean_value if pd.notna(mean_value) else np.nan,
+                median_value if pd.notna(median_value) else np.nan,
             )
 
     return profile
@@ -803,6 +644,7 @@ def generate_cluster_profile(
 # =====================================================================
 # CLUSTER MEMBERSHIP REVIEW
 # =====================================================================
+
 
 def review_cluster_members(
     df: pd.DataFrame,
@@ -814,41 +656,17 @@ def review_cluster_members(
     descriptive archetype names.
     """
 
-    logger.info(
-        "Cluster company membership review:"
-    )
+    logger.info("Cluster company membership review:")
 
-    for cluster_id in sorted(
-        df["cluster_id"]
-        .astype(int)
-        .unique()
-        .tolist()
-    ):
+    for cluster_id in sorted(df["cluster_id"].astype(int).unique().tolist()):
 
-        subset = (
-            df[
-                df["cluster_id"]
-                .astype(int)
-                == cluster_id
-            ]
-            .sort_values(
-                "company_name"
-            )
+        subset = df[df["cluster_id"].astype(int) == cluster_id].sort_values(
+            "company_name"
         )
 
-        name = (
-            subset["cluster_name"]
-            .mode()
-            .iloc[0]
-        )
+        name = subset["cluster_name"].mode().iloc[0]
 
-        companies = ", ".join(
-            subset[
-                "company_name"
-            ]
-            .astype(str)
-            .tolist()
-        )
+        companies = ", ".join(subset["company_name"].astype(str).tolist())
 
         logger.info(
             "  Cluster %d — %s",
@@ -867,6 +685,7 @@ def review_cluster_members(
 # CORRELATION HEATMAP
 # =====================================================================
 
+
 def generate_correlation_heatmap(
     df: pd.DataFrame,
 ) -> pd.DataFrame:
@@ -875,50 +694,31 @@ def generate_correlation_heatmap(
     the ten Day 37 KPIs.
     """
 
-    logger.info(
-        "Generating Pearson correlation matrix..."
+    logger.info("Generating Pearson correlation matrix...")
+
+    kpi_data = df[CORRELATION_KPIS].apply(
+        pd.to_numeric,
+        errors="coerce",
     )
 
-    kpi_data = (
-        df[
-            CORRELATION_KPIS
-        ]
-        .apply(
-            pd.to_numeric,
-            errors="coerce",
-        )
-    )
-
-    correlation = (
-        kpi_data.corr(
-            method="pearson"
-        )
-    )
+    correlation = kpi_data.corr(method="pearson")
 
     # -------------------------------------------------------------
     # Validate all ten KPIs exist.
     # -------------------------------------------------------------
 
-    if (
-        correlation.shape
-        != (
-            len(CORRELATION_KPIS),
-            len(CORRELATION_KPIS),
-        )
+    if correlation.shape != (
+        len(CORRELATION_KPIS),
+        len(CORRELATION_KPIS),
     ):
 
-        raise ValueError(
-            "Correlation matrix does not contain "
-            "all 10 required KPIs."
-        )
+        raise ValueError("Correlation matrix does not contain " "all 10 required KPIs.")
 
     # -------------------------------------------------------------
     # Generate annotated Seaborn heatmap.
     # -------------------------------------------------------------
 
-    plt.figure(
-        figsize=(14, 11)
-    )
+    plt.figure(figsize=(14, 11))
 
     sns.heatmap(
         correlation,
@@ -931,9 +731,7 @@ def generate_correlation_heatmap(
         cbar=True,
     )
 
-    plt.title(
-        "N100 Latest-Year KPI Pearson Correlation Matrix"
-    )
+    plt.title("N100 Latest-Year KPI Pearson Correlation Matrix")
 
     plt.xticks(
         rotation=45,
@@ -966,6 +764,7 @@ def generate_correlation_heatmap(
 # SECTOR-BASED OUTLIER DETECTION
 # =====================================================================
 
+
 def generate_outlier_report(
     df: pd.DataFrame,
 ) -> pd.DataFrame:
@@ -977,9 +776,7 @@ def generate_outlier_report(
         abs(Z-score) > 3
     """
 
-    logger.info(
-        "Running sector-relative outlier detection..."
-    )
+    logger.info("Running sector-relative outlier detection...")
 
     work = df[
         [
@@ -1012,19 +809,14 @@ def generate_outlier_report(
 
             mean = values.mean()
 
-            std = values.std(
-                ddof=0
-            )
+            std = values.std(ddof=0)
 
             # -----------------------------------------------------
             # Zero standard deviation means every value is equal.
             # No observation can be an outlier in that metric.
             # -----------------------------------------------------
 
-            if (
-                pd.isna(std)
-                or std == 0
-            ):
+            if pd.isna(std) or std == 0:
 
                 z_scores = pd.Series(
                     0.0,
@@ -1033,63 +825,37 @@ def generate_outlier_report(
 
             else:
 
-                z_scores = (
-                    values - mean
-                ) / std
+                z_scores = (values - mean) / std
 
             # -----------------------------------------------------
             # Flag |Z| > 3.
             # -----------------------------------------------------
 
-            for idx, z_score in (
-                z_scores.items()
-            ):
+            for idx, z_score in z_scores.items():
 
-                if (
-                    pd.notna(z_score)
-                    and abs(z_score) > 3
-                ):
+                if pd.notna(z_score) and abs(z_score) > 3:
 
                     outlier_rows.append(
                         {
-                            "company_id":
-                                sector_df.loc[
-                                    idx,
-                                    "company_id",
-                                ],
-
-                            "company_name":
-                                sector_df.loc[
-                                    idx,
-                                    "company_name",
-                                ],
-
-                            "broad_sector":
-                                sector,
-
-                            "metric":
+                            "company_id": sector_df.loc[
+                                idx,
+                                "company_id",
+                            ],
+                            "company_name": sector_df.loc[
+                                idx,
+                                "company_name",
+                            ],
+                            "broad_sector": sector,
+                            "metric": kpi,
+                            "value": sector_df.loc[
+                                idx,
                                 kpi,
-
-                            "value":
-                                sector_df.loc[
-                                    idx,
-                                    kpi,
-                                ],
-
-                            "sector_mean":
-                                mean,
-
-                            "sector_std":
-                                std,
-
-                            "z_score":
-                                z_score,
-
-                            "absolute_z_score":
-                                abs(z_score),
-
-                            "outlier_flag":
-                                True,
+                            ],
+                            "sector_mean": mean,
+                            "sector_std": std,
+                            "z_score": z_score,
+                            "absolute_z_score": abs(z_score),
+                            "outlier_flag": True,
                         }
                     )
 
@@ -1113,14 +879,10 @@ def generate_outlier_report(
 
     if not report.empty:
 
-        report = (
-            report
-            .sort_values(
-                "absolute_z_score",
-                ascending=False,
-            )
-            .reset_index(drop=True)
-        )
+        report = report.sort_values(
+            "absolute_z_score",
+            ascending=False,
+        ).reset_index(drop=True)
 
     report.to_csv(
         OUTLIER_REPORT_PATH,
@@ -1139,17 +901,13 @@ def generate_outlier_report(
 
     if report.empty:
 
-        logger.info(
-            "No companies exceeded |Z| > 3."
-        )
+        logger.info("No companies exceeded |Z| > 3.")
 
     else:
 
         logger.info(
             "Unique companies flagged: %d",
-            report[
-                "company_id"
-            ].nunique(),
+            report["company_id"].nunique(),
         )
 
     return report
@@ -1159,6 +917,7 @@ def generate_outlier_report(
 # PORTFOLIO STATISTICS
 # =====================================================================
 
+
 def generate_portfolio_stats(
     df: pd.DataFrame,
 ) -> pd.DataFrame:
@@ -1167,74 +926,36 @@ def generate_portfolio_stats(
     for every Day 37 KPI.
     """
 
-    logger.info(
-        "Generating portfolio statistics..."
-    )
+    logger.info("Generating portfolio statistics...")
 
     rows = []
 
     for kpi in CORRELATION_KPIS:
 
-        values = (
-            pd.to_numeric(
-                df[kpi],
-                errors="coerce",
-            )
-            .dropna()
-        )
+        values = pd.to_numeric(
+            df[kpi],
+            errors="coerce",
+        ).dropna()
 
         if values.empty:
 
-            raise ValueError(
-                f"No numeric observations "
-                f"for KPI: {kpi}"
-            )
+            raise ValueError(f"No numeric observations " f"for KPI: {kpi}")
 
         rows.append(
             {
                 "kpi": kpi,
-
-                "p10":
-                    values.quantile(
-                        0.10
-                    ),
-
-                "p25":
-                    values.quantile(
-                        0.25
-                    ),
-
-                "p50":
-                    values.quantile(
-                        0.50
-                    ),
-
-                "p75":
-                    values.quantile(
-                        0.75
-                    ),
-
-                "p90":
-                    values.quantile(
-                        0.90
-                    ),
-
-                "mean":
-                    values.mean(),
-
-                "std":
-                    values.std(
-                        ddof=1
-                    ),
-
-                "observations":
-                    len(values),
+                "p10": values.quantile(0.10),
+                "p25": values.quantile(0.25),
+                "p50": values.quantile(0.50),
+                "p75": values.quantile(0.75),
+                "p90": values.quantile(0.90),
+                "mean": values.mean(),
+                "std": values.std(ddof=1),
+                "observations": len(values),
             }
         )
 
-    stats = pd.DataFrame(
-        rows
-    )
+    stats = pd.DataFrame(rows)
 
     stats.to_csv(
         PORTFOLIO_STATS_PATH,
@@ -1253,6 +974,7 @@ def generate_portfolio_stats(
 # VALIDATION
 # =====================================================================
 
+
 def validate_outputs(
     df: pd.DataFrame,
     profile: pd.DataFrame,
@@ -1261,9 +983,7 @@ def validate_outputs(
 ) -> None:
     """Validate all Day 37 outputs."""
 
-    logger.info(
-        "Validating Day 37 outputs..."
-    )
+    logger.info("Validating Day 37 outputs...")
 
     # -------------------------------------------------------------
     # Master universe
@@ -1271,21 +991,13 @@ def validate_outputs(
 
     assert len(df) == EXPECTED_COMPANIES
 
-    assert (
-        df["company_id"].nunique()
-        == EXPECTED_COMPANIES
-    )
+    assert df["company_id"].nunique() == EXPECTED_COMPANIES
 
     # -------------------------------------------------------------
     # Five clusters
     # -------------------------------------------------------------
 
-    cluster_ids = sorted(
-        df["cluster_id"]
-        .astype(int)
-        .unique()
-        .tolist()
-    )
+    cluster_ids = sorted(df["cluster_id"].astype(int).unique().tolist())
 
     assert cluster_ids == [
         0,
@@ -1303,28 +1015,17 @@ def validate_outputs(
 
     for feature in CLUSTER_FEATURES:
 
-        assert (
-            f"{feature}_mean"
-            in profile.columns
-        )
+        assert f"{feature}_mean" in profile.columns
 
-        assert (
-            f"{feature}_median"
-            in profile.columns
-        )
+        assert f"{feature}_median" in profile.columns
 
     # -------------------------------------------------------------
     # Correlation heatmap
     # -------------------------------------------------------------
 
-    assert (
-        CORRELATION_HEATMAP_PATH.exists()
-    )
+    assert CORRELATION_HEATMAP_PATH.exists()
 
-    assert (
-        CORRELATION_HEATMAP_PATH.stat().st_size
-        > 0
-    )
+    assert CORRELATION_HEATMAP_PATH.stat().st_size > 0
 
     # -------------------------------------------------------------
     # Outlier report
@@ -1343,34 +1044,19 @@ def validate_outputs(
         "outlier_flag",
     }
 
-    assert set(
-        outliers.columns
-    ) == expected_outlier_columns
+    assert set(outliers.columns) == expected_outlier_columns
 
     if not outliers.empty:
 
-        assert (
-            outliers[
-                "absolute_z_score"
-            ]
-            > 3
-        ).all()
+        assert (outliers["absolute_z_score"] > 3).all()
 
-        assert (
-            outliers[
-                "outlier_flag"
-            ]
-            == True
-        ).all()
+        assert (outliers["outlier_flag"] == True).all()
 
     # -------------------------------------------------------------
     # Portfolio statistics
     # -------------------------------------------------------------
 
-    assert (
-        len(portfolio_stats)
-        == len(CORRELATION_KPIS)
-    )
+    assert len(portfolio_stats) == len(CORRELATION_KPIS)
 
     expected_stats_columns = {
         "kpi",
@@ -1384,48 +1070,31 @@ def validate_outputs(
         "observations",
     }
 
-    assert set(
-        portfolio_stats.columns
-    ) == expected_stats_columns
+    assert set(portfolio_stats.columns) == expected_stats_columns
 
-    assert (
-        portfolio_stats[
-            "observations"
-        ]
-        .gt(0)
-        .all()
-    )
+    assert portfolio_stats["observations"].gt(0).all()
 
     # -------------------------------------------------------------
     # Required files
     # -------------------------------------------------------------
 
-    assert (
-        CLUSTER_PROFILE_PATH.exists()
-    )
+    assert CLUSTER_PROFILE_PATH.exists()
 
-    assert (
-        OUTLIER_REPORT_PATH.exists()
-    )
+    assert OUTLIER_REPORT_PATH.exists()
 
-    assert (
-        PORTFOLIO_STATS_PATH.exists()
-    )
+    assert PORTFOLIO_STATS_PATH.exists()
 
-    logger.info(
-        "Day 37 output validation PASSED"
-    )
+    logger.info("Day 37 output validation PASSED")
 
 
 # =====================================================================
 # MAIN
 # =====================================================================
 
+
 def main() -> None:
 
-    logger.info(
-        "Starting Day 37 Cluster Profiling & Statistics"
-    )
+    logger.info("Starting Day 37 Cluster Profiling & Statistics")
 
     ensure_directories()
 
@@ -1439,47 +1108,31 @@ def main() -> None:
     # 1. Cluster profiling.
     # -------------------------------------------------------------
 
-    profile = (
-        generate_cluster_profile(
-            df
-        )
-    )
+    profile = generate_cluster_profile(df)
 
     # -------------------------------------------------------------
     # 2. Cluster membership/name review.
     # -------------------------------------------------------------
 
-    review_cluster_members(
-        df
-    )
+    review_cluster_members(df)
 
     # -------------------------------------------------------------
     # 3. Correlation heatmap.
     # -------------------------------------------------------------
 
-    generate_correlation_heatmap(
-        df
-    )
+    generate_correlation_heatmap(df)
 
     # -------------------------------------------------------------
     # 4. Sector-relative outliers.
     # -------------------------------------------------------------
 
-    outliers = (
-        generate_outlier_report(
-            df
-        )
-    )
+    outliers = generate_outlier_report(df)
 
     # -------------------------------------------------------------
     # 5. Portfolio statistics.
     # -------------------------------------------------------------
 
-    portfolio_stats = (
-        generate_portfolio_stats(
-            df
-        )
-    )
+    portfolio_stats = generate_portfolio_stats(df)
 
     # -------------------------------------------------------------
     # Final validation.
@@ -1492,9 +1145,7 @@ def main() -> None:
         portfolio_stats,
     )
 
-    logger.info(
-        "Day 37 Cluster Profiling & Statistics COMPLETE"
-    )
+    logger.info("Day 37 Cluster Profiling & Statistics COMPLETE")
 
 
 if __name__ == "__main__":

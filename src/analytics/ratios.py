@@ -13,7 +13,6 @@ import sqlite3
 from pathlib import Path
 import pandas as pd
 
-
 # ============================================================
 # CONFIGURATION
 # ============================================================
@@ -31,6 +30,7 @@ logger = logging.getLogger(__name__)
 # ============================================================
 # HELPERS
 # ============================================================
+
 
 def to_float(value):
     """Safely convert a database value to float."""
@@ -51,11 +51,7 @@ def to_float(value):
 
 def safe_sum(*values):
     """Sum available numeric values."""
-    numbers = [
-        to_float(v)
-        for v in values
-        if to_float(v) is not None
-    ]
+    numbers = [to_float(v) for v in values if to_float(v) is not None]
 
     if not numbers:
         return None
@@ -82,9 +78,7 @@ def cagr(start_value, end_value, years):
         return None
 
     try:
-        return (
-            (end_value / start_value) ** (1 / years) - 1
-        ) * 100
+        return ((end_value / start_value) ** (1 / years) - 1) * 100
     except (ValueError, ZeroDivisionError, OverflowError):
         return None
 
@@ -92,6 +86,7 @@ def cagr(start_value, end_value, years):
 # ============================================================
 # PROFITABILITY RATIOS
 # ============================================================
+
 
 def net_profit_margin(net_profit, sales):
     """
@@ -207,11 +202,7 @@ def return_on_capital_employed(
     reserves = to_float(reserves) or 0
     borrowings = to_float(borrowings) or 0
 
-    capital_employed = (
-        equity_capital
-        + reserves
-        + borrowings
-    )
+    capital_employed = equity_capital + reserves + borrowings
 
     if capital_employed == 0:
         return None
@@ -243,6 +234,7 @@ def return_on_assets(
 # LEVERAGE RATIOS
 # ============================================================
 
+
 def debt_to_equity(
     borrowings,
     equity_capital,
@@ -271,22 +263,18 @@ def high_leverage_flag(
     debt_to_equity_ratio,
     sector=None,
 ):
-    debt_to_equity_ratio = to_float(
-        debt_to_equity_ratio
-    )
+    debt_to_equity_ratio = to_float(debt_to_equity_ratio)
 
     if debt_to_equity_ratio is None:
         return False
 
-    return (
-        debt_to_equity_ratio > 5
-        and sector != "Financials"
-    )
+    return debt_to_equity_ratio > 5 and sector != "Financials"
 
 
 # ============================================================
 # INTEREST COVERAGE
 # ============================================================
+
 
 def interest_coverage_ratio(
     operating_profit,
@@ -303,9 +291,7 @@ def interest_coverage_ratio(
     if interest == 0:
         return None
 
-    return (
-        operating_profit + other_income
-    ) / interest
+    return (operating_profit + other_income) / interest
 
 
 def interest_coverage_label(icr):
@@ -339,6 +325,7 @@ def interest_coverage_warning(icr):
 # BALANCE SHEET RATIOS
 # ============================================================
 
+
 def net_debt(
     borrowings,
     investments,
@@ -349,10 +336,7 @@ def net_debt(
     if borrowings is None and investments is None:
         return None
 
-    return (
-        (borrowings or 0)
-        - (investments or 0)
-    )
+    return (borrowings or 0) - (investments or 0)
 
 
 def asset_turnover(
@@ -375,6 +359,7 @@ def asset_turnover(
 # CASH FLOW RATIOS
 # ============================================================
 
+
 def free_cash_flow(
     operating_activity,
     investing_activity,
@@ -392,19 +377,14 @@ def free_cash_flow(
     if cfo is None and cfi is None:
         return None
 
-    return (
-        (cfo or 0)
-        + (cfi or 0)
-    )
+    return (cfo or 0) + (cfi or 0)
 
 
 def capex_cr(investing_activity):
     """
     Capex is represented as positive spending amount.
     """
-    investing_activity = to_float(
-        investing_activity
-    )
+    investing_activity = to_float(investing_activity)
 
     if investing_activity is None:
         return None
@@ -416,9 +396,7 @@ def capex_intensity(
     investing_activity,
     sales,
 ):
-    investing_activity = to_float(
-        investing_activity
-    )
+    investing_activity = to_float(investing_activity)
     sales = to_float(sales)
 
     if investing_activity is None or sales is None:
@@ -427,9 +405,7 @@ def capex_intensity(
     if sales == 0:
         return None
 
-    return (
-        abs(investing_activity) / sales
-    ) * 100
+    return (abs(investing_activity) / sales) * 100
 
 
 def cfo_quality_ratio(
@@ -479,14 +455,13 @@ def fcf_conversion_rate(
     if net_profit == 0:
         return None
 
-    return (
-        fcf / net_profit
-    ) * 100
+    return (fcf / net_profit) * 100
 
 
 # ============================================================
 # PER SHARE / DIVIDEND RATIOS
 # ============================================================
+
 
 def earnings_per_share(eps):
     return to_float(eps)
@@ -519,6 +494,7 @@ def dividend_payout_ratio(
 # CAGR
 # ============================================================
 
+
 def calculate_cagr(
     start_value,
     end_value,
@@ -534,6 +510,7 @@ def calculate_cagr(
 # ============================================================
 # COMPOSITE QUALITY SCORE
 # ============================================================
+
 
 def calculate_composite_quality_score(
     npm,
@@ -681,26 +658,18 @@ def calculate_composite_quality_score(
 # DATABASE HELPERS
 # ============================================================
 
+
 def get_connection():
     if not DB_PATH.exists():
-        raise FileNotFoundError(
-            f"Database not found: {DB_PATH.resolve()}"
-        )
+        raise FileNotFoundError(f"Database not found: {DB_PATH.resolve()}")
 
-    return sqlite3.connect(
-        str(DB_PATH)
-    )
+    return sqlite3.connect(str(DB_PATH))
 
 
 def get_table_columns(conn, table_name):
-    rows = conn.execute(
-        f"PRAGMA table_info({table_name})"
-    ).fetchall()
+    rows = conn.execute(f"PRAGMA table_info({table_name})").fetchall()
 
-    return [
-        row[1]
-        for row in rows
-    ]
+    return [row[1] for row in rows]
 
 
 def verify_schema(conn):
@@ -761,17 +730,10 @@ def verify_schema(conn):
         "composite_quality_score",
     ]
 
-    missing = [
-        col
-        for col in required
-        if col not in columns
-    ]
+    missing = [col for col in required if col not in columns]
 
     if missing:
-        raise RuntimeError(
-            "financial_ratios is missing columns: "
-            + ", ".join(missing)
-        )
+        raise RuntimeError("financial_ratios is missing columns: " + ", ".join(missing))
 
     return columns
 
@@ -780,10 +742,10 @@ def verify_schema(conn):
 # LOAD SOURCE DATA
 # ============================================================
 
+
 def load_source_data(conn):
 
-    pnl_rows = conn.execute(
-        """
+    pnl_rows = conn.execute("""
         SELECT
             company_id,
             year,
@@ -800,11 +762,9 @@ def load_source_data(conn):
             eps,
             dividend_payout
         FROM profitandloss
-        """
-    ).fetchall()
+        """).fetchall()
 
-    bs_rows = conn.execute(
-        """
+    bs_rows = conn.execute("""
         SELECT
             company_id,
             year,
@@ -819,11 +779,9 @@ def load_source_data(conn):
             other_asset,
             total_assets
         FROM balancesheet
-        """
-    ).fetchall()
+        """).fetchall()
 
-    cf_rows = conn.execute(
-        """
+    cf_rows = conn.execute("""
         SELECT
             company_id,
             year,
@@ -832,8 +790,7 @@ def load_source_data(conn):
             financing_activity,
             net_cash_flow
         FROM cashflow
-        """
-    ).fetchall()
+        """).fetchall()
 
     logger.info(
         "Loaded P&L rows: %d",
@@ -915,9 +872,11 @@ def load_source_data(conn):
 
     return pnl, bs, cf
 
+
 # ============================================================
 # DAY 13 — SECTOR + SOURCE RATIO CROSS-CHECKS
 # ============================================================
+
 
 def normalize_company_id(value):
     """Normalize company identifiers for reliable cross-file joins."""
@@ -963,9 +922,7 @@ def load_sector_mapping():
     try:
         path = find_project_file("sectors.xlsx")
     except FileNotFoundError:
-        logger.warning(
-            "sectors.xlsx not found. Continuing without sector mapping."
-        )
+        logger.warning("sectors.xlsx not found. Continuing without sector mapping.")
         return {}
 
     df = pd.read_excel(path)
@@ -979,13 +936,10 @@ def load_sector_mapping():
 
     if missing:
         raise RuntimeError(
-            "sectors.xlsx is missing columns: "
-            + ", ".join(sorted(missing))
+            "sectors.xlsx is missing columns: " + ", ".join(sorted(missing))
         )
 
-    df["company_id"] = df["company_id"].map(
-        normalize_company_id
-    )
+    df["company_id"] = df["company_id"].map(normalize_company_id)
 
     sectors = dict(
         zip(
@@ -1014,9 +968,7 @@ def load_source_ratio_values():
     try:
         path = find_project_file("companies.xlsx")
     except FileNotFoundError:
-        logger.warning(
-            "companies.xlsx not found. Continuing without source ROCE/ROE."
-        )
+        logger.warning("companies.xlsx not found. Continuing without source ROCE/ROE.")
         return {}, {}
 
     # companies.xlsx has a title row above the real headers.
@@ -1035,13 +987,10 @@ def load_source_ratio_values():
 
     if missing:
         raise RuntimeError(
-            "companies.xlsx is missing columns: "
-            + ", ".join(sorted(missing))
+            "companies.xlsx is missing columns: " + ", ".join(sorted(missing))
         )
 
-    df["id"] = df["id"].map(
-        normalize_company_id
-    )
+    df["id"] = df["id"].map(normalize_company_id)
 
     roce_values = {}
     roe_values = {}
@@ -1050,13 +999,9 @@ def load_source_ratio_values():
 
         company_id = row["id"]
 
-        roce = to_float(
-            row["roce_percentage"]
-        )
+        roce = to_float(row["roce_percentage"])
 
-        roe = to_float(
-            row["roe_percentage"]
-        )
+        roe = to_float(row["roe_percentage"])
 
         roce_values[company_id] = roce
         roe_values[company_id] = roe
@@ -1086,10 +1031,7 @@ def setup_edge_case_log():
         exist_ok=True,
     )
 
-    log_path = (
-        output_dir
-        / "ratio_edge_cases.log"
-    )
+    log_path = output_dir / "ratio_edge_cases.log"
 
     with open(
         log_path,
@@ -1097,35 +1039,19 @@ def setup_edge_case_log():
         encoding="utf-8",
     ) as log_file:
 
-        log_file.write(
-            "N100 Ratio Engine - Day 13 Edge Cases\n"
-        )
+        log_file.write("N100 Ratio Engine - Day 13 Edge Cases\n")
 
-        log_file.write(
-            "=" * 70
-            + "\n"
-        )
+        log_file.write("=" * 70 + "\n")
 
-        log_file.write(
-            "ROCE / ROE source cross-checks\n"
-        )
+        log_file.write("ROCE / ROE source cross-checks\n")
 
-        log_file.write(
-            "Difference threshold: > 5 percentage points\n"
-        )
+        log_file.write("Difference threshold: > 5 percentage points\n")
 
-        log_file.write(
-            "Computed Ratio Engine values are analytical source of truth.\n"
-        )
+        log_file.write("Computed Ratio Engine values are analytical source of truth.\n")
 
-        log_file.write(
-            "companies.xlsx values are source/display reference only.\n"
-        )
+        log_file.write("companies.xlsx values are source/display reference only.\n")
 
-        log_file.write(
-            "=" * 70
-            + "\n\n"
-        )
+        log_file.write("=" * 70 + "\n\n")
 
     return log_path
 
@@ -1214,13 +1140,9 @@ def cross_check_source_ratios(
 
     for row in output_rows:
 
-        company_id = row.get(
-            "company_id"
-        )
+        company_id = row.get("company_id")
 
-        year = row.get(
-            "year"
-        )
+        year = row.get("year")
 
         if company_id is None:
             continue
@@ -1230,15 +1152,9 @@ def cross_check_source_ratios(
         if parsed_year is None:
             continue
 
-        existing = latest_rows.get(
-            company_id
-        )
+        existing = latest_rows.get(company_id)
 
-        if (
-            existing is None
-            or parsed_year
-            > parse_year(existing["year"])
-        ):
+        if existing is None or parsed_year > parse_year(existing["year"]):
             latest_rows[company_id] = row
 
     roce_anomalies = 0
@@ -1250,22 +1166,14 @@ def cross_check_source_ratios(
 
     for company_id, row in latest_rows.items():
 
-        calculated = to_float(
-            row.get(
-                "return_on_capital_employed_pct"
-            )
-        )
+        calculated = to_float(row.get("return_on_capital_employed_pct"))
 
-        source = roce_source.get(
-            company_id
-        )
+        source = roce_source.get(company_id)
 
         if calculated is None or source is None:
             continue
 
-        difference = abs(
-            calculated - source
-        )
+        difference = abs(calculated - source)
 
         if difference > 5:
 
@@ -1287,22 +1195,14 @@ def cross_check_source_ratios(
 
     for company_id, row in latest_rows.items():
 
-        calculated = to_float(
-            row.get(
-                "return_on_equity_pct"
-            )
-        )
+        calculated = to_float(row.get("return_on_equity_pct"))
 
-        source = roe_source.get(
-            company_id
-        )
+        source = roe_source.get(company_id)
 
         if calculated is None or source is None:
             continue
 
-        difference = abs(
-            calculated - source
-        )
+        difference = abs(calculated - source)
 
         if difference > 5:
 
@@ -1322,9 +1222,12 @@ def cross_check_source_ratios(
         roce_anomalies,
         roe_anomalies,
     )
+
+
 # ============================================================
 # HISTORICAL VALUE HELPERS
 # ============================================================
+
 
 def historical_value(
     data,
@@ -1401,9 +1304,7 @@ def find_prior_year_value(
         return None
 
     # Deterministic selection.
-    candidates.sort(
-        key=lambda x: str(x[0])
-    )
+    candidates.sort(key=lambda x: str(x[0]))
 
     return candidates[-1][1]
 
@@ -1583,6 +1484,7 @@ def calculate_growth_metrics(
 # FLAG HELPERS
 # ============================================================
 
+
 def growth_flag(value):
     value = to_float(value)
 
@@ -1595,6 +1497,7 @@ def growth_flag(value):
 # ============================================================
 # BUILD RATIO ROW
 # ============================================================
+
 
 def build_ratio_row(
     company_id,
@@ -1610,48 +1513,22 @@ def build_ratio_row(
     cf_row = cf_row or {}
 
     sales = pnl_row.get("sales")
-    operating_profit = pnl_row.get(
-        "operating_profit"
-    )
-    reported_opm = pnl_row.get(
-        "opm_percentage"
-    )
-    other_income = pnl_row.get(
-        "other_income"
-    )
-    interest = pnl_row.get(
-        "interest"
-    )
-    net_profit = pnl_row.get(
-        "net_profit"
-    )
+    operating_profit = pnl_row.get("operating_profit")
+    reported_opm = pnl_row.get("opm_percentage")
+    other_income = pnl_row.get("other_income")
+    interest = pnl_row.get("interest")
+    net_profit = pnl_row.get("net_profit")
     eps = pnl_row.get("eps")
-    dividend_payout = pnl_row.get(
-        "dividend_payout"
-    )
+    dividend_payout = pnl_row.get("dividend_payout")
 
-    equity_capital = bs_row.get(
-        "equity_capital"
-    )
-    reserves = bs_row.get(
-        "reserves"
-    )
-    borrowings = bs_row.get(
-        "borrowings"
-    )
-    investments = bs_row.get(
-        "investments"
-    )
-    total_assets = bs_row.get(
-        "total_assets"
-    )
+    equity_capital = bs_row.get("equity_capital")
+    reserves = bs_row.get("reserves")
+    borrowings = bs_row.get("borrowings")
+    investments = bs_row.get("investments")
+    total_assets = bs_row.get("total_assets")
 
-    cfo = cf_row.get(
-        "operating_activity"
-    )
-    cfi = cf_row.get(
-        "investing_activity"
-    )
+    cfo = cf_row.get("operating_activity")
+    cfi = cf_row.get("investing_activity")
 
     # --------------------------------------------------------
     # Core ratios
@@ -1756,15 +1633,9 @@ def build_ratio_row(
         interest_coverage=icr,
         asset_turnover_value=turnover,
         cfo_quality=cfo_quality,
-        revenue_cagr_5yr=(
-            growth["revenue_cagr_5yr"]
-        ),
-        pat_cagr_5yr=(
-            growth["pat_cagr_5yr"]
-        ),
-        eps_cagr_5yr=(
-            growth["eps_cagr_5yr"]
-        ),
+        revenue_cagr_5yr=(growth["revenue_cagr_5yr"]),
+        pat_cagr_5yr=(growth["pat_cagr_5yr"]),
+        eps_cagr_5yr=(growth["eps_cagr_5yr"]),
     )
 
     # --------------------------------------------------------
@@ -1774,62 +1645,30 @@ def build_ratio_row(
     return {
         "company_id": company_id,
         "year": year,
-
         "net_profit_margin_pct": npm,
-
         "operating_profit_margin_pct": opm,
-
         "return_on_equity_pct": roe,
-
         "return_on_capital_employed_pct": roce,
-
         "return_on_assets_pct": roa,
-
         "debt_to_equity": de,
-
         "high_leverage_flag": (
             high_leverage_flag(
                 de,
                 sector=sector,
             )
         ),
-
         "interest_coverage": icr,
-
-        "icr_label": (
-            interest_coverage_label(icr)
-        ),
-
-        "icr_warning_flag": (
-            interest_coverage_warning(icr)
-        ),
-
+        "icr_label": (interest_coverage_label(icr)),
+        "icr_warning_flag": (interest_coverage_warning(icr)),
         "net_debt_cr": net_debt_value,
-
         "asset_turnover": turnover,
-
         "free_cash_flow_cr": fcf,
-
         "capex_cr": capex,
-
-        "capex_intensity_pct": (
-            capex_intensity_value
-        ),
-
+        "capex_intensity_pct": (capex_intensity_value),
         "cfo_quality_ratio": cfo_quality,
-
-        "cfo_quality_label": (
-            cfo_quality_label(cfo_quality)
-        ),
-
-        "fcf_conversion_rate_pct": (
-            fcf_conversion
-        ),
-
-        "earnings_per_share": (
-            earnings_per_share(eps)
-        ),
-
+        "cfo_quality_label": (cfo_quality_label(cfo_quality)),
+        "fcf_conversion_rate_pct": (fcf_conversion),
+        "earnings_per_share": (earnings_per_share(eps)),
         "book_value_per_share": (
             book_value_per_share(
                 equity_capital,
@@ -1837,111 +1676,27 @@ def build_ratio_row(
                 eps,
             )
         ),
-
-        "dividend_payout_ratio_pct": (
-            dividend_payout_ratio(
-                dividend_payout
-            )
-        ),
-
-        "total_debt_cr": to_float(
-            borrowings
-        ),
-
-        "cash_from_operations_cr": to_float(
-            cfo
-        ),
-
-        "revenue_cagr_3yr": (
-            growth["revenue_cagr_3yr"]
-        ),
-
-        "revenue_cagr_3yr_flag": (
-            growth_flag(
-                growth["revenue_cagr_3yr"]
-            )
-        ),
-
-        "revenue_cagr_5yr": (
-            growth["revenue_cagr_5yr"]
-        ),
-
-        "revenue_cagr_5yr_flag": (
-            growth_flag(
-                growth["revenue_cagr_5yr"]
-            )
-        ),
-
-        "revenue_cagr_10yr": (
-            growth["revenue_cagr_10yr"]
-        ),
-
-        "revenue_cagr_10yr_flag": (
-            growth_flag(
-                growth["revenue_cagr_10yr"]
-            )
-        ),
-
-        "pat_cagr_3yr": (
-            growth["pat_cagr_3yr"]
-        ),
-
-        "pat_cagr_3yr_flag": (
-            growth_flag(
-                growth["pat_cagr_3yr"]
-            )
-        ),
-
-        "pat_cagr_5yr": (
-            growth["pat_cagr_5yr"]
-        ),
-
-        "pat_cagr_5yr_flag": (
-            growth_flag(
-                growth["pat_cagr_5yr"]
-            )
-        ),
-
-        "pat_cagr_10yr": (
-            growth["pat_cagr_10yr"]
-        ),
-
-        "pat_cagr_10yr_flag": (
-            growth_flag(
-                growth["pat_cagr_10yr"]
-            )
-        ),
-
-        "eps_cagr_3yr": (
-            growth["eps_cagr_3yr"]
-        ),
-
-        "eps_cagr_3yr_flag": (
-            growth_flag(
-                growth["eps_cagr_3yr"]
-            )
-        ),
-
-        "eps_cagr_5yr": (
-            growth["eps_cagr_5yr"]
-        ),
-
-        "eps_cagr_5yr_flag": (
-            growth_flag(
-                growth["eps_cagr_5yr"]
-            )
-        ),
-
-        "eps_cagr_10yr": (
-            growth["eps_cagr_10yr"]
-        ),
-
-        "eps_cagr_10yr_flag": (
-            growth_flag(
-                growth["eps_cagr_10yr"]
-            )
-        ),
-
+        "dividend_payout_ratio_pct": (dividend_payout_ratio(dividend_payout)),
+        "total_debt_cr": to_float(borrowings),
+        "cash_from_operations_cr": to_float(cfo),
+        "revenue_cagr_3yr": (growth["revenue_cagr_3yr"]),
+        "revenue_cagr_3yr_flag": (growth_flag(growth["revenue_cagr_3yr"])),
+        "revenue_cagr_5yr": (growth["revenue_cagr_5yr"]),
+        "revenue_cagr_5yr_flag": (growth_flag(growth["revenue_cagr_5yr"])),
+        "revenue_cagr_10yr": (growth["revenue_cagr_10yr"]),
+        "revenue_cagr_10yr_flag": (growth_flag(growth["revenue_cagr_10yr"])),
+        "pat_cagr_3yr": (growth["pat_cagr_3yr"]),
+        "pat_cagr_3yr_flag": (growth_flag(growth["pat_cagr_3yr"])),
+        "pat_cagr_5yr": (growth["pat_cagr_5yr"]),
+        "pat_cagr_5yr_flag": (growth_flag(growth["pat_cagr_5yr"])),
+        "pat_cagr_10yr": (growth["pat_cagr_10yr"]),
+        "pat_cagr_10yr_flag": (growth_flag(growth["pat_cagr_10yr"])),
+        "eps_cagr_3yr": (growth["eps_cagr_3yr"]),
+        "eps_cagr_3yr_flag": (growth_flag(growth["eps_cagr_3yr"])),
+        "eps_cagr_5yr": (growth["eps_cagr_5yr"]),
+        "eps_cagr_5yr_flag": (growth_flag(growth["eps_cagr_5yr"])),
+        "eps_cagr_10yr": (growth["eps_cagr_10yr"]),
+        "eps_cagr_10yr_flag": (growth_flag(growth["eps_cagr_10yr"])),
         "composite_quality_score": score,
     }
 
@@ -1950,10 +1705,9 @@ def build_ratio_row(
 # POPULATE DATABASE
 # ============================================================
 
+
 def populate_financial_ratios():
-    logger.info(
-        "Starting financial ratio engine"
-    )
+    logger.info("Starting financial ratio engine")
 
     conn = get_connection()
 
@@ -1968,9 +1722,7 @@ def populate_financial_ratios():
         # Load source data
         # ----------------------------------------------------
 
-        pnl, bs, cf = load_source_data(
-            conn
-        )
+        pnl, bs, cf = load_source_data(conn)
 
         # ----------------------------------------------------
         # Day 13 — Load sector and source-ratio reference data
@@ -1981,9 +1733,7 @@ def populate_financial_ratios():
         edge_case_log = setup_edge_case_log()
 
         financials_count = sum(
-            1
-            for company_id in sectors
-            if sectors.get(company_id) == "Financials"
+            1 for company_id in sectors if sectors.get(company_id) == "Financials"
         )
 
         logger.info(
@@ -1995,11 +1745,7 @@ def populate_financial_ratios():
         # UNION of all company/year combinations
         # ----------------------------------------------------
 
-        all_keys = (
-            set(pnl.keys())
-            | set(bs.keys())
-            | set(cf.keys())
-        )
+        all_keys = set(pnl.keys()) | set(bs.keys()) | set(cf.keys())
 
         all_keys = sorted(
             all_keys,
@@ -2022,29 +1768,21 @@ def populate_financial_ratios():
 
         for company_id, year in all_keys:
 
-            pnl_row = pnl.get(
-                (company_id, year)
-            )
+            pnl_row = pnl.get((company_id, year))
 
-            bs_row = bs.get(
-                (company_id, year)
-            )
+            bs_row = bs.get((company_id, year))
 
-            cf_row = cf.get(
-                (company_id, year)
-            )
+            cf_row = cf.get((company_id, year))
 
             row = build_ratio_row(
-              company_id=company_id,
+                company_id=company_id,
                 year=year,
                 pnl_row=pnl_row,
                 bs_row=bs_row,
                 cf_row=cf_row,
                 pnl=pnl,
-                sector=sectors.get(
-                    normalize_company_id(company_id)
-                ),
-)
+                sector=sectors.get(normalize_company_id(company_id)),
+            )
             output_rows.append(row)
 
         logger.info(
@@ -2055,13 +1793,11 @@ def populate_financial_ratios():
         # Day 13 — ROCE / ROE source cross-check
         # ----------------------------------------------------
 
-        roce_anomalies, roe_anomalies = (
-            cross_check_source_ratios(
-                output_rows=output_rows,
-                roce_source=roce_source,
-                roe_source=roe_source,
-                log_path=edge_case_log,
-            )
+        roce_anomalies, roe_anomalies = cross_check_source_ratios(
+            output_rows=output_rows,
+            roce_source=roce_source,
+            roe_source=roe_source,
+            log_path=edge_case_log,
         )
 
         logger.info(
@@ -2075,21 +1811,13 @@ def populate_financial_ratios():
         )
 
         print()
-        print(
-            f"ROCE anomalies: {roce_anomalies}"
-        )
+        print(f"ROCE anomalies: {roce_anomalies}")
 
-        print(
-            f"ROE anomalies: {roe_anomalies}"
-        )
+        print(f"ROE anomalies: {roe_anomalies}")
 
-        print(
-            f"Edge-case log: {edge_case_log}"
-        )
+        print(f"Edge-case log: {edge_case_log}")
 
-        print(
-            f"Financials companies: {financials_count}"
-        )
+        print(f"Financials companies: {financials_count}")
 
         logger.info(
             "Financials companies in sector mapping: %d",
@@ -2104,30 +1832,20 @@ def populate_financial_ratios():
         # 46 values for 44 columns
         # 47 values for 44 columns
         # ----------------------------------------------------
-        
+
         if not output_rows:
-            raise RuntimeError(
-                "No ratio rows were generated."
-            )
+            raise RuntimeError("No ratio rows were generated.")
 
         insert_columns = [
-            column
-            for column in table_columns
-            if column in output_rows[0]
+            column for column in table_columns if column in output_rows[0]
         ]
 
         if not insert_columns:
-            raise RuntimeError(
-                "No matching financial ratio columns found."
-            )
+            raise RuntimeError("No matching financial ratio columns found.")
 
-        placeholders = ", ".join(
-            ["?"] * len(insert_columns)
-        )
+        placeholders = ", ".join(["?"] * len(insert_columns))
 
-        column_sql = ", ".join(
-            insert_columns
-        )
+        column_sql = ", ".join(insert_columns)
 
         insert_sql = f"""
             INSERT OR REPLACE INTO financial_ratios
@@ -2138,20 +1856,13 @@ def populate_financial_ratios():
         values = []
 
         for row in output_rows:
-            values.append(
-                tuple(
-                    row.get(column)
-                    for column in insert_columns
-                )
-            )
+            values.append(tuple(row.get(column) for column in insert_columns))
 
         # ----------------------------------------------------
         # Replace old calculated data
         # ----------------------------------------------------
 
-        conn.execute(
-            "DELETE FROM financial_ratios"
-        )
+        conn.execute("DELETE FROM financial_ratios")
 
         conn.executemany(
             insert_sql,
@@ -2164,12 +1875,10 @@ def populate_financial_ratios():
         # Verify row count
         # ----------------------------------------------------
 
-        count = conn.execute(
-            """
+        count = conn.execute("""
             SELECT COUNT(*)
             FROM financial_ratios
-            """
-        ).fetchone()[0]
+            """).fetchone()[0]
 
         logger.info(
             "financial_ratios rows: %d",
@@ -2177,33 +1886,23 @@ def populate_financial_ratios():
         )
 
         print()
-        print(
-            f"financial_ratios rows: {count}"
-        )
+        print(f"financial_ratios rows: {count}")
 
         if count >= 1100:
-            print(
-                "PASS: row count >= 1,100"
-            )
+            print("PASS: row count >= 1,100")
         else:
-            print(
-                "FAIL: row count < 1,100"
-            )
+            print("FAIL: row count < 1,100")
 
         # ----------------------------------------------------
         # Company count
         # ----------------------------------------------------
 
-        company_count = conn.execute(
-            """
+        company_count = conn.execute("""
             SELECT COUNT(DISTINCT company_id)
             FROM financial_ratios
-            """
-        ).fetchone()[0]
+            """).fetchone()[0]
 
-        print(
-            f"Companies populated: {company_count}"
-        )
+        print(f"Companies populated: {company_count}")
 
         # ----------------------------------------------------
         # Sample rows
@@ -2212,8 +1911,7 @@ def populate_financial_ratios():
         print()
         print("Sample rows:")
 
-        sample_rows = conn.execute(
-            """
+        sample_rows = conn.execute("""
             SELECT
                 company_id,
                 year,
@@ -2226,16 +1924,13 @@ def populate_financial_ratios():
             FROM financial_ratios
             ORDER BY company_id, year
             LIMIT 5
-            """
-        ).fetchall()
+            """).fetchall()
 
         for row in sample_rows:
             print(row)
 
         print()
-        print(
-            "Ratio engine completed successfully."
-        )
+        print("Ratio engine completed successfully.")
 
     finally:
         conn.close()

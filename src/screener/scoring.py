@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 
-
 # ---------------------------------------------------------------------
 # WEIGHTS
 # ---------------------------------------------------------------------
@@ -11,16 +10,13 @@ WEIGHTS = {
     "roe": 15,
     "roce": 10,
     "npm": 10,
-
     # Cash Quality = 30%
     "fcf_cagr": 15,
     "cfo_pat": 10,
     "fcf_positive": 5,
-
     # Growth = 20%
     "revenue_cagr": 10,
     "pat_cagr": 10,
-
     # Leverage = 15%
     "debt_to_equity": 10,
     "interest_coverage": 5,
@@ -30,6 +26,7 @@ WEIGHTS = {
 # ---------------------------------------------------------------------
 # NORMALISATION
 # ---------------------------------------------------------------------
+
 
 def winsorised_score(series: pd.Series) -> pd.Series:
     """
@@ -65,11 +62,7 @@ def winsorised_score(series: pd.Series) -> pd.Series:
         upper=p90,
     )
 
-    result = (
-        (capped - p10)
-        / (p90 - p10)
-        * 100
-    )
+    result = (capped - p10) / (p90 - p10) * 100
 
     return result.clip(0, 100)
 
@@ -90,6 +83,7 @@ def inverse_winsorised_score(series: pd.Series) -> pd.Series:
 # FCF CAGR
 # ---------------------------------------------------------------------
 
+
 def calculate_fcf_cagr_5yr(dataframe: pd.DataFrame) -> pd.DataFrame:
     """
     Calculate 5-year FCF CAGR for each company.
@@ -105,9 +99,7 @@ def calculate_fcf_cagr_5yr(dataframe: pd.DataFrame) -> pd.DataFrame:
         errors="coerce",
     )
 
-    df = df.sort_values(
-        ["company_id", "year_numeric"]
-    )
+    df = df.sort_values(["company_id", "year_numeric"])
 
     df["fcf_cagr_5yr"] = np.nan
 
@@ -124,66 +116,39 @@ def calculate_fcf_cagr_5yr(dataframe: pd.DataFrame) -> pd.DataFrame:
 
             current_fcf = row["free_cash_flow_cr"]
 
-            if (
-                pd.isna(current_fcf)
-                or current_fcf <= 0
-            ):
+            if pd.isna(current_fcf) or current_fcf <= 0:
                 continue
 
-            target_date = (
-                current_date
-                - pd.DateOffset(years=5)
-            )
+            target_date = current_date - pd.DateOffset(years=5)
 
-            historical = group[
-                group["year_numeric"] <= target_date
-            ]
+            historical = group[group["year_numeric"] <= target_date]
 
             if historical.empty:
                 continue
 
             start_row = historical.iloc[-1]
 
-            start_fcf = (
-                start_row["free_cash_flow_cr"]
-            )
+            start_fcf = start_row["free_cash_flow_cr"]
 
-            if (
-                pd.isna(start_fcf)
-                or start_fcf <= 0
-            ):
+            if pd.isna(start_fcf) or start_fcf <= 0:
                 continue
 
-            years = (
-                current_date.year
-                - start_row["year_numeric"].year
-            )
+            years = current_date.year - start_row["year_numeric"].year
 
             if years <= 0:
                 continue
 
-            cagr = (
-                (
-                    current_fcf
-                    / start_fcf
-                )
-                ** (1 / years)
-                - 1
-            ) * 100
+            cagr = ((current_fcf / start_fcf) ** (1 / years) - 1) * 100
 
-            df.loc[
-                index,
-                "fcf_cagr_5yr"
-            ] = cagr
+            df.loc[index, "fcf_cagr_5yr"] = cagr
 
-    return df.drop(
-        columns=["year_numeric"]
-    )
+    return df.drop(columns=["year_numeric"])
 
 
 # ---------------------------------------------------------------------
 # SECTOR RELATIVE SCORING
 # ---------------------------------------------------------------------
+
 
 def calculate_sector_scores(
     dataframe: pd.DataFrame,
@@ -237,13 +202,9 @@ def calculate_sector_scores(
         df[score_column] = np.nan
 
     # Score each sector independently
-    for sector, sector_index in (
-        df.groupby("broad_sector").groups.items()
-    ):
+    for sector, sector_index in df.groupby("broad_sector").groups.items():
 
-        sector_df = df.loc[
-            sector_index
-        ]
+        sector_df = df.loc[sector_index]
 
         for score_column, (
             metric_column,
@@ -254,13 +215,9 @@ def calculate_sector_scores(
                 continue
 
             if inverse:
-                scores = inverse_winsorised_score(
-                    sector_df[metric_column]
-                )
+                scores = inverse_winsorised_score(sector_df[metric_column])
             else:
-                scores = winsorised_score(
-                    sector_df[metric_column]
-                )
+                scores = winsorised_score(sector_df[metric_column])
 
             df.loc[
                 sector_index,
@@ -273,6 +230,7 @@ def calculate_sector_scores(
 # ---------------------------------------------------------------------
 # COMPOSITE SCORE
 # ---------------------------------------------------------------------
+
 
 def calculate_composite_quality_score(
     dataframe: pd.DataFrame,
@@ -304,12 +262,7 @@ def calculate_composite_quality_score(
         errors="coerce",
     )
 
-    debt_free = (
-        df["icr_label"]
-        .astype(str)
-        .str.lower()
-        .eq("debt free")
-    )
+    debt_free = df["icr_label"].astype(str).str.lower().eq("debt free")
 
     # Debt free companies receive 100 for ICR
     df.loc[
@@ -327,12 +280,8 @@ def calculate_composite_quality_score(
         "fcf_positive_score": WEIGHTS["fcf_positive"],
         "revenue_cagr_score": WEIGHTS["revenue_cagr"],
         "pat_cagr_score": WEIGHTS["pat_cagr"],
-        "debt_to_equity_score": WEIGHTS[
-            "debt_to_equity"
-        ],
-        "interest_coverage_score": WEIGHTS[
-            "interest_coverage"
-        ],
+        "debt_to_equity_score": WEIGHTS["debt_to_equity"],
+        "interest_coverage_score": WEIGHTS["interest_coverage"],
     }
 
     # Missing metrics contribute zero.
@@ -341,22 +290,13 @@ def calculate_composite_quality_score(
         index=df.index,
     )
 
-    for column, weight in (
-        weighted_columns.items()
-    ):
+    for column, weight in weighted_columns.items():
 
-        values = (
-            df[column]
-            .fillna(0)
-        )
+        values = df[column].fillna(0)
 
-        composite += (
-            values * weight / 100
-        )
+        composite += values * weight / 100
 
-    df[
-        "composite_quality_score"
-    ] = composite.clip(
+    df["composite_quality_score"] = composite.clip(
         lower=0,
         upper=100,
     )

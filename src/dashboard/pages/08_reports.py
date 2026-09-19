@@ -8,23 +8,19 @@ from urllib.request import Request, urlopen
 import pandas as pd
 import streamlit as st
 
-
 # --------------------------------------------------
 # Project paths
 # --------------------------------------------------
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
-DEFAULT_DB_PATH = (
-    PROJECT_ROOT
-    / "data"
-    / "nifty100.db"
-)
+DEFAULT_DB_PATH = PROJECT_ROOT / "data" / "nifty100.db"
 
 
 # --------------------------------------------------
 # Load companies
 # --------------------------------------------------
+
 
 @st.cache_data
 def load_companies(
@@ -39,9 +35,7 @@ def load_companies(
         ORDER BY company_name
     """
 
-    with sqlite3.connect(
-        db_path
-    ) as connection:
+    with sqlite3.connect(db_path) as connection:
 
         df = pd.read_sql_query(
             query,
@@ -51,12 +45,7 @@ def load_companies(
     if df.empty:
         return df
 
-    df["company_id"] = (
-        df["company_id"]
-        .astype(str)
-        .str.strip()
-        .str.upper()
-    )
+    df["company_id"] = df["company_id"].astype(str).str.strip().str.upper()
 
     return df
 
@@ -64,6 +53,7 @@ def load_companies(
 # --------------------------------------------------
 # Load annual reports
 # --------------------------------------------------
+
 
 @st.cache_data
 def load_annual_reports(
@@ -84,16 +74,12 @@ def load_annual_reports(
         ORDER BY year DESC
     """
 
-    with sqlite3.connect(
-        db_path
-    ) as connection:
+    with sqlite3.connect(db_path) as connection:
 
         df = pd.read_sql_query(
             query,
             connection,
-            params=(
-                company_id.upper(),
-            ),
+            params=(company_id.upper(),),
         )
 
     return df
@@ -102,6 +88,7 @@ def load_annual_reports(
 # --------------------------------------------------
 # Check report availability
 # --------------------------------------------------
+
 
 @st.cache_data(
     ttl=3600,
@@ -176,35 +163,28 @@ def check_report_status(
 # Format company options
 # --------------------------------------------------
 
+
 def format_company(
     company_row: dict,
 ) -> str:
 
-    return (
-        f"{company_row['company_id']} "
-        f"— "
-        f"{company_row['company_name']}"
-    )
+    return f"{company_row['company_id']} " f"— " f"{company_row['company_name']}"
 
 
 # --------------------------------------------------
 # Render page
 # --------------------------------------------------
 
+
 def render():
 
-    st.title(
-        "📄 Annual Reports"
-    )
+    st.title("📄 Annual Reports")
 
     st.caption(
-        "Browse available company annual reports "
-        "and access BSE PDF documents."
+        "Browse available company annual reports " "and access BSE PDF documents."
     )
 
-    db_path = str(
-        DEFAULT_DB_PATH
-    )
+    db_path = str(DEFAULT_DB_PATH)
 
     # ----------------------------------------------
     # Database check
@@ -212,13 +192,9 @@ def render():
 
     if not DEFAULT_DB_PATH.exists():
 
-        st.error(
-            "Database file not found."
-        )
+        st.error("Database file not found.")
 
-        st.code(
-            str(DEFAULT_DB_PATH)
-        )
+        st.code(str(DEFAULT_DB_PATH))
 
         return
 
@@ -228,30 +204,19 @@ def render():
 
     try:
 
-        companies_df = (
-            load_companies(
-                db_path
-            )
-        )
+        companies_df = load_companies(db_path)
 
     except Exception as error:
 
-        st.error(
-            "Unable to load companies."
-        )
+        st.error("Unable to load companies.")
 
-        st.exception(
-            error
-        )
+        st.exception(error)
 
         return
 
     if companies_df.empty:
 
-        st.warning(
-            "No companies were found "
-            "in the database."
-        )
+        st.warning("No companies were found " "in the database.")
 
         return
 
@@ -259,40 +224,20 @@ def render():
     # Company selection
     # ----------------------------------------------
 
-    st.markdown(
-        "## Company Selection"
+    st.markdown("## Company Selection")
+
+    company_records = companies_df.to_dict(orient="records")
+
+    selected_company = st.selectbox(
+        "Search and select a company",
+        options=company_records,
+        format_func=format_company,
+        key="reports_company_selector",
     )
 
-    company_records = (
-        companies_df.to_dict(
-            orient="records"
-        )
-    )
+    company_id = str(selected_company["company_id"]).strip().upper()
 
-    selected_company = (
-        st.selectbox(
-            "Search and select a company",
-            options=company_records,
-            format_func=format_company,
-            key="reports_company_selector",
-        )
-    )
-
-    company_id = (
-        str(
-            selected_company[
-                "company_id"
-            ]
-        )
-        .strip()
-        .upper()
-    )
-
-    company_name = (
-        selected_company[
-            "company_name"
-        ]
-    )
+    company_name = selected_company["company_name"]
 
     # ----------------------------------------------
     # Load reports
@@ -300,22 +245,16 @@ def render():
 
     try:
 
-        reports_df = (
-            load_annual_reports(
-                db_path,
-                company_id,
-            )
+        reports_df = load_annual_reports(
+            db_path,
+            company_id,
         )
 
     except Exception as error:
 
-        st.error(
-            "Unable to load annual reports."
-        )
+        st.error("Unable to load annual reports.")
 
-        st.exception(
-            error
-        )
+        st.exception(error)
 
         return
 
@@ -325,57 +264,33 @@ def render():
 
     st.divider()
 
-    col1, col2, col3 = st.columns(
-        3
-    )
+    col1, col2, col3 = st.columns(3)
 
     with col1:
 
-        st.caption(
-            "Company"
-        )
+        st.caption("Company")
 
-        st.subheader(
-            company_id
-        )
+        st.subheader(company_id)
 
     with col2:
 
-        st.caption(
-            "Available Reports"
-        )
+        st.caption("Available Reports")
 
-        st.subheader(
-            len(
-                reports_df
-            )
-        )
+        st.subheader(len(reports_df))
 
     with col3:
 
-        st.caption(
-            "Latest Report"
-        )
+        st.caption("Latest Report")
 
         if reports_df.empty:
 
-            st.subheader(
-                "N/A"
-            )
+            st.subheader("N/A")
 
         else:
 
-            latest_year = (
-                reports_df[
-                    "year"
-                ].max()
-            )
+            latest_year = reports_df["year"].max()
 
-            st.subheader(
-                int(
-                    latest_year
-                )
-            )
+            st.subheader(int(latest_year))
 
     st.divider()
 
@@ -383,20 +298,13 @@ def render():
     # Annual report list
     # ----------------------------------------------
 
-    st.markdown(
-        f"## {company_name}"
-    )
+    st.markdown(f"## {company_name}")
 
-    st.markdown(
-        "### Annual Reports"
-    )
+    st.markdown("### Annual Reports")
 
     if reports_df.empty:
 
-        st.warning(
-            "No annual report records were "
-            "found for this company."
-        )
+        st.warning("No annual report records were " "found for this company.")
 
         st.info(
             "This company may not yet have "
@@ -410,23 +318,14 @@ def render():
     # Report table
     # ----------------------------------------------
 
-    st.caption(
-        "Click **Open BSE PDF** to access "
-        "the company's annual report."
-    )
+    st.caption("Click **Open BSE PDF** to access " "the company's annual report.")
 
-    for row in reports_df.itertuples(
-        index=False
-    ):
+    for row in reports_df.itertuples(index=False):
 
         year = row.year
         report_url = row.annual_report
 
-        report_available, status_code = (
-            check_report_status(
-                report_url
-            )
-        )
+        report_available, status_code = check_report_status(report_url)
 
         col1, col2, col3 = st.columns(
             [
@@ -438,9 +337,7 @@ def render():
 
         with col1:
 
-            st.markdown(
-                f"**FY {year}**"
-            )
+            st.markdown(f"**FY {year}**")
 
         with col2:
 
@@ -473,9 +370,7 @@ def render():
 
                 else:
 
-                    st.success(
-                        "Report available"
-                    )
+                    st.success("Report available")
 
         with col3:
 
@@ -492,11 +387,7 @@ def render():
                 st.button(
                     "Report unavailable",
                     disabled=True,
-                    key=(
-                        f"unavailable_"
-                        f"{company_id}_"
-                        f"{year}"
-                    ),
+                    key=(f"unavailable_" f"{company_id}_" f"{year}"),
                     use_container_width=True,
                 )
 
@@ -506,10 +397,7 @@ def render():
     # Data source information
     # ----------------------------------------------
 
-    st.caption(
-        "Source: BSE annual report documents "
-        "stored in the project database."
-    )
+    st.caption("Source: BSE annual report documents " "stored in the project database.")
 
 
 if __name__ == "__main__":

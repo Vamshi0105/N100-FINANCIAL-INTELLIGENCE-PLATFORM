@@ -11,13 +11,13 @@ from fastapi import APIRouter, HTTPException, Query
 
 from src.screener.engine import run_screener
 
-
 router = APIRouter()
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _validate_filter(
     value: Optional[str],
@@ -48,6 +48,7 @@ def _validate_filter(
 # ---------------------------------------------------------------------------
 # Screener
 # ---------------------------------------------------------------------------
+
 
 @router.get("/screener")
 def get_screener(
@@ -134,9 +135,7 @@ def get_screener(
 
     # Remove the API-only sector key before passing filters to engine.
     engine_filters = {
-        key: value
-        for key, value in filters.items()
-        if key != "_api_sector"
+        key: value for key, value in filters.items() if key != "_api_sector"
     }
 
     results = run_screener(filters=engine_filters)
@@ -144,58 +143,55 @@ def get_screener(
     # Apply sector filter using the same dashboard result DataFrame.
     if sector is not None:
         results = results[
-            results["broad_sector"]
-            .astype(str)
-            .str.lower()
-            == sector.strip().lower()
+            results["broad_sector"].astype(str).str.lower() == sector.strip().lower()
         ]
 
     companies = []
 
     for _, row in results.iterrows():
-        companies.append({
-            "ticker": row.get("company_id"),
-            "company_name": (
-                None if pd.isna(row.get("name"))
-                else row.get("name")
-            ),
-            "sector": (
-                None if pd.isna(row.get("broad_sector"))
-                else row.get("broad_sector")
-            ),
-            "year": (
-                None if pd.isna(row.get("year"))
-                else row.get("year")
-            ),
-            "roe": (
-                None if pd.isna(row.get("return_on_equity_pct"))
-                else row.get("return_on_equity_pct")
-            ),
-            "debt_to_equity": (
-                None if pd.isna(row.get("debt_to_equity"))
-                else row.get("debt_to_equity")
-            ),
-            "free_cash_flow_cr": (
-                None if pd.isna(row.get("free_cash_flow_cr"))
-                else row.get("free_cash_flow_cr")
-            ),
-            "revenue_cagr_5yr": (
-                None if pd.isna(row.get("revenue_cagr_5yr"))
-                else row.get("revenue_cagr_5yr")
-            ),
-            "pat_cagr_5yr": (
-                None if pd.isna(row.get("pat_cagr_5yr"))
-                else row.get("pat_cagr_5yr")
-            ),
-            "pe": (
-                None if pd.isna(row.get("pe_ratio"))
-                else row.get("pe_ratio")
-            ),
-            "composite_quality_score": (
-                None if pd.isna(row.get("composite_quality_score"))
-                else row.get("composite_quality_score")
-            ),
-        })
+        companies.append(
+            {
+                "ticker": row.get("company_id"),
+                "company_name": (None if pd.isna(row.get("name")) else row.get("name")),
+                "sector": (
+                    None
+                    if pd.isna(row.get("broad_sector"))
+                    else row.get("broad_sector")
+                ),
+                "year": (None if pd.isna(row.get("year")) else row.get("year")),
+                "roe": (
+                    None
+                    if pd.isna(row.get("return_on_equity_pct"))
+                    else row.get("return_on_equity_pct")
+                ),
+                "debt_to_equity": (
+                    None
+                    if pd.isna(row.get("debt_to_equity"))
+                    else row.get("debt_to_equity")
+                ),
+                "free_cash_flow_cr": (
+                    None
+                    if pd.isna(row.get("free_cash_flow_cr"))
+                    else row.get("free_cash_flow_cr")
+                ),
+                "revenue_cagr_5yr": (
+                    None
+                    if pd.isna(row.get("revenue_cagr_5yr"))
+                    else row.get("revenue_cagr_5yr")
+                ),
+                "pat_cagr_5yr": (
+                    None
+                    if pd.isna(row.get("pat_cagr_5yr"))
+                    else row.get("pat_cagr_5yr")
+                ),
+                "pe": (None if pd.isna(row.get("pe_ratio")) else row.get("pe_ratio")),
+                "composite_quality_score": (
+                    None
+                    if pd.isna(row.get("composite_quality_score"))
+                    else row.get("composite_quality_score")
+                ),
+            }
+        )
 
     return {
         "count": len(companies),
@@ -209,4 +205,4 @@ def get_screener(
             "max_pe": max_pe,
         },
         "companies": companies,
-    }   
+    }

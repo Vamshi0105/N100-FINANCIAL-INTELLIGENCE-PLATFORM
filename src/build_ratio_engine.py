@@ -31,22 +31,18 @@ from analytics.cash_flow import (
     capital_allocation_pattern,
 )
 
-
 DB_PATH = "data/nifty100.db"
 
 OUTPUT_DIR = "output"
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-LOG_FILE = os.path.join(
-    OUTPUT_DIR,
-    "ratio_edge_cases.log"
-)
+LOG_FILE = os.path.join(OUTPUT_DIR, "ratio_edge_cases.log")
 
 logging.basicConfig(
     filename=LOG_FILE,
     level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(message)s"
+    format="%(asctime)s | %(levelname)s | %(message)s",
 )
 
 
@@ -106,18 +102,11 @@ def get_columns(cursor, table):
     """
 
     try:
-        cursor.execute(
-            f"PRAGMA table_info({table})"
-        )
+        cursor.execute(f"PRAGMA table_info({table})")
 
-        return [
-            row[1]
-            for row in cursor.fetchall()
-        ]
+        return [row[1] for row in cursor.fetchall()]
     except sqlite3.Error as e:
-        logging.error(
-            f"Error getting columns for table '{table}': {e}"
-        )
+        logging.error(f"Error getting columns for table '{table}': {e}")
         return []
 
 
@@ -126,10 +115,7 @@ def find_column(columns, candidates):
     Find the first matching column from candidates.
     """
 
-    normalized = {
-        column.lower(): column
-        for column in columns
-    }
+    normalized = {column.lower(): column for column in columns}
 
     for candidate in candidates:
 
@@ -145,20 +131,13 @@ def load_table(cursor, table):
     """
 
     try:
-        columns = get_columns(
-            cursor,
-            table
-        )
+        columns = get_columns(cursor, table)
 
         if not columns:
-            logging.warning(
-                f"No columns found for table '{table}'"
-            )
+            logging.warning(f"No columns found for table '{table}'")
             return []
 
-        cursor.execute(
-            f"SELECT * FROM {table}"
-        )
+        cursor.execute(f"SELECT * FROM {table}")
 
         rows = cursor.fetchall()
 
@@ -166,15 +145,11 @@ def load_table(cursor, table):
 
         for row in rows:
 
-            result.append(
-                dict(zip(columns, row))
-            )
+            result.append(dict(zip(columns, row)))
 
         return result
     except sqlite3.Error as e:
-        logging.error(
-            f"Error loading table '{table}': {e}"
-        )
+        logging.error(f"Error loading table '{table}': {e}")
         return []
 
 
@@ -194,13 +169,9 @@ def get_value(row, aliases):
 
                 if key.lower() == alias.lower():
 
-                    return clean_number(
-                        row[key]
-                    )
+                    return clean_number(row[key])
     except Exception as e:
-        logging.debug(
-            f"Error retrieving value with aliases {aliases}: {e}"
-        )
+        logging.debug(f"Error retrieving value with aliases {aliases}: {e}")
 
     return None
 
@@ -221,20 +192,14 @@ def get_text(row, aliases):
                 if key.lower() == alias.lower():
                     return row[key]
     except Exception as e:
-        logging.debug(
-            f"Error retrieving text with aliases {aliases}: {e}"
-        )
+        logging.debug(f"Error retrieving text with aliases {aliases}: {e}")
 
     return None
 
 
 def get_company_id(row):
     try:
-        return (
-            row.get("company_id")
-            or row.get("companyId")
-            or row.get("id")
-        )
+        return row.get("company_id") or row.get("companyId") or row.get("id")
     except Exception as e:
         logging.debug(f"Error getting company_id: {e}")
         return None
@@ -330,18 +295,12 @@ def create_financial_ratios_table(cursor):
             )
         """)
     except sqlite3.Error as e:
-        logging.error(
-            f"Error creating financial_ratios table: {e}"
-        )
+        logging.error(f"Error creating financial_ratios table: {e}")
         raise
 
 
 def calculate_composite_quality(
-    roe,
-    npm,
-    debt_to_equity_value,
-    icr,
-    asset_turnover_value
+    roe, npm, debt_to_equity_value, icr, asset_turnover_value
 ):
     """
     Simple 100-point quality score.
@@ -404,9 +363,7 @@ def calculate_composite_quality(
 
         return score
     except Exception as e:
-        logging.error(
-            f"Error calculating composite quality: {e}"
-        )
+        logging.error(f"Error calculating composite quality: {e}")
         return 0
 
 
@@ -417,55 +374,31 @@ def main():
     conn = None
     try:
         if not os.path.exists(DB_PATH):
-            logging.error(
-                f"Database file not found: {DB_PATH}"
-            )
+            logging.error(f"Database file not found: {DB_PATH}")
             print(f"ERROR: Database file not found: {DB_PATH}")
             return
 
-        conn = sqlite3.connect(
-            DB_PATH
-        )
+        conn = sqlite3.connect(DB_PATH)
 
         cursor = conn.cursor()
 
         print("Loading source tables...")
 
-        pnl = load_table(
-            cursor,
-            "profitandloss"
-        )
+        pnl = load_table(cursor, "profitandloss")
 
-        balance = load_table(
-            cursor,
-            "balancesheet"
-        )
+        balance = load_table(cursor, "balancesheet")
 
-        cashflow = load_table(
-            cursor,
-            "cashflow"
-        )
+        cashflow = load_table(cursor, "cashflow")
 
-        companies = load_table(
-            cursor,
-            "companies"
-        )
+        companies = load_table(cursor, "companies")
 
-        print(
-            f"Profit/Loss rows: {len(pnl)}"
-        )
+        print(f"Profit/Loss rows: {len(pnl)}")
 
-        print(
-            f"Balance Sheet rows: {len(balance)}"
-        )
+        print(f"Balance Sheet rows: {len(balance)}")
 
-        print(
-            f"Cash Flow rows: {len(cashflow)}"
-        )
+        print(f"Cash Flow rows: {len(cashflow)}")
 
-        print(
-            f"Companies: {len(companies)}"
-        )
+        print(f"Companies: {len(companies)}")
 
         # ---------------------------------------------------------
         # Create lookup dictionaries
@@ -480,9 +413,7 @@ def main():
 
             if company_id is not None and year is not None:
 
-                balance_lookup[
-                    (company_id, year)
-                ] = row
+                balance_lookup[(company_id, year)] = row
 
         cashflow_lookup = {}
 
@@ -493,9 +424,7 @@ def main():
 
             if company_id is not None and year is not None:
 
-                cashflow_lookup[
-                    (company_id, year)
-                ] = row
+                cashflow_lookup[(company_id, year)] = row
 
         company_lookup = {}
 
@@ -505,21 +434,16 @@ def main():
 
             if company_id is not None:
 
-                company_lookup[
-                    company_id
-                ] = row
+                company_lookup[company_id] = row
 
         # ---------------------------------------------------------
         # Recreate financial_ratios
-        
-   
-           # ---------------------------------------------------------
+
+        # ---------------------------------------------------------
         # Recreate financial_ratios
         # ---------------------------------------------------------
 
-        create_financial_ratios_table(
-            cursor
-        )
+        create_financial_ratios_table(cursor)
 
         conn.commit()
 
@@ -633,31 +557,15 @@ def main():
                 history[company_id][year] = {}
 
             history[company_id][year]["revenue"] = get_value(
-                row,
-                [
-                    "sales",
-                    "revenue",
-                    "net_sales",
-                    "total_revenue"
-                ]
+                row, ["sales", "revenue", "net_sales", "total_revenue"]
             )
 
             history[company_id][year]["pat"] = get_value(
-                row,
-                [
-                    "net_profit",
-                    "net_profit_after_tax",
-                    "profit_after_tax",
-                    "pat"
-                ]
+                row, ["net_profit", "net_profit_after_tax", "profit_after_tax", "pat"]
             )
 
             history[company_id][year]["eps"] = get_value(
-                row,
-                [
-                    "eps",
-                    "earnings_per_share"
-                ]
+                row, ["eps", "earnings_per_share"]
             )
 
         # ---------------------------------------------------------
@@ -670,143 +578,62 @@ def main():
         for pnl_row in pnl:
 
             try:
-                company_id = get_company_id(
-                    pnl_row
-                )
+                company_id = get_company_id(pnl_row)
 
-                year = get_year(
-                    pnl_row
-                )
+                year = get_year(pnl_row)
 
                 current_year = normalize_year(year)
 
                 if current_year is None:
                     logging.warning(
-                        "Invalid year | company=%s | year=%s",
-                        company_id,
-                        year
+                        "Invalid year | company=%s | year=%s", company_id, year
                     )
 
                     skipped += 1
                     continue
 
-                bs_row = balance_lookup.get(
-                    (company_id, year),
-                    {}
-                )
+                bs_row = balance_lookup.get((company_id, year), {})
 
-                cf_row = cashflow_lookup.get(
-                    (company_id, year),
-                    {}
-                )
+                cf_row = cashflow_lookup.get((company_id, year), {})
 
-                company_row = company_lookup.get(
-                    company_id,
-                    {}
-                )
+                company_row = company_lookup.get(company_id, {})
 
                 sales = get_value(
-                    pnl_row,
-                    [
-                        "sales",
-                        "revenue",
-                        "net_sales",
-                        "total_revenue"
-                    ]
+                    pnl_row, ["sales", "revenue", "net_sales", "total_revenue"]
                 )
 
                 net_profit = get_value(
                     pnl_row,
-                    [
-                        "net_profit",
-                        "net_profit_after_tax",
-                        "profit_after_tax",
-                        "pat"
-                    ]
+                    ["net_profit", "net_profit_after_tax", "profit_after_tax", "pat"],
                 )
 
-                operating_profit = get_value(
-                    pnl_row,
-                    [
-                        "operating_profit",
-                        "op_profit"
-                    ]
-                )
+                operating_profit = get_value(pnl_row, ["operating_profit", "op_profit"])
 
-                other_income = get_value(
-                    pnl_row,
-                    [
-                        "other_income"
-                    ]
-                )
+                other_income = get_value(pnl_row, ["other_income"])
 
                 interest = get_value(
-                    pnl_row,
-                    [
-                        "interest",
-                        "interest_expense",
-                        "finance_cost"
-                    ]
+                    pnl_row, ["interest", "interest_expense", "finance_cost"]
                 )
 
-                ebit = get_value(
-                    pnl_row,
-                    [
-                        "ebit",
-                        "earnings_before_interest_and_tax"
-                    ]
-                )
+                ebit = get_value(pnl_row, ["ebit", "earnings_before_interest_and_tax"])
 
                 if ebit is None:
 
-                    ebit = (
-                        operating_profit or 0
-                    ) + (
-                        other_income or 0
-                    )
+                    ebit = (operating_profit or 0) + (other_income or 0)
 
                 equity_capital = get_value(
-                    bs_row,
-                    [
-                        "equity_capital",
-                        "share_capital",
-                        "equity"
-                    ]
+                    bs_row, ["equity_capital", "share_capital", "equity"]
                 )
 
-                reserves = get_value(
-                    bs_row,
-                    [
-                        "reserves",
-                        "reserves_and_surplus"
-                    ]
-                )
+                reserves = get_value(bs_row, ["reserves", "reserves_and_surplus"])
 
                 borrowings = get_value(
-                    bs_row,
-                    [
-                        "borrowings",
-                        "total_borrowings",
-                        "debt",
-                        "total_debt"
-                    ]
+                    bs_row, ["borrowings", "total_borrowings", "debt", "total_debt"]
                 )
 
-                investments = get_value(
-                    bs_row,
-                    [
-                        "investments",
-                        "total_investments"
-                    ]
-                )
+                investments = get_value(bs_row, ["investments", "total_investments"])
 
-                total_assets = get_value(
-                    bs_row,
-                    [
-                        "total_assets",
-                        "assets"
-                    ]
-                )
+                total_assets = get_value(bs_row, ["total_assets", "assets"])
 
                 cfo = get_value(
                     cf_row,
@@ -814,8 +641,8 @@ def main():
                         "operating_activity",
                         "cash_from_operations",
                         "cash_flow_from_operating_activities",
-                        "cfo"
-                    ]
+                        "cfo",
+                    ],
                 )
 
                 cfi = get_value(
@@ -824,8 +651,8 @@ def main():
                         "investing_activity",
                         "cash_from_investing",
                         "cash_flow_from_investing_activities",
-                        "cfi"
-                    ]
+                        "cfi",
+                    ],
                 )
 
                 cff = get_value(
@@ -834,119 +661,53 @@ def main():
                         "financing_activity",
                         "cash_from_financing",
                         "cash_flow_from_financing_activities",
-                        "cff"
-                    ]
+                        "cff",
+                    ],
                 )
 
-                broad_sector = get_text(
-                    company_row,
-                    [
-                        "broad_sector",
-                        "sector"
-                    ]
-                )
+                broad_sector = get_text(company_row, ["broad_sector", "sector"])
 
-                npm = net_profit_margin(
-                    net_profit,
-                    sales
-                )
+                npm = net_profit_margin(net_profit, sales)
 
-                opm = operating_profit_margin(
-                    operating_profit,
-                    sales
-                )
+                opm = operating_profit_margin(operating_profit, sales)
 
-                roe = return_on_equity(
-                    net_profit,
-                    equity_capital,
-                    reserves
-                )
+                roe = return_on_equity(net_profit, equity_capital, reserves)
 
                 roce = return_on_capital_employed(
-                    ebit,
-                    equity_capital,
-                    reserves,
-                    borrowings
+                    ebit, equity_capital, reserves, borrowings
                 )
 
-                roa = return_on_assets(
-                    net_profit,
-                    total_assets
+                roa = return_on_assets(net_profit, total_assets)
+
+                de = debt_to_equity(borrowings, equity_capital, reserves)
+
+                leverage_flag = high_leverage_flag(de, broad_sector)
+
+                icr = interest_coverage_ratio(operating_profit, other_income, interest)
+
+                icr_label = interest_coverage_label(icr)
+
+                icr_warning = interest_coverage_warning(icr)
+
+                net_debt_value = net_debt(borrowings, investments)
+
+                turnover = asset_turnover(sales, total_assets)
+
+                fcf = free_cash_flow(cfo, cfi)
+
+                capex_pct = capex_intensity(cfi, sales)
+
+                capex_label = capex_intensity_label(capex_pct)
+
+                cfo_pat = cfo_pat_ratio(cfo, net_profit)
+
+                cfo_quality_ratio, cfo_quality_label = cfo_quality_score(
+                    cfo, net_profit
                 )
 
-                de = debt_to_equity(
-                    borrowings,
-                    equity_capital,
-                    reserves
-                )
+                fcf_conversion = fcf_conversion_rate(fcf, operating_profit)
 
-                leverage_flag = high_leverage_flag(
-                    de,
-                    broad_sector
-                )
-
-                icr = interest_coverage_ratio(
-                    operating_profit,
-                    other_income,
-                    interest
-                )
-
-                icr_label = interest_coverage_label(
-                    icr
-                )
-
-                icr_warning = interest_coverage_warning(
-                    icr
-                )
-
-                net_debt_value = net_debt(
-                    borrowings,
-                    investments
-                )
-
-                turnover = asset_turnover(
-                    sales,
-                    total_assets
-                )
-
-                fcf = free_cash_flow(
-                    cfo,
-                    cfi
-                )
-
-                capex_pct = capex_intensity(
-                    cfi,
-                    sales
-                )
-
-                capex_label = capex_intensity_label(
-                    capex_pct
-                )
-
-                cfo_pat = cfo_pat_ratio(
-                    cfo,
-                    net_profit
-                )
-
-                cfo_quality_ratio, cfo_quality_label = (
-                    cfo_quality_score(
-                        cfo,
-                        net_profit
-                    )
-                )
-
-                fcf_conversion = fcf_conversion_rate(
-                    fcf,
-                    operating_profit
-                )
-
-                eps = get_value(
-                    pnl_row,
-                    [
-                        "eps",
-                        "earnings_per_share"
-                    ]
-                )
+                eps = get_value(pnl_row, ["eps", "earnings_per_share"])
 
                 shares = get_value(
                     bs_row,
@@ -954,48 +715,29 @@ def main():
                         "number_of_shares",
                         "shares_outstanding",
                         "equity_shares",
-                        "no_of_shares"
-                    ]
+                        "no_of_shares",
+                    ],
                 )
 
-                equity_total = (
-                    (equity_capital or 0) +
-                    (reserves or 0)
-                )
+                equity_total = (equity_capital or 0) + (reserves or 0)
 
                 book_value_per_share = None
 
                 if shares and shares != 0:
 
-                    book_value_per_share = (
-                        equity_total / shares
-                    )
+                    book_value_per_share = equity_total / shares
 
                 dividends = get_value(
-                    pnl_row,
-                    [
-                        "dividend",
-                        "dividends",
-                        "dividend_paid"
-                    ]
+                    pnl_row, ["dividend", "dividends", "dividend_paid"]
                 )
 
                 dividend_payout = None
 
-                if (
-                    dividends is not None
-                    and net_profit is not None
-                    and net_profit != 0
-                ):
+                if dividends is not None and net_profit is not None and net_profit != 0:
 
-                    dividend_payout = (
-                        dividends / net_profit
-                    ) * 100
+                    dividend_payout = (dividends / net_profit) * 100
 
-                company_history = history.get(
-                    company_id,
-                    {}
-                )
+                company_history = history.get(company_id, {})
 
                 revenue_history = {
                     normalize_year(y): values["revenue"]
@@ -1007,23 +749,18 @@ def main():
                 pat_history = {
                     normalize_year(y): values["pat"]
                     for y, values in company_history.items()
-                    if normalize_year(y) is not None
-                    and values.get("pat") is not None
+                    if normalize_year(y) is not None and values.get("pat") is not None
                 }
 
                 eps_history = {
                     normalize_year(y): values["eps"]
                     for y, values in company_history.items()
-                    if normalize_year(y) is not None
-                    and values.get("eps") is not None
+                    if normalize_year(y) is not None and values.get("eps") is not None
                 }
 
                 def cagr_window(history_data, window):
 
-                    years_available = [
-                        y for y in history_data
-                        if y <= current_year
-                    ]
+                    years_available = [y for y in history_data if y <= current_year]
 
                     years_available.sort()
 
@@ -1037,75 +774,35 @@ def main():
                     return calculate_cagr(
                         history_data[start_year],
                         history_data[end_year],
-                        end_year - start_year
+                        end_year - start_year,
                     )
 
-                rev3, rev3_flag = cagr_window(
-                    revenue_history,
-                    3
-                )
+                rev3, rev3_flag = cagr_window(revenue_history, 3)
 
-                rev5, rev5_flag = cagr_window(
-                    revenue_history,
-                    5
-                )
+                rev5, rev5_flag = cagr_window(revenue_history, 5)
 
-                rev10, rev10_flag = cagr_window(
-                    revenue_history,
-                    10
-                )
+                rev10, rev10_flag = cagr_window(revenue_history, 10)
 
-                pat3, pat3_flag = cagr_window(
-                    pat_history,
-                    3
-                )
+                pat3, pat3_flag = cagr_window(pat_history, 3)
 
-                pat5, pat5_flag = cagr_window(
-                    pat_history,
-                    5
-                )
+                pat5, pat5_flag = cagr_window(pat_history, 5)
 
-                pat10, pat10_flag = cagr_window(
-                    pat_history,
-                    10
-                )
+                pat10, pat10_flag = cagr_window(pat_history, 10)
 
-                eps3, eps3_flag = cagr_window(
-                    eps_history,
-                    3
-                )
+                eps3, eps3_flag = cagr_window(eps_history, 3)
 
-                eps5, eps5_flag = cagr_window(
-                    eps_history,
-                    5
-                )
+                eps5, eps5_flag = cagr_window(eps_history, 5)
 
-                eps10, eps10_flag = cagr_window(
-                    eps_history,
-                    10
-                )
+                eps10, eps10_flag = cagr_window(eps_history, 10)
 
-                quality_score = calculate_composite_quality(
-                    roe,
-                    npm,
-                    de,
-                    icr,
-                    turnover
-                )
+                quality_score = calculate_composite_quality(roe, npm, de, icr, turnover)
 
                 source_opm = get_value(
                     pnl_row,
-                    [
-                        "opm_percentage",
-                        "opm_percent",
-                        "operating_profit_margin"
-                    ]
+                    ["opm_percentage", "opm_percent", "operating_profit_margin"],
                 )
 
-                if cross_check_opm(
-                    opm,
-                    source_opm
-                ):
+                if cross_check_opm(opm, source_opm):
 
                     logging.warning(
                         "OPM mismatch | company=%s | year=%s | "
@@ -1113,80 +810,57 @@ def main():
                         company_id,
                         year,
                         opm,
-                        source_opm
+                        source_opm,
                     )
 
                 values = (
-
                     company_id,
                     current_year,
-
                     npm,
                     opm,
                     roe,
                     roce,
                     roa,
-
                     de,
                     int(leverage_flag),
-
                     icr,
                     icr_label,
                     int(icr_warning),
-
                     net_debt_value,
                     turnover,
-
                     fcf,
                     cfi,
                     capex_pct,
-
                     cfo_quality_ratio,
                     cfo_quality_label,
-
                     fcf_conversion,
-
                     eps,
                     book_value_per_share,
                     dividend_payout,
-
                     borrowings,
                     cfo,
-
                     rev3,
                     rev3_flag,
-
                     rev5,
                     rev5_flag,
-
                     rev10,
                     rev10_flag,
-
                     pat3,
                     pat3_flag,
-
                     pat5,
                     pat5_flag,
-
                     pat10,
                     pat10_flag,
-
                     eps3,
                     eps3_flag,
-
                     eps5,
                     eps5_flag,
-
                     eps10,
                     eps10_flag,
-
-                    quality_score
+                    quality_score,
                 )
 
-                cursor.execute(
-                    insert_sql,
-                    values
-                )
+                cursor.execute(insert_sql, values)
 
                 processed += 1
 
@@ -1199,36 +873,24 @@ def main():
 
         conn.commit()
 
-        print(
-            f"\nProcessed rows: {processed}"
-        )
+        print(f"\nProcessed rows: {processed}")
 
-        print(
-            f"Skipped rows: {skipped}"
-        )
+        print(f"Skipped rows: {skipped}")
 
-        cursor.execute(
-            "SELECT COUNT(*) FROM financial_ratios"
-        )
+        cursor.execute("SELECT COUNT(*) FROM financial_ratios")
 
         count = cursor.fetchone()[0]
 
-        print(
-            f"financial_ratios rows: {count}"
-        )
+        print(f"financial_ratios rows: {count}")
 
         print("\nRatio Engine completed successfully.")
 
     except sqlite3.Error as e:
-        logging.error(
-            f"Database error: {e}\n{traceback.format_exc()}"
-        )
+        logging.error(f"Database error: {e}\n{traceback.format_exc()}")
         print(f"ERROR: Database error - {e}")
 
     except Exception as e:
-        logging.error(
-            f"Unexpected error: {e}\n{traceback.format_exc()}"
-        )
+        logging.error(f"Unexpected error: {e}\n{traceback.format_exc()}")
         print(f"ERROR: {e}")
 
     finally:
@@ -1236,9 +898,7 @@ def main():
             try:
                 conn.close()
             except sqlite3.Error as e:
-                logging.error(
-                    f"Error closing database connection: {e}"
-                )
+                logging.error(f"Error closing database connection: {e}")
 
 
 if __name__ == "__main__":

@@ -5,7 +5,6 @@ from openpyxl import load_workbook
 from openpyxl.styles import PatternFill
 from openpyxl.utils import get_column_letter
 
-
 OUTPUT_PATH = Path("output/screener_output.xlsx")
 
 
@@ -18,30 +17,22 @@ KPI_COLUMNS = [
     "year",
     "broad_sector",
     "composite_quality_score",
-
     "return_on_equity_pct",
     "return_on_capital_employed_pct",
     "net_profit_margin_pct",
-
     "free_cash_flow_cr",
     "fcf_cagr_5yr",
     "cfo_quality_ratio",
-
     "revenue_cagr_3yr",
     "revenue_cagr_5yr",
-
     "pat_cagr_3yr",
     "pat_cagr_5yr",
-
     "debt_to_equity",
     "interest_coverage",
-
     "sales",
     "net_profit",
-
     "pe_ratio",
     "pb_ratio",
-
     "dividend_yield_pct",
 ]
 
@@ -51,36 +42,16 @@ KPI_COLUMNS = [
 # ---------------------------------------------------------
 
 FILTER_TO_COLUMN = {
-
-    "return_on_equity_pct_min":
-        ("return_on_equity_pct", "min"),
-
-    "debt_to_equity_max":
-        ("debt_to_equity", "max"),
-
-    "free_cash_flow_cr_min":
-        ("free_cash_flow_cr", "min"),
-
-    "revenue_cagr_3yr_min":
-        ("revenue_cagr_3yr", "min"),
-
-    "revenue_cagr_5yr_min":
-        ("revenue_cagr_5yr", "min"),
-
-    "pat_cagr_5yr_min":
-        ("pat_cagr_5yr", "min"),
-
-    "sales_min":
-        ("sales", "min"),
-
-    "pe_ratio_max":
-        ("pe_ratio", "max"),
-
-    "pb_ratio_max":
-        ("pb_ratio", "max"),
-
-    "dividend_yield_pct_min":
-        ("dividend_yield_pct", "min"),
+    "return_on_equity_pct_min": ("return_on_equity_pct", "min"),
+    "debt_to_equity_max": ("debt_to_equity", "max"),
+    "free_cash_flow_cr_min": ("free_cash_flow_cr", "min"),
+    "revenue_cagr_3yr_min": ("revenue_cagr_3yr", "min"),
+    "revenue_cagr_5yr_min": ("revenue_cagr_5yr", "min"),
+    "pat_cagr_5yr_min": ("pat_cagr_5yr", "min"),
+    "sales_min": ("sales", "min"),
+    "pe_ratio_max": ("pe_ratio", "max"),
+    "pb_ratio_max": ("pb_ratio", "max"),
+    "dividend_yield_pct_min": ("dividend_yield_pct", "min"),
 }
 
 
@@ -98,6 +69,7 @@ RED_FILL = PatternFill(
 # ---------------------------------------------------------
 # EXPORT
 # ---------------------------------------------------------
+
 
 def export_screener_results(
     preset_results: dict,
@@ -122,33 +94,20 @@ def export_screener_results(
         engine="openpyxl",
     ) as writer:
 
-        for preset_name, dataframe in (
-            preset_results.items()
-        ):
+        for preset_name, dataframe in preset_results.items():
 
             available_columns = [
-                column
-                for column in KPI_COLUMNS
-                if column in dataframe.columns
+                column for column in KPI_COLUMNS if column in dataframe.columns
             ]
 
-            export_dataframe = dataframe[
-                available_columns
-            ].copy()
+            export_dataframe = dataframe[available_columns].copy()
 
-            export_dataframe = (
-                export_dataframe
-                .sort_values(
-                    "composite_quality_score",
-                    ascending=False,
-                )
+            export_dataframe = export_dataframe.sort_values(
+                "composite_quality_score",
+                ascending=False,
             )
 
-            sheet_name = (
-                preset_name
-                .replace("_", " ")
-                .title()
-            )
+            sheet_name = preset_name.replace("_", " ").title()
 
             export_dataframe.to_excel(
                 writer,
@@ -168,6 +127,7 @@ def export_screener_results(
 # EXCEL FORMATTING
 # ---------------------------------------------------------
 
+
 def apply_excel_formatting(
     output_path,
     preset_filters,
@@ -176,26 +136,16 @@ def apply_excel_formatting(
     Apply threshold-based green/red formatting.
     """
 
-    workbook = load_workbook(
-        output_path
-    )
+    workbook = load_workbook(output_path)
 
-    for preset_name, filters in (
-        preset_filters.items()
-    ):
+    for preset_name, filters in preset_filters.items():
 
-        sheet_name = (
-            preset_name
-            .replace("_", " ")
-            .title()
-        )
+        sheet_name = preset_name.replace("_", " ").title()
 
         if sheet_name not in workbook.sheetnames:
             continue
 
-        worksheet = workbook[
-            sheet_name
-        ]
+        worksheet = workbook[sheet_name]
 
         # Map header name to Excel column number
         headers = {}
@@ -205,29 +155,19 @@ def apply_excel_formatting(
             start=1,
         ):
 
-            headers[cell.value] = (
-                column_number
-            )
+            headers[cell.value] = column_number
 
-        for filter_name, threshold in (
-            filters.items()
-        ):
+        for filter_name, threshold in filters.items():
 
             if filter_name not in FILTER_TO_COLUMN:
                 continue
 
-            column_name, rule = (
-                FILTER_TO_COLUMN[
-                    filter_name
-                ]
-            )
+            column_name, rule = FILTER_TO_COLUMN[filter_name]
 
             if column_name not in headers:
                 continue
 
-            column_number = headers[
-                column_name
-            ]
+            column_number = headers[column_name]
 
             for row_number in range(
                 2,
@@ -258,36 +198,22 @@ def apply_excel_formatting(
                 passes = False
 
                 if rule == "min":
-                    passes = (
-                        value >= threshold
-                    )
+                    passes = value >= threshold
 
                 elif rule == "max":
-                    passes = (
-                        value <= threshold
-                    )
+                    passes = value <= threshold
 
-                cell.fill = (
-                    GREEN_FILL
-                    if passes
-                    else RED_FILL
-                )
+                cell.fill = GREEN_FILL if passes else RED_FILL
 
         # Freeze header
         worksheet.freeze_panes = "A2"
 
         # Auto-size columns
-        for column_cells in (
-            worksheet.columns
-        ):
+        for column_cells in worksheet.columns:
 
             max_length = 0
 
-            column_letter = (
-                get_column_letter(
-                    column_cells[0].column
-                )
-            )
+            column_letter = get_column_letter(column_cells[0].column)
 
             for cell in column_cells:
 
@@ -296,21 +222,12 @@ def apply_excel_formatting(
 
                 max_length = max(
                     max_length,
-                    len(
-                        str(
-                            cell.value
-                        )
-                    ),
+                    len(str(cell.value)),
                 )
 
-            worksheet.column_dimensions[
-                column_letter
-            ].width = min(
+            worksheet.column_dimensions[column_letter].width = min(
                 max_length + 2,
                 30,
             )
 
-    workbook.save(
-        output_path
-    )
-    
+    workbook.save(output_path)

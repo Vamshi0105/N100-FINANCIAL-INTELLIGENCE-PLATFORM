@@ -28,10 +28,7 @@ def render():
 
     st.title("🏠 Nifty 100 Analytics")
 
-    st.caption(
-        "Financial analytics dashboard for Nifty 100 companies"
-    )
-
+    st.caption("Financial analytics dashboard for Nifty 100 companies")
 
     # ----------------------------------------------
     # YEAR SELECTOR
@@ -59,17 +56,13 @@ def render():
 
     if not dashboard_years:
 
-        st.warning(
-            "No financial years between 2019 and 2024 were found."
-        )
+        st.warning("No financial years between 2019 and 2024 were found.")
 
         return
 
     if "dashboard_year" not in st.session_state:
 
-        st.session_state.dashboard_year = (
-            dashboard_years[0]
-        )
+        st.session_state.dashboard_year = dashboard_years[0]
 
     st.sidebar.divider()
 
@@ -81,21 +74,17 @@ def render():
         key="dashboard_year",
     )
 
-
     # ----------------------------------------------
     # LOAD DATA
     # ----------------------------------------------
 
     metrics = get_home_metrics(selected_year)
 
-
     # ----------------------------------------------
     # KPI TILES
     # ----------------------------------------------
 
-    st.subheader(
-        f"Dashboard Summary — {selected_year}"
-    )
+    st.subheader(f"Dashboard Summary — {selected_year}")
 
     row_1 = st.columns(3)
 
@@ -121,7 +110,6 @@ def render():
         ),
     )
 
-
     row_2 = st.columns(3)
 
     row_2[0].metric(
@@ -142,33 +130,23 @@ def render():
         metrics["debt_free_companies"],
     )
 
-
     st.divider()
-
 
     # ----------------------------------------------
     # SECTOR DONUT CHART
     # ----------------------------------------------
 
-    left_column, right_column = st.columns(
-        [1, 1]
-    )
+    left_column, right_column = st.columns([1, 1])
 
     with left_column:
 
-        st.subheader(
-            "Sector Breakdown"
-        )
+        st.subheader("Sector Breakdown")
 
-        sector_data = get_sector_breakdown(
-            selected_year
-        )
+        sector_data = get_sector_breakdown(selected_year)
 
         if sector_data.empty:
 
-            st.info(
-                "No sector data available."
-            )
+            st.info("No sector data available.")
 
         else:
 
@@ -194,63 +172,39 @@ def render():
                 use_container_width=True,
             )
 
-
     # ----------------------------------------------
     # TOP 5 TABLE
     # ----------------------------------------------
 
     with right_column:
 
-        st.subheader(
-            "Top 5 Companies by Quality Score"
-        )
+        st.subheader("Top 5 Companies by Quality Score")
 
-        top_companies = get_top_companies(
-            selected_year
-        )
+        top_companies = get_top_companies(selected_year)
 
         if top_companies.empty:
 
-            st.info(
-                "No quality score data available."
-            )
+            st.info("No quality score data available.")
 
         else:
 
-            display_dataframe = (
-                top_companies.copy()
-            )
+            display_dataframe = top_companies.copy()
 
-            if (
-                "composite_quality_score"
-                in display_dataframe.columns
-            ):
+            if "composite_quality_score" in display_dataframe.columns:
 
-                display_dataframe[
-                    "composite_quality_score"
-                ] = display_dataframe[
+                display_dataframe["composite_quality_score"] = display_dataframe[
                     "composite_quality_score"
                 ].round(2)
 
-            if (
-                "return_on_equity_pct"
-                in display_dataframe.columns
-            ):
+            if "return_on_equity_pct" in display_dataframe.columns:
 
-                display_dataframe[
-                    "return_on_equity_pct"
-                ] = display_dataframe[
+                display_dataframe["return_on_equity_pct"] = display_dataframe[
                     "return_on_equity_pct"
                 ].round(2)
 
-            if (
-                "debt_to_equity"
-                in display_dataframe.columns
-            ):
+            if "debt_to_equity" in display_dataframe.columns:
 
-                display_dataframe[
-                    "debt_to_equity"
-                ] = display_dataframe[
+                display_dataframe["debt_to_equity"] = display_dataframe[
                     "debt_to_equity"
                 ].round(2)
 
@@ -260,13 +214,10 @@ def render():
                 hide_index=True,
             )
 
-
     # ----------------------------------------------
     # FOOTER
     # ----------------------------------------------
 
     st.divider()
 
-    st.caption(
-        "Nifty 100 Analytics • Data sourced from the project SQLite database"
-    )
+    st.caption("Nifty 100 Analytics • Data sourced from the project SQLite database")

@@ -23,43 +23,25 @@ def test_operating_profit_margin():
 def test_opm_cross_check_mismatch():
     computed = operating_profit_margin(30, 100)
 
-    assert cross_check_opm(
-        computed,
-        25,
-        tolerance=1
-    ) is True
+    assert cross_check_opm(computed, 25, tolerance=1) is True
 
 
 def test_roe_normal():
-    assert return_on_equity(
-        20,
-        50,
-        50
-    ) == 20
+    assert return_on_equity(20, 50, 50) == 20
 
 
 def test_roe_negative_equity():
-    assert return_on_equity(
-        20,
-        50,
-        -60
-    ) is None
+    assert return_on_equity(20, 50, -60) is None
 
 
 def test_roce_normal():
-    assert return_on_capital_employed(
-        30,
-        50,
-        50,
-        100
-    ) == 15
+    assert return_on_capital_employed(30, 50, 50, 100) == 15
 
 
 def test_roa_zero_assets():
-    assert return_on_assets(
-        20,
-        0
-    ) is None
+    assert return_on_assets(20, 0) is None
+
+
 def test_operating_profit_margin_zero_sales():
     assert operating_profit_margin(50, 0) is None
 

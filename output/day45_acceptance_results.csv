@@ -1,0 +1,24 @@
+gate,criterion,result,evidence
+AC-01,companies row count = 92,PASS,companies count = 92
+AC-02,">=90% of companies have >=10 years P&L, BS and CF",PASS,84/92 companies = 91.30% meet all three 10-year requirements
+AC-03,foreign_key_check returns 0 rows,PASS,foreign_key_check rows = 0
+AC-04,"financial_ratios >= 1,100 rows",PASS,rows = 1155; columns = 44
+AC-05,Revenue CAGR spot-check within 0.1%,PASS,"AXISBANK: manual=14.744, db=14.744, err=0.000pp; BANKBARODA: manual=17.477, db=17.477, err=0.000pp; CANBK: manual=18.176, db=18.176, err=0.000pp"
+AC-06,ROE matches companies.roe_percentage within 5% for 5 companies,FAIL,"checked=5, max relative difference=16.141871050835153"
+AC-07,Quality screener returns 10-50 companies,PASS,"ROE>15, D/E<1, FCF>0 result count = 35"
+AC-08,Company Profile loads in <3 seconds,MANUAL,Run localhost Streamlit test with a ticker and stopwatch; record result.
+AC-09,Screener CSV is valid and well-formed,FAIL,FileNotFoundError('No screener CSV export found in output/ or project root')
+AC-10,No text overflow in 5 sampled tear sheets,MANUAL,Open 5 random PDFs from reports/tearsheets and visually verify no clipping/overlap.
+AC-11,GET /api/v1/health returns HTTP 200,FAIL,"API not reachable: HTTPConnectionPool(host='127.0.0.1', port=8000): Max retries exceeded with url: /api/v1/health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000024EF8DC1550>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+AC-12,TCS ratios has 10+ years,FAIL,"ConnectionError(MaxRetryError(""HTTPConnectionPool(host='127.0.0.1', port=8000): Max retries exceeded with url: /api/v1/companies/TCS/ratios (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000024EF8DF16D0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))""))"
+AC-13,API screener matches screener_output.xlsx,FAIL,"ConnectionError(MaxRetryError(""HTTPConnectionPool(host='127.0.0.1', port=8000): Max retries exceeded with url: /api/v1/screener?min_roe=15&max_de=1 (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000024EF8DF1F90>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))""))"
+AC-14,peer_percentiles has all 11 peer groups,PASS,distinct peer groups = 11
+AC-15,All 92 companies have cluster_id 0-4,PASS,"rows=92, unique_companies=92, null_clusters=0, clusters=[0, 1, 2, 3, 4]"
+AC-16,All 92 companies have >=1 pro and >=1 con,FAIL,"ValueError(""Required columns missing: ['company_id', 'type', 'rule_id', 'text', 'confidence_pct']"")"
+AC-17,92 tear sheets exist and each >=50 KB (project document criterion),FAIL,PDFs=91; <30KB=0; <50KB=0
+AC-18,"pytest >=60 tests, 0 failures/errors",FAIL,"returncode=0; passed=0; tail=........................................................................ [ 42%]
+........................................................................ [ 84%]
+...........................                                              [100%]
+171 passed in 21.83s"
+AC-19,validation_failures.csv has required columns,PASS,"columns=['rule_id', 'severity', 'table', 'company_id', 'year', 'field', 'issue', 'raw_value']; rows=1223"
+AC-20,analyst_guide.pdf >=10 pages,FAIL,"ModuleNotFoundError(""No module named 'pypdf'"")"

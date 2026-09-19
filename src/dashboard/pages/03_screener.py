@@ -4,7 +4,6 @@ import streamlit as st
 from src.screener.engine import run_screener
 from src.screener.presets import get_preset
 
-
 # --------------------------------------------------
 # Page configuration
 # --------------------------------------------------
@@ -68,23 +67,17 @@ def apply_preset(preset_name: str):
     preset = get_preset(preset_name)
 
     slider_filters = {
-        key: value
-        for key, value in preset.items()
-        if key in SLIDER_DEFAULTS
+        key: value for key, value in preset.items() if key in SLIDER_DEFAULTS
     }
 
     extra_filters = {
-        key: value
-        for key, value in preset.items()
-        if key not in SLIDER_DEFAULTS
+        key: value for key, value in preset.items() if key not in SLIDER_DEFAULTS
     }
 
     # Map existing 5-year revenue CAGR presets to the
     # Day 24 Revenue CAGR slider.
     if "revenue_cagr_5yr_min" in extra_filters:
-        st.session_state.revenue_cagr_3yr_min = (
-            extra_filters["revenue_cagr_5yr_min"]
-        )
+        st.session_state.revenue_cagr_3yr_min = extra_filters["revenue_cagr_5yr_min"]
         del extra_filters["revenue_cagr_5yr_min"]
 
     # Reset first so each preset starts clean.
@@ -114,76 +107,45 @@ def build_filters():
         st.session_state.return_on_equity_pct_min
         != SLIDER_DEFAULTS["return_on_equity_pct_min"]
     ):
-        filters["return_on_equity_pct_min"] = (
-            st.session_state.return_on_equity_pct_min
-        )
+        filters["return_on_equity_pct_min"] = st.session_state.return_on_equity_pct_min
 
     # Debt-to-Equity
-    if (
-        st.session_state.debt_to_equity_max
-        != SLIDER_DEFAULTS["debt_to_equity_max"]
-    ):
-        filters["debt_to_equity_max"] = (
-            st.session_state.debt_to_equity_max
-        )
+    if st.session_state.debt_to_equity_max != SLIDER_DEFAULTS["debt_to_equity_max"]:
+        filters["debt_to_equity_max"] = st.session_state.debt_to_equity_max
 
     # Free Cash Flow
     if (
         st.session_state.free_cash_flow_cr_min
         != SLIDER_DEFAULTS["free_cash_flow_cr_min"]
     ):
-        filters["free_cash_flow_cr_min"] = (
-            st.session_state.free_cash_flow_cr_min
-        )
+        filters["free_cash_flow_cr_min"] = st.session_state.free_cash_flow_cr_min
 
     # Revenue CAGR
-    if (
-        st.session_state.revenue_cagr_3yr_min
-        != SLIDER_DEFAULTS["revenue_cagr_3yr_min"]
-    ):
-        filters["revenue_cagr_3yr_min"] = (
-            st.session_state.revenue_cagr_3yr_min
-        )
+    if st.session_state.revenue_cagr_3yr_min != SLIDER_DEFAULTS["revenue_cagr_3yr_min"]:
+        filters["revenue_cagr_3yr_min"] = st.session_state.revenue_cagr_3yr_min
 
     # PAT CAGR
-    if (
-        st.session_state.pat_cagr_5yr_min
-        != SLIDER_DEFAULTS["pat_cagr_5yr_min"]
-    ):
-        filters["pat_cagr_5yr_min"] = (
-            st.session_state.pat_cagr_5yr_min
-        )
+    if st.session_state.pat_cagr_5yr_min != SLIDER_DEFAULTS["pat_cagr_5yr_min"]:
+        filters["pat_cagr_5yr_min"] = st.session_state.pat_cagr_5yr_min
 
     # OPM
     if st.session_state.opm_min != SLIDER_DEFAULTS["opm_min"]:
         filters["opm_min"] = st.session_state.opm_min
 
     # P/E
-    if (
-        st.session_state.pe_ratio_max
-        != SLIDER_DEFAULTS["pe_ratio_max"]
-    ):
-        filters["pe_ratio_max"] = (
-            st.session_state.pe_ratio_max
-        )
+    if st.session_state.pe_ratio_max != SLIDER_DEFAULTS["pe_ratio_max"]:
+        filters["pe_ratio_max"] = st.session_state.pe_ratio_max
 
     # P/B
-    if (
-        st.session_state.pb_ratio_max
-        != SLIDER_DEFAULTS["pb_ratio_max"]
-    ):
-        filters["pb_ratio_max"] = (
-            st.session_state.pb_ratio_max
-        )
+    if st.session_state.pb_ratio_max != SLIDER_DEFAULTS["pb_ratio_max"]:
+        filters["pb_ratio_max"] = st.session_state.pb_ratio_max
 
     # Dividend Yield
     if (
         st.session_state.dividend_yield_pct_min
         != SLIDER_DEFAULTS["dividend_yield_pct_min"]
     ):
-        filters["dividend_yield_pct_min"] = (
-            st.session_state.dividend_yield_pct_min
-        )
+        filters["dividend_yield_pct_min"] = st.session_state.dividend_yield_pct_min
 
     # Interest Coverage Ratio
     if st.session_state.icr_min != SLIDER_DEFAULTS["icr_min"]:
@@ -218,9 +180,7 @@ def get_display_dataframe(dataframe: pd.DataFrame) -> pd.DataFrame:
     ]
 
     available_columns = [
-        column
-        for column in display_columns
-        if column in dataframe.columns
+        column for column in display_columns if column in dataframe.columns
     ]
 
     result = dataframe[available_columns].copy()
@@ -281,15 +241,9 @@ def render():
                 st.rerun()
 
     if st.session_state.active_preset:
-        pretty_name = (
-            st.session_state.active_preset
-            .replace("_", " ")
-            .title()
-        )
+        pretty_name = st.session_state.active_preset.replace("_", " ").title()
 
-        st.success(
-            f"Active preset: {pretty_name}"
-        )
+        st.success(f"Active preset: {pretty_name}")
 
     # --------------------------------------------------
     # Sidebar filters
@@ -398,9 +352,7 @@ def render():
 
     except Exception as error:
 
-        st.error(
-            f"Unable to run financial screener: {error}"
-        )
+        st.error(f"Unable to run financial screener: {error}")
         return
 
     display_dataframe = get_display_dataframe(results)
@@ -414,9 +366,7 @@ def render():
     if result_count == 1:
         st.subheader("1 company matches your filters")
     else:
-        st.subheader(
-            f"{result_count} companies match your filters"
-        )
+        st.subheader(f"{result_count} companies match your filters")
 
     # --------------------------------------------------
     # Results table
@@ -440,9 +390,7 @@ def render():
     # CSV download
     # --------------------------------------------------
 
-    csv_data = display_dataframe.to_csv(
-        index=False
-    ).encode("utf-8")
+    csv_data = display_dataframe.to_csv(index=False).encode("utf-8")
 
     st.download_button(
         label="Download Results as CSV",

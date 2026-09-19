@@ -8,7 +8,6 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-
 DATABASE_PATH = Path("data/nifty100.db")
 
 
@@ -170,16 +169,11 @@ def get_home_metrics(year=None):
     return {
         "average_roe": dataframe["return_on_equity_pct"].mean(),
         "median_pe": dataframe["pe_ratio"].median(),
-        "median_debt_to_equity": dataframe[
-            "debt_to_equity"
-        ].median(),
+        "median_debt_to_equity": dataframe["debt_to_equity"].median(),
         "total_companies": dataframe["company_id"].nunique(),
-        "median_revenue_cagr_5yr": dataframe[
-            "revenue_cagr_5yr"
-        ].median(),
+        "median_revenue_cagr_5yr": dataframe["revenue_cagr_5yr"].median(),
         "debt_free_companies": dataframe[
-            dataframe["debt_to_equity"].fillna(float("inf"))
-            <= 0.000001
+            dataframe["debt_to_equity"].fillna(float("inf")) <= 0.000001
         ]["company_id"].nunique(),
     }
 
@@ -247,7 +241,9 @@ def get_top_companies(year):
     return dataframe.sort_values(
         "composite_quality_score",
         ascending=False,
-    ).head(5)[columns]
+    ).head(
+        5
+    )[columns]
 
 
 @st.cache_data(ttl=600)

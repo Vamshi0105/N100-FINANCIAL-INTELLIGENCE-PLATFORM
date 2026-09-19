@@ -13,9 +13,7 @@ def main():
 
     for preset_name, filters in PRESETS.items():
 
-        print(
-            f"\n{preset_name.upper().replace('_', ' ')}"
-        )
+        print(f"\n{preset_name.upper().replace('_', ' ')}")
 
         print("-" * 70)
 
@@ -24,24 +22,16 @@ def main():
         # Save result for Excel export
         preset_results[preset_name] = result
 
-        company_count = (
-            result["company_id"]
-            .nunique()
-        )
+        company_count = result["company_id"].nunique()
 
-        print(
-            f"Companies: {company_count}"
-        )
+        print(f"Companies: {company_count}")
 
         if not result.empty:
 
-            print(
-                "\nTop companies:"
-            )
+            print("\nTop companies:")
 
             companies = (
-                result
-                .sort_values(
+                result.sort_values(
                     "composite_quality_score",
                     ascending=False,
                 )["company_id"]
@@ -57,22 +47,16 @@ def main():
     # EXPORT ALL PRESETS
     # -------------------------------------------------
 
-    output_path = (
-        export_screener_results(
-            preset_results,
-            PRESETS,
-        )
+    output_path = export_screener_results(
+        preset_results,
+        PRESETS,
     )
 
     print("\n" + "=" * 70)
-    print(
-        "EXCEL EXPORT COMPLETED"
-    )
+    print("EXCEL EXPORT COMPLETED")
     print("=" * 70)
 
-    print(
-        f"\nFile created: {output_path}"
-    )
+    print(f"\nFile created: {output_path}")
 
 
 if __name__ == "__main__":

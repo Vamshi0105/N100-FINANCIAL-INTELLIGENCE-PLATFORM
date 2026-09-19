@@ -10,10 +10,10 @@ from src.dashboard.utils.db import (
     get_pros_cons,
 )
 
-
 # ---------------------------------------------------------
 # SAFE DISPLAY HELPERS
 # ---------------------------------------------------------
+
 
 def safe_text(value, default="N/A"):
     """
@@ -97,9 +97,7 @@ def get_annual_record_count(dataframe):
 
     years = dataframe["year"].astype(str)
 
-    annual_years = years[
-        years.str.endswith("-03")
-    ]
+    annual_years = years[years.str.endswith("-03")]
 
     return annual_years.nunique()
 
@@ -135,32 +133,20 @@ def render():
 
     if search_text:
 
-        search_mask = (
-            company_options["company_id"]
-            .astype(str)
-            .str.contains(
-                search_text,
-                case=False,
-                na=False,
-            )
-            |
-            company_options["company_name"]
-            .astype(str)
-            .str.contains(
-                search_text,
-                case=False,
-                na=False,
-            )
+        search_mask = company_options["company_id"].astype(str).str.contains(
+            search_text,
+            case=False,
+            na=False,
+        ) | company_options["company_name"].astype(str).str.contains(
+            search_text,
+            case=False,
+            na=False,
         )
 
-        company_options = company_options[
-            search_mask
-        ]
+        company_options = company_options[search_mask]
 
     if company_options.empty:
-        st.warning(
-            "Ticker not found — please try another."
-        )
+        st.warning("Ticker not found — please try another.")
         return
 
     # ---------------------------------------------------------
@@ -170,11 +156,9 @@ def render():
     company_options = company_options.copy()
 
     company_options["display_name"] = (
-        company_options["company_id"]
-        .astype(str)
+        company_options["company_id"].astype(str)
         + " — "
-        + company_options["company_name"]
-        .astype(str)
+        + company_options["company_name"].astype(str)
     )
 
     selected_company = st.selectbox(
@@ -182,22 +166,16 @@ def render():
         company_options["display_name"].tolist(),
     )
 
-    ticker = selected_company.split(
-        " — "
-    )[0]
+    ticker = selected_company.split(" — ")[0]
 
     # ---------------------------------------------------------
     # COMPANY PROFILE
     # ---------------------------------------------------------
 
-    profile = get_company_profile(
-        ticker
-    )
+    profile = get_company_profile(ticker)
 
     if profile.empty:
-        st.warning(
-            "Ticker not found — please try another."
-        )
+        st.warning("Ticker not found — please try another.")
         return
 
     profile_row = profile.iloc[0]
@@ -228,49 +206,31 @@ def render():
 
     st.markdown("---")
 
-    st.subheader(
-        company_name
-    )
+    st.subheader(company_name)
 
     col1, col2, col3 = st.columns(3)
 
     with col1:
 
-        st.write(
-            "**NSE Ticker**"
-        )
+        st.write("**NSE Ticker**")
 
-        st.write(
-            ticker
-        )
+        st.write(ticker)
 
     with col2:
 
-        st.write(
-            "**Sector**"
-        )
+        st.write("**Sector**")
 
-        st.write(
-            broad_sector
-        )
+        st.write(broad_sector)
 
     with col3:
 
-        st.write(
-            "**Sub-Sector**"
-        )
+        st.write("**Sub-Sector**")
 
-        st.write(
-            sub_sector
-        )
+        st.write(sub_sector)
 
-    st.markdown(
-        "### About Company"
-    )
+    st.markdown("### About Company")
 
-    st.write(
-        about_company
-    )
+    st.write(about_company)
 
     st.markdown("---")
 
@@ -278,23 +238,15 @@ def render():
     # LOAD FINANCIAL DATA
     # ---------------------------------------------------------
 
-    ratios = get_ratios(
-        ticker
-    )
+    ratios = get_ratios(ticker)
 
-    pl = get_pl(
-        ticker
-    )
+    pl = get_pl(ticker)
 
     # ---------------------------------------------------------
     # PARTIAL DATA WARNING
     # ---------------------------------------------------------
 
-    annual_record_count = (
-        get_annual_record_count(
-            ratios
-        )
-    )
+    annual_record_count = get_annual_record_count(ratios)
 
     if annual_record_count < 10:
 
@@ -315,47 +267,28 @@ def render():
 
         ratios = ratios.copy()
 
-        ratios["year"] = (
-            ratios["year"]
-            .astype(str)
-        )
+        ratios["year"] = ratios["year"].astype(str)
 
         complete_ratios = ratios[
-            ratios[
-                "return_on_equity_pct"
-            ].notna()
-            &
-            ratios[
-                "return_on_capital_employed_pct"
-            ].notna()
-            &
-            ratios[
-                "net_profit_margin_pct"
-            ].notna()
+            ratios["return_on_equity_pct"].notna()
+            & ratios["return_on_capital_employed_pct"].notna()
+            & ratios["net_profit_margin_pct"].notna()
         ].copy()
 
-        complete_ratios = (
-            complete_ratios
-            .sort_values(
-                "year",
-                ascending=True,
-            )
+        complete_ratios = complete_ratios.sort_values(
+            "year",
+            ascending=True,
         )
 
         if not complete_ratios.empty:
 
-            latest_ratios = (
-                complete_ratios
-                .iloc[-1]
-            )
+            latest_ratios = complete_ratios.iloc[-1]
 
     # ---------------------------------------------------------
     # KPI TILES
     # ---------------------------------------------------------
 
-    st.subheader(
-        "Key Financial Metrics"
-    )
+    st.subheader("Key Financial Metrics")
 
     (
         kpi1,
@@ -368,29 +301,17 @@ def render():
 
     if latest_ratios is not None:
 
-        roe = latest_ratios.get(
-            "return_on_equity_pct"
-        )
+        roe = latest_ratios.get("return_on_equity_pct")
 
-        roce = latest_ratios.get(
-            "return_on_capital_employed_pct"
-        )
+        roce = latest_ratios.get("return_on_capital_employed_pct")
 
-        npm = latest_ratios.get(
-            "net_profit_margin_pct"
-        )
+        npm = latest_ratios.get("net_profit_margin_pct")
 
-        debt_equity = latest_ratios.get(
-            "debt_to_equity"
-        )
+        debt_equity = latest_ratios.get("debt_to_equity")
 
-        revenue_cagr = latest_ratios.get(
-            "revenue_cagr_5yr"
-        )
+        revenue_cagr = latest_ratios.get("revenue_cagr_5yr")
 
-        fcf = latest_ratios.get(
-            "free_cash_flow_cr"
-        )
+        fcf = latest_ratios.get("free_cash_flow_cr")
 
     else:
 
@@ -442,9 +363,7 @@ def render():
 
     kpi6.metric(
         "Free Cash Flow",
-        format_currency_cr(
-            fcf
-        ),
+        format_currency_cr(fcf),
     )
 
     st.markdown("---")
@@ -453,60 +372,38 @@ def render():
     # REVENUE AND NET PROFIT CHART
     # ---------------------------------------------------------
 
-    st.subheader(
-        "Revenue & Net Profit Trend"
-    )
+    st.subheader("Revenue & Net Profit Trend")
 
     if pl.empty:
 
-        st.info(
-            "Profit & Loss data is not available."
-        )
+        st.info("Profit & Loss data is not available.")
 
     else:
 
         pl_chart = pl.copy()
 
-        pl_chart["year"] = (
-            pl_chart["year"]
-            .astype(str)
-        )
+        pl_chart["year"] = pl_chart["year"].astype(str)
 
         available_columns = []
 
         if "sales" in pl_chart.columns:
-            available_columns.append(
-                "sales"
-            )
+            available_columns.append("sales")
 
         if "net_profit" in pl_chart.columns:
-            available_columns.append(
-                "net_profit"
-            )
+            available_columns.append("net_profit")
 
         if available_columns:
 
-            pl_chart = (
-                pl_chart
-                .dropna(
-                    subset=available_columns,
-                    how="all",
-                )
+            pl_chart = pl_chart.dropna(
+                subset=available_columns,
+                how="all",
             )
 
-        pl_chart = (
-            pl_chart
-            .sort_values(
-                "year"
-            )
-        )
+        pl_chart = pl_chart.sort_values("year")
 
         if pl_chart.empty:
 
-            st.info(
-                "Revenue and Net Profit data "
-                "is not available."
-            )
+            st.info("Revenue and Net Profit data " "is not available.")
 
         else:
 
@@ -541,9 +438,7 @@ def render():
                 fig.add_trace(
                     go.Scatter(
                         x=pl_chart["year"],
-                        y=pl_chart[
-                            "net_profit"
-                        ],
+                        y=pl_chart["net_profit"],
                         mode="lines+markers",
                         name="Net Profit",
                         yaxis="y2",
@@ -557,27 +452,21 @@ def render():
                 )
 
             fig.update_layout(
-
                 height=500,
-
                 hovermode="x unified",
-
                 xaxis=dict(
                     title="Financial Year",
                 ),
-
                 yaxis=dict(
                     title="Revenue (₹ Cr)",
                     rangemode="tozero",
                 ),
-
                 yaxis2=dict(
                     title="Net Profit (₹ Cr)",
                     overlaying="y",
                     side="right",
                     rangemode="tozero",
                 ),
-
                 legend=dict(
                     orientation="h",
                     yanchor="bottom",
@@ -585,7 +474,6 @@ def render():
                     xanchor="right",
                     x=1,
                 ),
-
                 margin=dict(
                     l=60,
                     r=60,
@@ -605,17 +493,11 @@ def render():
 
     st.markdown("---")
 
-    st.subheader(
-        "Pros & Cons"
-    )
+    st.subheader("Pros & Cons")
 
-    pros_cons = get_pros_cons(
-        ticker
-    )
+    pros_cons = get_pros_cons(ticker)
 
-    pros_column, cons_column = (
-        st.columns(2)
-    )
+    pros_column, cons_column = st.columns(2)
 
     # ---------------------------------------------------------
     # PROS
@@ -623,38 +505,25 @@ def render():
 
     with pros_column:
 
-        st.markdown(
-            "### ✅ Pros"
-        )
+        st.markdown("### ✅ Pros")
 
         if not pros_cons.empty and "pros" in pros_cons.columns:
 
-            pros_values = (
-                pros_cons["pros"]
-                .dropna()
-                .astype(str)
-                .tolist()
-            )
+            pros_values = pros_cons["pros"].dropna().astype(str).tolist()
 
             if pros_values:
 
                 for pro in pros_values:
 
-                    st.success(
-                        f"✓ {pro}"
-                    )
+                    st.success(f"✓ {pro}")
 
             else:
 
-                st.info(
-                    "No pros data available."
-                )
+                st.info("No pros data available.")
 
         else:
 
-            st.info(
-                "No pros data available."
-            )
+            st.info("No pros data available.")
 
     # ---------------------------------------------------------
     # CONS
@@ -662,38 +531,25 @@ def render():
 
     with cons_column:
 
-        st.markdown(
-            "### ❌ Cons"
-        )
+        st.markdown("### ❌ Cons")
 
         if not pros_cons.empty and "cons" in pros_cons.columns:
 
-            cons_values = (
-                pros_cons["cons"]
-                .dropna()
-                .astype(str)
-                .tolist()
-            )
+            cons_values = pros_cons["cons"].dropna().astype(str).tolist()
 
             if cons_values:
 
                 for con in cons_values:
 
-                    st.error(
-                        f"✗ {con}"
-                    )
+                    st.error(f"✗ {con}")
 
             else:
 
-                st.info(
-                    "No cons data available."
-                )
+                st.info("No cons data available.")
 
         else:
 
-            st.info(
-                "No cons data available."
-            )
+            st.info("No cons data available.")
 
     # ---------------------------------------------------------
     # ROE AND ROCE TREND
@@ -701,69 +557,38 @@ def render():
 
     st.markdown("---")
 
-    st.subheader(
-        "ROE & ROCE Trend"
-    )
+    st.subheader("ROE & ROCE Trend")
 
     if ratios.empty:
 
-        st.info(
-            "Financial ratio history "
-            "is not available."
-        )
+        st.info("Financial ratio history " "is not available.")
 
     else:
 
-        ratios_chart = (
-            ratios.copy()
-        )
+        ratios_chart = ratios.copy()
 
         ratio_columns = []
 
-        if (
-            "return_on_equity_pct"
-            in ratios_chart.columns
-        ):
-            ratio_columns.append(
-                "return_on_equity_pct"
-            )
+        if "return_on_equity_pct" in ratios_chart.columns:
+            ratio_columns.append("return_on_equity_pct")
 
-        if (
-            "return_on_capital_employed_pct"
-            in ratios_chart.columns
-        ):
-            ratio_columns.append(
-                "return_on_capital_employed_pct"
-            )
+        if "return_on_capital_employed_pct" in ratios_chart.columns:
+            ratio_columns.append("return_on_capital_employed_pct")
 
         if ratio_columns:
 
-            ratios_chart = (
-                ratios_chart
-                .dropna(
-                    subset=ratio_columns,
-                    how="all",
-                )
+            ratios_chart = ratios_chart.dropna(
+                subset=ratio_columns,
+                how="all",
             )
 
-        ratios_chart["year"] = (
-            ratios_chart["year"]
-            .astype(str)
-        )
+        ratios_chart["year"] = ratios_chart["year"].astype(str)
 
-        ratios_chart = (
-            ratios_chart
-            .sort_values(
-                "year"
-            )
-        )
+        ratios_chart = ratios_chart.sort_values("year")
 
         if ratios_chart.empty:
 
-            st.info(
-                "ROE and ROCE data is "
-                "not available."
-            )
+            st.info("ROE and ROCE data is " "not available.")
 
         else:
 
@@ -774,22 +599,14 @@ def render():
             # ---------------------------------------------
 
             if (
-                "return_on_equity_pct"
-                in ratios_chart.columns
-                and
-                ratios_chart[
-                    "return_on_equity_pct"
-                ].notna().any()
+                "return_on_equity_pct" in ratios_chart.columns
+                and ratios_chart["return_on_equity_pct"].notna().any()
             ):
 
                 fig.add_trace(
                     go.Scatter(
-                        x=ratios_chart[
-                            "year"
-                        ],
-                        y=ratios_chart[
-                            "return_on_equity_pct"
-                        ],
+                        x=ratios_chart["year"],
+                        y=ratios_chart["return_on_equity_pct"],
                         mode="lines+markers",
                         name="ROE",
                         hovertemplate=(
@@ -806,22 +623,14 @@ def render():
             # ---------------------------------------------
 
             if (
-                "return_on_capital_employed_pct"
-                in ratios_chart.columns
-                and
-                ratios_chart[
-                    "return_on_capital_employed_pct"
-                ].notna().any()
+                "return_on_capital_employed_pct" in ratios_chart.columns
+                and ratios_chart["return_on_capital_employed_pct"].notna().any()
             ):
 
                 fig.add_trace(
                     go.Scatter(
-                        x=ratios_chart[
-                            "year"
-                        ],
-                        y=ratios_chart[
-                            "return_on_capital_employed_pct"
-                        ],
+                        x=ratios_chart["year"],
+                        y=ratios_chart["return_on_capital_employed_pct"],
                         mode="lines+markers",
                         name="ROCE",
                         hovertemplate=(
@@ -835,28 +644,20 @@ def render():
 
             if len(fig.data) == 0:
 
-                st.info(
-                    "ROE and ROCE data is "
-                    "not available."
-                )
+                st.info("ROE and ROCE data is " "not available.")
 
             else:
 
                 fig.update_layout(
-
                     height=450,
-
                     hovermode="x unified",
-
                     xaxis=dict(
                         title="Financial Year",
                     ),
-
                     yaxis=dict(
                         title="Return (%)",
                         rangemode="tozero",
                     ),
-
                     legend=dict(
                         orientation="h",
                         yanchor="bottom",
@@ -864,7 +665,6 @@ def render():
                         xanchor="right",
                         x=1,
                     ),
-
                     margin=dict(
                         l=60,
                         r=40,

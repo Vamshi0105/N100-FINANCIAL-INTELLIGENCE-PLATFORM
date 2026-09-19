@@ -9,11 +9,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from .normaliser import (
-    normalize_ticker,
-    normalize_year
-)
-
+from .normaliser import normalize_ticker, normalize_year
 
 CORE = [
     "companies",
@@ -22,7 +18,7 @@ CORE = [
     "cashflow",
     "analysis",
     "documents",
-    "prosandcons"
+    "prosandcons",
 ]
 
 
@@ -31,19 +27,12 @@ SUPPLEMENTARY = [
     "stock_prices",
     "market_cap",
     "financial_ratios",
-    "peer_groups"
+    "peer_groups",
 ]
 
 
 NUMERIC_COLUMNS = {
-
-    "companies": [
-        "face_value",
-        "book_value",
-        "roce_percentage",
-        "roe_percentage"
-    ],
-
+    "companies": ["face_value", "book_value", "roce_percentage", "roe_percentage"],
     "profitandloss": [
         "sales",
         "expenses",
@@ -56,9 +45,8 @@ NUMERIC_COLUMNS = {
         "tax_percentage",
         "net_profit",
         "eps",
-        "dividend_payout"
+        "dividend_payout",
     ],
-
     "balancesheet": [
         "equity_capital",
         "reserves",
@@ -69,38 +57,31 @@ NUMERIC_COLUMNS = {
         "cwip",
         "investments",
         "other_asset",
-        "total_assets"
+        "total_assets",
     ],
-
     "cashflow": [
         "operating_activity",
         "investing_activity",
         "financing_activity",
-        "net_cash_flow"
+        "net_cash_flow",
     ],
-
-    "sectors": [
-        "index_weight_pct"
-    ],
-
+    "sectors": ["index_weight_pct"],
     "stock_prices": [
         "open_price",
         "high_price",
         "low_price",
         "close_price",
         "volume",
-        "adjusted_close"
+        "adjusted_close",
     ],
-
     "market_cap": [
         "market_cap_crore",
         "enterprise_value_crore",
         "pe_ratio",
         "pb_ratio",
         "ev_ebitda",
-        "dividend_yield_pct"
+        "dividend_yield_pct",
     ],
-
     "financial_ratios": [
         "net_profit_margin_pct",
         "operating_profit_margin_pct",
@@ -114,8 +95,8 @@ NUMERIC_COLUMNS = {
         "book_value_per_share",
         "dividend_payout_ratio_pct",
         "total_debt_cr",
-        "cash_from_operations_cr"
-    ]
+        "cash_from_operations_cr",
+    ],
 }
 
 
@@ -123,19 +104,9 @@ def get_source_path(root, table_name):
 
     root = Path(root)
 
-    raw_path = (
-        root
-        / "data"
-        / "raw"
-        / f"{table_name}.xlsx"
-    )
+    raw_path = root / "data" / "raw" / f"{table_name}.xlsx"
 
-    supporting_path = (
-        root
-        / "data"
-        / "supporting"
-        / f"{table_name}.xlsx"
-    )
+    supporting_path = root / "data" / "supporting" / f"{table_name}.xlsx"
 
     if raw_path.exists():
         return raw_path
@@ -143,43 +114,25 @@ def get_source_path(root, table_name):
     if supporting_path.exists():
         return supporting_path
 
-    raise FileNotFoundError(
-        f"Excel file not found for: {table_name}"
-    )
+    raise FileNotFoundError(f"Excel file not found for: {table_name}")
 
 
 def read_excel(root, table_name):
 
-    path = get_source_path(
-        root,
-        table_name
-    )
+    path = get_source_path(root, table_name)
 
     # Core files use header row 2 in the supplied dataset.
-    header = (
-        1
-        if table_name in CORE
-        else 0
-    )
+    header = 1 if table_name in CORE else 0
 
-    df = pd.read_excel(
-        path,
-        header=header
-    )
+    df = pd.read_excel(path, header=header)
 
     # Clean column names
-    df.columns = [
-        str(column).strip()
-        for column in df.columns
-    ]
+    df.columns = [str(column).strip() for column in df.columns]
 
     # Normalize company ID
     if "company_id" in df.columns:
 
-        df["company_id"] = (
-            df["company_id"]
-            .map(normalize_ticker)
-        )
+        df["company_id"] = df["company_id"].map(normalize_ticker)
 
     # Rename common columns
     rename_map = {}
@@ -200,30 +153,17 @@ def read_excel(root, table_name):
         rename_map["Annual Report"] = "Annual_Report"
 
     if rename_map:
-        df = df.rename(
-            columns=rename_map
-        )
+        df = df.rename(columns=rename_map)
 
     # Normalize company ID again after renaming
     if "company_id" in df.columns:
 
-        df["company_id"] = (
-            df["company_id"]
-            .map(normalize_ticker)
-        )
+        df["company_id"] = df["company_id"].map(normalize_ticker)
 
     # Normalize financial years
-    annual_tables = {
-        "profitandloss",
-        "balancesheet",
-        "cashflow",
-        "financial_ratios"
-    }
+    annual_tables = {"profitandloss", "balancesheet", "cashflow", "financial_ratios"}
 
-    if (
-        table_name in annual_tables
-        and "year" in df.columns
-    ):
+    if table_name in annual_tables and "year" in df.columns:
 
         def safe_year(value):
 
@@ -233,58 +173,35 @@ def read_excel(root, table_name):
             except Exception:
                 return None
 
-        df["year"] = (
-            df["year"]
-            .map(safe_year)
-        )
+        df["year"] = df["year"].map(safe_year)
 
     # Documents generally use calendar year
     if table_name == "documents":
 
         if "year" in df.columns:
 
-            df["year"] = pd.to_numeric(
-                df["year"],
-                errors="coerce"
-            )
+            df["year"] = pd.to_numeric(df["year"], errors="coerce")
 
     # Stock price dates
-    if (
-        table_name == "stock_prices"
-        and "date" in df.columns
-    ):
+    if table_name == "stock_prices" and "date" in df.columns:
 
-        df["date"] = pd.to_datetime(
-            df["date"],
-            errors="coerce"
-        ).dt.strftime("%Y-%m-%d")
+        df["date"] = pd.to_datetime(df["date"], errors="coerce").dt.strftime("%Y-%m-%d")
 
     # Numeric conversion
-    for column in NUMERIC_COLUMNS.get(
-        table_name,
-        []
-    ):
+    for column in NUMERIC_COLUMNS.get(table_name, []):
 
         if column in df.columns:
 
-            df[column] = pd.to_numeric(
-                df[column],
-                errors="coerce"
-            )
+            df[column] = pd.to_numeric(df[column], errors="coerce")
 
     return df
 
 
 def get_table_columns(connection, table_name):
 
-    rows = connection.execute(
-        f"PRAGMA table_info({table_name})"
-    ).fetchall()
+    rows = connection.execute(f"PRAGMA table_info({table_name})").fetchall()
 
-    return {
-        row[1]
-        for row in rows
-    }
+    return {row[1] for row in rows}
 
 
 def prepare_data(frames):
@@ -295,26 +212,13 @@ def prepare_data(frames):
 
     companies = frames["companies"].copy()
 
-    companies["id"] = (
-        companies["id"]
-        .map(normalize_ticker)
-    )
+    companies["id"] = companies["id"].map(normalize_ticker)
 
-    companies = companies[
-        companies["id"].str.len().between(
-            2,
-            12
-        )
-    ]
+    companies = companies[companies["id"].str.len().between(2, 12)]
 
-    companies = companies.drop_duplicates(
-        subset=["id"],
-        keep="last"
-    )
+    companies = companies.drop_duplicates(subset=["id"], keep="last")
 
-    company_ids = set(
-        companies["id"]
-    )
+    company_ids = set(companies["id"])
 
     frames["companies"] = companies
 
@@ -322,49 +226,28 @@ def prepare_data(frames):
     # Annual financial tables
     # ---------------------------------------------------------
 
-    for table_name in [
-        "profitandloss",
-        "balancesheet",
-        "cashflow"
-    ]:
+    for table_name in ["profitandloss", "balancesheet", "cashflow"]:
 
         df = frames[table_name].copy()
 
         if "company_id" in df.columns:
 
-            df["company_id"] = (
-                df["company_id"]
-                .map(normalize_ticker)
-            )
+            df["company_id"] = df["company_id"].map(normalize_ticker)
 
         # Remove invalid years
         if "year" in df.columns:
 
-            df = df[
-                df["year"].notna()
-            ]
+            df = df[df["year"].notna()]
 
         # Remove orphan companies
         if "company_id" in df.columns:
 
-            df = df[
-                df["company_id"]
-                .isin(company_ids)
-            ]
+            df = df[df["company_id"].isin(company_ids)]
 
         # Remove duplicate annual records
-        if {
-            "company_id",
-            "year"
-        }.issubset(df.columns):
+        if {"company_id", "year"}.issubset(df.columns):
 
-            df = df.drop_duplicates(
-                subset=[
-                    "company_id",
-                    "year"
-                ],
-                keep="last"
-            )
+            df = df.drop_duplicates(subset=["company_id", "year"], keep="last")
 
         frames[table_name] = df
 
@@ -376,15 +259,9 @@ def prepare_data(frames):
 
         if "company_id" in df.columns:
 
-            df["company_id"] = (
-                df["company_id"]
-                .map(normalize_ticker)
-            )
+            df["company_id"] = df["company_id"].map(normalize_ticker)
 
-            df = df[
-                df["company_id"]
-                .isin(company_ids)
-            ]
+            df = df[df["company_id"].isin(company_ids)]
 
             frames[table_name] = df
 
@@ -398,34 +275,20 @@ def prepare_data(frames):
         "operating_activity",
         "investing_activity",
         "financing_activity",
-        "net_cash_flow"
+        "net_cash_flow",
     }
 
-    if required.issubset(
-        cashflow.columns
-    ):
+    if required.issubset(cashflow.columns):
 
         calculated = (
-            cashflow[
-                [
-                    "operating_activity",
-                    "investing_activity",
-                    "financing_activity"
-                ]
-            ]
+            cashflow[["operating_activity", "investing_activity", "financing_activity"]]
             .fillna(0)
             .sum(axis=1)
         )
 
-        mismatch = (
-            cashflow["net_cash_flow"]
-            - calculated
-        ).abs() > 10
+        mismatch = (cashflow["net_cash_flow"] - calculated).abs() > 10
 
-        cashflow.loc[
-            mismatch,
-            "net_cash_flow"
-        ] = calculated[mismatch]
+        cashflow.loc[mismatch, "net_cash_flow"] = calculated[mismatch]
 
     frames["cashflow"] = cashflow
 
@@ -433,89 +296,51 @@ def prepare_data(frames):
     # DQ-10 correction
     # ---------------------------------------------------------
 
-    balancesheet = (
-        frames["balancesheet"]
-        .copy()
-    )
+    balancesheet = frames["balancesheet"].copy()
 
     if "fixed_assets" in balancesheet.columns:
 
-        mask = (
-            balancesheet["fixed_assets"]
-            < 0
-        )
+        mask = balancesheet["fixed_assets"] < 0
 
-        balancesheet.loc[
-            mask,
-            "fixed_assets"
-        ] = 0
+        balancesheet.loc[mask, "fixed_assets"] = 0
 
     frames["balancesheet"] = balancesheet
 
     return frames
 
 
-def load_database(
-    root,
-    database_path
-):
+def load_database(root, database_path):
 
     root = Path(root)
     database_path = Path(database_path)
 
     frames = {}
 
-    for table_name in (
-        CORE + SUPPLEMENTARY
-    ):
+    for table_name in CORE + SUPPLEMENTARY:
 
-        print(
-            f"Reading {table_name}.xlsx ..."
-        )
+        print(f"Reading {table_name}.xlsx ...")
 
-        frames[table_name] = (
-            read_excel(
-                root,
-                table_name
-            )
-        )
+        frames[table_name] = read_excel(root, table_name)
 
     # Prepare data
-    frames = prepare_data(
-        frames
-    )
+    frames = prepare_data(frames)
 
     # Create database folder
-    database_path.parent.mkdir(
-        parents=True,
-        exist_ok=True
-    )
+    database_path.parent.mkdir(parents=True, exist_ok=True)
 
     if database_path.exists():
         database_path.unlink()
 
-    connection = sqlite3.connect(
-        database_path
-    )
+    connection = sqlite3.connect(database_path)
 
-    connection.execute(
-        "PRAGMA foreign_keys = ON"
-    )
+    connection.execute("PRAGMA foreign_keys = ON")
 
     # Create tables
-    schema_path = (
-        root
-        / "db"
-        / "schema.sql"
-    )
+    schema_path = root / "db" / "schema.sql"
 
-    schema = schema_path.read_text(
-        encoding="utf-8"
-    )
+    schema = schema_path.read_text(encoding="utf-8")
 
-    connection.executescript(
-        schema
-    )
+    connection.executescript(schema)
 
     load_order = [
         "companies",
@@ -529,7 +354,7 @@ def load_database(
         "prosandcons",
         "stock_prices",
         "market_cap",
-        "financial_ratios"
+        "financial_ratios",
     ]
 
     audit = []
@@ -541,113 +366,50 @@ def load_database(
         df = frames[table_name].copy()
 
         # Documents column naming
-        if (
-            table_name == "documents"
-            and "Annual_Report" in df.columns
-        ):
+        if table_name == "documents" and "Annual_Report" in df.columns:
 
-            df = df.rename(
-                columns={
-                    "Annual_Report":
-                    "annual_report"
-                }
-            )
+            df = df.rename(columns={"Annual_Report": "annual_report"})
 
-        table_columns = (
-            get_table_columns(
-                connection,
-                table_name
-            )
-        )
+        table_columns = get_table_columns(connection, table_name)
 
-        valid_columns = [
-            column
-            for column in df.columns
-            if column in table_columns
-        ]
+        valid_columns = [column for column in df.columns if column in table_columns]
 
-        df = df[
-            valid_columns
-        ]
+        df = df[valid_columns]
 
         # Insert
         if not df.empty:
 
-            df.to_sql(
-                table_name,
-                connection,
-                if_exists="append",
-                index=False
-            )
+            df.to_sql(table_name, connection, if_exists="append", index=False)
 
-        elapsed = (
-            time.time()
-            - start_time
+        elapsed = time.time() - start_time
+
+        source_count = len(read_excel(root, table_name))
+
+        audit.append(
+            {
+                "table": table_name,
+                "rows_in": source_count,
+                "rows_out": len(df),
+                "rejected": source_count - len(df),
+                "runtime_s": round(elapsed, 4),
+            }
         )
 
-        source_count = len(
-            read_excel(
-                root,
-                table_name
-            )
-        )
-
-        audit.append({
-
-            "table": table_name,
-
-            "rows_in":
-                source_count,
-
-            "rows_out":
-                len(df),
-
-            "rejected":
-                source_count - len(df),
-
-            "runtime_s":
-                round(
-                    elapsed,
-                    4
-                )
-        })
-
-        print(
-            f"{table_name}: "
-            f"{len(df)} rows loaded"
-        )
+        print(f"{table_name}: " f"{len(df)} rows loaded")
 
     connection.commit()
 
     # Foreign key validation
-    foreign_key_errors = connection.execute(
-        "PRAGMA foreign_key_check"
-    ).fetchall()
+    foreign_key_errors = connection.execute("PRAGMA foreign_key_check").fetchall()
 
     connection.close()
 
-    output_folder = (
-        root
-        / "output"
-    )
+    output_folder = root / "output"
 
-    output_folder.mkdir(
-        parents=True,
-        exist_ok=True
-    )
+    output_folder.mkdir(parents=True, exist_ok=True)
 
-    audit_df = pd.DataFrame(
-        audit
-    )
+    audit_df = pd.DataFrame(audit)
 
-    audit_df.to_csv(
-        output_folder
-        / "load_audit.csv",
-        index=False
-    )
+    audit_df.to_csv(output_folder / "load_audit.csv", index=False)
 
-    return (
-        frames,
-        audit_df,
-        foreign_key_errors
-    )
+    return (frames, audit_df, foreign_key_errors)
